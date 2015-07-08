@@ -9,6 +9,9 @@
 #include "MainTask.h"  
 
 #define DMA_SIZE		3
+
+char Doubleclick;
+
 uint8_t DMADest_Buffer[DMA_SIZE]; 
 GPDMA_Channel_CFG_Type GPDMACfg;
 extern volatile const void *GPDMA_LUTPerAddr[];
@@ -66,52 +69,25 @@ void DMA_IRQHandler (void)
 										       {printf("j");GUI_StoreKeyMsg(GUI_KEY_MONITORING,1);}else printf("error 0x4E 0x6A but not 0x78");break;		
 									case 0x6B://左
 										       if(DMADest_Buffer[2]==0x77)
-										       {printf("k");
-											     if (SysSetOpenflag == 0)GUI_StoreKeyMsg(GUI_KEY_LEFT    ,1);
-											     else{ if (dropdown0flag == 0)GUI_StoreKeyMsg(GUI_KEY_BACKTAB ,1);else GUI_StoreKeyMsg(GUI_KEY_LEFT,1);}
-										       }else printf("error 0x4E 0x6B but not 0x77");break;
+										       {printf("k");GUI_StoreKeyMsg(GUI_KEY_LEFT    ,1); }else printf("error 0x4E 0x6B but not 0x77");break;
 									case 0x6C://上
 										       if(DMADest_Buffer[2]==0x76)
-										       {printf("l");
-											       if (SysSetOpenflag == 0)GUI_StoreKeyMsg(GUI_KEY_UP    ,1);
-											       else{ if (dropdown0flag == 0)GUI_StoreKeyMsg(GUI_KEY_BACKTAB ,1);else GUI_StoreKeyMsg(GUI_KEY_UP,1);}
-										       }else printf("error 0x4E 0x6C but not 0x76");break;
+										       {printf("l");GUI_StoreKeyMsg(GUI_KEY_UP    ,1); }else printf("error 0x4E 0x6C but not 0x76");break;
 									case 0x6D://下
 													 if(DMADest_Buffer[2]==0x75)
-													 {printf("m");
-															if (SysSetOpenflag == 0)GUI_StoreKeyMsg(GUI_KEY_DOWN ,1);
-															else {if (dropdown0flag == 0)GUI_StoreKeyMsg(GUI_KEY_TAB ,1);else GUI_StoreKeyMsg(GUI_KEY_DOWN, 1);}
-													 }else printf("error 0x4E 0x6D but not 0x75");break;
+													 {printf("m");GUI_StoreKeyMsg(GUI_KEY_DOWN ,1);}else printf("error 0x4E 0x6D but not 0x75");break;
 									case 0x6E://确定
 													 if(DMADest_Buffer[2]==0x74)
-													 {printf("n");
-														 if (SysSetOpenflag == 0)GUI_StoreKeyMsg(GUI_KEY_ENTER ,1);
-														 else {if (dropdown0flag == 0){GUI_StoreKeyMsg(GUI_KEY_SPACE ,1);dropdown0flag++;}
-																	else {GUI_StoreKeyMsg(GUI_KEY_ENTER ,1);dropdown0flag--;}
-																 }
-													 }else printf("error 0x4E 0x6E but not 0x74");break;
+													 {printf("n");GUI_StoreKeyMsg(GUI_KEY_ENTER ,1); }else printf("error 0x4E 0x6E but not 0x74");break;
 									case 0x6F://右
 													 if(DMADest_Buffer[2]==0x73)
-													 {printf("o");
-														 if (SysSetOpenflag == 0)GUI_StoreKeyMsg(GUI_KEY_RIGHT ,1);
-														 else {if (dropdown0flag == 0)GUI_StoreKeyMsg(GUI_KEY_TAB ,1);else GUI_StoreKeyMsg(GUI_KEY_RIGHT, 1);}
-													 }else printf("error 0x4E 0x6F but not 0x73");break;												
+													 {printf("o");GUI_StoreKeyMsg(GUI_KEY_RIGHT ,1); }else printf("error 0x4E 0x6F but not 0x73");break;												
 									case 0x70://菜单
 													 if(DMADest_Buffer[2]==0x72)
-													 {printf("p");
-													  	if (SysSetOpenflag == 0)GUI_StoreKeyMsg(GUI_KEY_MENU  ,1);
-													  	else{WM_BringToTop (hDlg_FishMap);WM_SetFocus (hDlg_FishMap);SysSetOpenflag = 0;Doubleclick = 0;downlistfocus = 0;GUI_CURSOR_Show();}
-													 }
-													 else printf("error 0x4E 0x70 but not 0x72");break;
+													 {printf("p");GUI_StoreKeyMsg(GUI_KEY_MENU  ,1);}else printf("error 0x4E 0x70 but not 0x72");break;
 									case 0x71://返回
 													 if(DMADest_Buffer[2]==0x71)
-													 {
-//														 printf("q");
-//													  	if (SysSetOpenflag == 0)GUI_StoreKeyMsg(GUI_KEY_MENU  ,1);
-//													  	else{WM_BringToTop (hDlg_FishMap);WM_SetFocus (hDlg_FishMap);SysSetOpenflag = 0;Doubleclick = 0;downlistfocus = 0;GUI_CURSOR_Show();}
-														 GUI_StoreKeyMsg(GUI_KEY_BACKSPACE,1);														 
-													 }
-													 else printf("error 0x4E 0x71 but not 0x71");break;
+													 {printf("q");GUI_StoreKeyMsg(GUI_KEY_BACKSPACE,1);}else printf("error 0x4E 0x71 but not 0x71");break;
 // 									case 0x3A://F1
 // 										if(DMADest_Buffer[2]==0x78)
 // 										{printf("F1:");GUI_StoreKeyMsg(GUI_KEY_F1,1);}else printf("error 0x4E 0x3A but not 0x78");break;

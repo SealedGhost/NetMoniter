@@ -25,5 +25,6 @@
 #define SDRAM_TMRD            3
 
 void lpc1788_SDRAM_Init(void);
+void lpc1788_SDRAM_Clean(void);
 
 /************************************* End *************************************/

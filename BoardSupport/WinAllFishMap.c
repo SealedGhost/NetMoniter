@@ -10,14 +10,18 @@
 //-Deleted end
 
 /* external variables */
+extern WM_HWIN  menuWin;
+extern WM_HWIN  subWins[4];
 extern _boat boat_list[BOAT_LIST_SIZE_MAX];
 extern _boat* boat_list_p[BOAT_LIST_SIZE_MAX];
 extern boat mothership;
 extern short isAllBoatVisible;
+extern unsigned char * pStrBuf;
+
 extern void Draw_ScaleRuler(int x0, int y0, long scaleVal);
 
 static WM_HTIMER reTimer;
-static unsigned int aaa[3]  = {48,176,'\0'};
+static unsigned int drawMapSwitch  = 1;
 unsigned int as[]  = {'1','2',176};
 
 short shift_x  = 0;
@@ -56,7 +60,7 @@ short i_cursor;
 long flip_lttude = 10000*(flip_speed_lat)/120;
 long flip_lngtude = 10000*(flip_speed_long)/120;
 
-
+void map_draw(long longitude,  long latitude, scale_map scale);
 
 WM_MESSAGE * pUpdateMsg;
 
@@ -185,101 +189,169 @@ unsigned int getFishingAreaId(long longitude, long latitude )
 	
 }
 
-
-
-void get_diff(mapping * diff)
+/**    getWrapPara()
+*    
+*    @Description:  通过查找最大和最小的经纬度，确定船舶分布的区域，再计算所需的scale
+*    @inputs     :   halfDiff_lg,分布区域的中点经度；halfDiff_lt，中点纬度；
+                     wrap_scale 能够满足屏幕切包含这块区域的scale
+*    @outputs    :
+*    @return     :
+*/
+void getWrapPara(long * halfDiff_lg, long * halfDiff_lt, scale_map* wrap_scale)
 {
-	int i  = 0;
-	
-	int min_lg_index  = 0;
-	int max_lg_index  = 0;
-	int min_lt_index  = 0;
-	int max_lt_index  = 0;
-
-//	long diff_lg  = 0;
-//	long diff_lt  = 0;
-	
-	
-	for(i=0;i<3;i++)
-	{
-		if(test_p[i]->longitude < test_p[min_lg_index]->longitude)
-			min_lg_index  = i;
-		if(test_p[i]->longitude > test_p[max_lg_index]->longitude)
-			max_lg_index  = i;
-		
-		if(test_p[i]->latitude < test_p[min_lt_index]->latitude)
-			min_lt_index  = i;
-		if(test_p[i]->latitude > test_p[max_lt_index]->latitude)
-			max_lt_index  = i;		
-	}
-	
-	
-	diff->lgtude  = test_p[max_lg_index]->longitude - test_p[min_lg_index]->longitude;
-	diff->lttude  = test_p[max_lt_index]->latitude - test_p[min_lt_index]->latitude;
-	
-	__cursor.longitude  = (test_p[max_lg_index]->longitude + test_p[min_lg_index]->longitude) /2;
-	__cursor.latitude   = (test_p[max_lt_index]->latitude + test_p[min_lt_index]->latitude) /2;
-	
-GUI_DispDecAt(diff->lgtude,20,20,10);
-GUI_DispDecAt(diff->lttude,20,40,10);
-	
-//	diff_lg  = test_p[max_lg_index]->longitude - test_p[min_lg_index]->longitude;
-//	diff_lt  = test_p[max_lt_index]->latitude - test_p[min_lt_index]->latitude;
-
-
-//GUI_DispDecAt(diff_lg,20,20,10);
-//GUI_DispDecAt(diff_lt,20,40,10);
-	
-}
-
-void map_getWraped()
-{
-	int gear  = 0;
-	///表示最上方boat和最下方boat的纬度差
-	long diff_lt  = 0;
-	///表示最右方boat和最左方boat的经度差	
-	long diff_lg  = 0;
-	
-	/// 在当前档位下屏幕能表示的最大纬度差
-	long maxDiff_lt  = 0;
-	////在当前档位下屏幕能表示的最大经度差
-	long maxDiff_lg  = 0;
-	
-  mapping diff = {0,0,0,0};
-	
-	get_diff(&diff);
-	gear  = 4;
-	while(gear>0)
-	{
-		///计算当前档位下屏幕所能表示的最大经纬度差
-		maxDiff_lt  =  MAP_WIDTH * measuring_scale[gear].minute / measuring_scale[gear].pixel;
-		maxDiff_lg  =  MAP_HEIGHT  * measuring_scale[gear].minute / measuring_scale[gear].pixel;	
-
-		
-		printf("maxDiff_lt=%ld  maxDiff_lg=%ld\r\n",maxDiff_lt,maxDiff_lg);
-		///若屏幕足够显示
-//    if(maxDiff_lt>=diff_lt  &&  maxDiff_lg>=diff_lg)
-		if(maxDiff_lt >= diff.lttude  &&  maxDiff_lg>= diff.lgtude)
-		{
-			///返回所选档位
-			printf("find gear=%d\r\n",gear);
-       break;
-		}	
-    else
-		{
-       gear--;
-		}			
-	}
+  int i  = 0;
+  int min_lg_index  = 0;
+  int max_lg_index  = 0;
+  int min_lt_index  = 0;
+  int max_lt_index  = 0;
   
-	scale_choose  = gear;
-	
-	__cursor.x  = (MAP_LEFT+MAP_RIGHT)/2;
-	__cursor.y  = (MAP_TOP+MAP_BOTTOM)/2;
-	
-	WM_InvalidateRect(hDlg_FishMap, pRect);
-GUI_DispDecAt(gear,20,60,1);
-	
+  long maxDiff_lg  = 0;
+  long maxDiff_lt  = 0;
+  
+  long minute  = 0;
+  
+  if(N_boat <= 0)
+  {
+     *halfDiff_lg  = mothership.longitude;
+     *halfDiff_lt  = mothership.latitude;
+     
+     return;
+  }
+  
+  /// 找到第一个经纬度都不为 0 的 boat
+  for(i=0;i<N_boat;i++)
+  {
+     if( (boat_list_p[i]->latitude > 0)  &&  (boat_list_p[i]->longitude > 0) )
+     {
+        min_lg_index  = i;
+        min_lt_index  = i;
+        max_lg_index  = i;
+        max_lt_index  = i;
+        break;
+     }
+  }
+  
+  ///分别查找最大最小经纬度的船的索引
+  for(;i<N_boat;i++)
+  {
+     if( (boat_list_p[i]->longitude < boat_list_p[min_lg_index]->longitude)  
+         &&  (boat_list_p[i]->longitude > 0)  &&  (boat_list_p[i])->latitude > 0 )
+       min_lg_index  = i;
+     else if(boat_list_p[i]->longitude > boat_list_p[max_lg_index]->longitude)
+       max_lg_index  = i;
+     
+     if( (boat_list_p[i]->latitude < boat_list_p[min_lt_index]->latitude)  
+         &&  (boat_list_p[i]->latitude >0)  &&  (boat_list_p[i]->longitude > 0) )
+       min_lt_index  = i;
+     else if(boat_list_p[i]->latitude  > boat_list_p[max_lt_index]->latitude)
+       max_lt_index  = i;     
+  }
+  
+INFO("min:boat_list_p[%d].lg = %ld",min_lg_index, boat_list_p[min_lg_index]->longitude);  
+INFO("min:boat_list_p[%d].lt = %ld",min_lt_index, boat_list_p[min_lt_index]->latitude);
+INFO("max:boat_list_p[%d].lg = %ld",max_lg_index, boat_list_p[max_lg_index]->longitude);
+INFO("max:boat_list_p[%d].lt = %ld",max_lt_index, boat_list_p[max_lt_index]->latitude);
+
+INFO("mothership.lg = %ld,mothership.lt = %ld",mothership.longitude,mothership.latitude); 
+
+ ///将母船考虑在内后，计算要适配的区域的三个参数：
+ ///   maxDiff_lg:表示适配区域的经度差（宽度）
+ ///   maxDiff_lt:  ......      纬度差（高度） 
+ ///   halfDiff_lg,halfDiff_lt: 适配区域中心点的经纬度坐标
+  if(mothership.longitude > boat_list_p[max_lg_index]->longitude)
+  {
+     maxDiff_lg  = mothership.longitude - boat_list_p[min_lg_index]->longitude;  
+     *halfDiff_lg = mothership.longitude/2 + boat_list_p[min_lg_index]->longitude/2;
+INFO("  maxDiff_lg = %ld",maxDiff_lg);      
+INFO("*halfDiff_lg = %ld",*halfDiff_lg);     
+  }
+  else if(mothership.longitude < boat_list_p[min_lg_index]->longitude)
+  {
+     maxDiff_lg  = boat_list_p[max_lg_index]->longitude - mothership.longitude;
+     *halfDiff_lg = mothership.longitude/2 + boat_list_p[max_lg_index]->longitude/2;
+INFO("  maxDiff_lg = %ld",maxDiff_lg);      
+INFO("*halfDiff_lg = %ld",*halfDiff_lg);     
+  }
+  else  
+  {
+     maxDiff_lg  = boat_list_p[max_lg_index]->longitude - boat_list_p[min_lg_index]->longitude;
+     *halfDiff_lg = boat_list_p[max_lg_index]->longitude/2 + boat_list_p[min_lg_index]->longitude/2;
+INFO("  maxDiff_lg = %ld",maxDiff_lg);     
+INFO("*halfDiff_lg = %ld",*halfDiff_lg);     
+  }
+     
+     
+  if(mothership.latitude > boat_list_p[max_lt_index]->latitude)
+  {
+     maxDiff_lt  = mothership.latitude - boat_list_p[min_lt_index]->latitude;
+     *halfDiff_lt = mothership.latitude/2 + boat_list_p[min_lt_index]->latitude/2;
+INFO("  maxDiff_lt = %ld",maxDiff_lt);     
+INFO("*halfDiff_lt = %ld",*halfDiff_lt);     
+  }
+     
+  else if(mothership.latitude < boat_list_p[min_lt_index]->latitude)
+  {
+     maxDiff_lt  = boat_list_p[max_lt_index]->latitude - mothership.latitude;
+     *halfDiff_lt = mothership.latitude/2 + boat_list_p[max_lt_index]->latitude/2;
+INFO("  maxDiff_lt = %ld",maxDiff_lt);     
+INFO("*halfDiff_lt = %ld",*halfDiff_lt);     
+  }
+     
+  else
+  {
+     maxDiff_lt  = boat_list_p[max_lt_index]->latitude  - boat_list_p[min_lt_index]->latitude;
+     *halfDiff_lt = boat_list_p[max_lt_index]->latitude/2 + boat_list_p[min_lt_index]->latitude/2;
+INFO("  maxDiff_lt = %ld",maxDiff_lt);     
+INFO("*halfDiff_lt = %ld",*halfDiff_lt);     
+  }
+  
+   
+   ///map的宽为800pix，高为400pix，判断在适配上述区域时以map的宽来适配还是高来适配
+   
+   ///若适配区域的宽度大于高度的两倍，则以map的宽来适配
+  if(( maxDiff_lg/2) > maxDiff_lt)
+  {
+     wrap_scale->minute  = ( maxDiff_lg/(8*100) + 1)*100;  ///这种写法保证所得到的scale.minute为100的整数倍
+  }
+  ///否则以map的高来适配
+  else
+  {
+     wrap_scale->minute  = ( maxDiff_lt/(4*100) + 1)*100;
+  }
 }
+
+/**    SetWrapedView()
+*
+*   @Description:  得到适配渔区的参数后，以所得scale显示
+*
+*/
+void setWrapedView()
+{
+   ///若没有boat，则以母船为中心，用最小scale来显示
+   long lg  = mothership.longitude;
+   long lt  = mothership.latitude;
+   
+   scale_map wrapScale ={100,100};
+   
+   if(N_boat > 0)
+      getWrapPara(&lg, &lt, &wrapScale);
+   
+INFO("lg:%ld",lg);   
+INFO("lt:%ld",lt);
+
+INFO("wrapScale.pixel:%d,wrapScale.minute:%ld",wrapScale.pixel,wrapScale.minute);
+   
+   map_draw(lg, lt, wrapScale);
+   
+   center.x=(MAP_LEFT+MAP_RIGHT)/2;
+	 center.y=(MAP_TOP+MAP_BOTTOM)/2;
+						
+	 GUI_SetLineStyle(GUI_LS_SOLID);
+	 GUI_SetColor(GUI_BLUE);
+   
+   disp_fish_boat(&wrapScale, lg, lt, MAP_LEFT/2+MAP_RIGHT/2, MAP_TOP/2+MAP_BOTTOM/2, boat_list_p, N_boat);
+}
+
 
 
 void map_draw(long longitude,  long latitude, scale_map scale)
@@ -290,6 +362,7 @@ void map_draw(long longitude,  long latitude, scale_map scale)
 	
 	 short tmp_x = 0;
 	 short tmp_y = 0;
+//   short tmp_user  = 0;
 	 
 	 long tmp_lttude  = 0;
 	 long tmp_lgtude  = 0;
@@ -300,9 +373,6 @@ void map_draw(long longitude,  long latitude, scale_map scale)
 	 mapping  anchor;
 	
 	 display disp_fsh_ara; 
-	
-	
-	
 	 
 	 shift_x  = (scale.pixel>>1) - 16;
 	 shift_y  = (scale.pixel>>1)- 8;
@@ -310,12 +380,12 @@ void map_draw(long longitude,  long latitude, scale_map scale)
 	 anchor.lgtude  = longitude;
 	 anchor.lttude  = latitude;
 	
-		 
+	 
 		 do
 		 {
 			 if(fishing_area[i+1].latitude_fish<latitude && fishing_area[i].latitude_fish>=latitude)
 			 {
-				 count_fr_fsh_ara  = (longitude - fishing_area[i].longitude_fish)/measuring_scale[scale_choose].minute;
+				 count_fr_fsh_ara  = (longitude - fishing_area[i].longitude_fish)/scale.minute;
 				 num_fr_fsh_ara    = fishing_area[i].fish_number + count_fr_fsh_ara;
 				 break;
 			 }
@@ -326,25 +396,25 @@ void map_draw(long longitude,  long latitude, scale_map scale)
 		 }while(i<num_fish-1);
 		 
 		 anchor.y  = (MAP_TOP+MAP_BOTTOM)/2 - \
-		                 (fishing_area[i].latitude_fish-latitude)*measuring_scale[scale_choose].pixel \
-		                 / measuring_scale[scale_choose].minute;
+		                 (fishing_area[i].latitude_fish-latitude)*scale.pixel \
+		                 / scale.minute;
 		 anchor.x  = (MAP_LEFT+MAP_RIGHT)/2  - \
-		                 (longitude-fishing_area[i].longitude_fish)%measuring_scale[scale_choose].minute \
-		                 * measuring_scale[scale_choose].pixel / measuring_scale[scale_choose].minute;
+		                 (longitude-fishing_area[i].longitude_fish)%scale.minute \
+		                 * scale.pixel / scale.minute;
 		 
 		 anchor.lttude  = fishing_area[i].latitude_fish;
-		 anchor.lgtude  = fishing_area[i].longitude_fish + count_fr_fsh_ara * measuring_scale[scale_choose].minute;
+		 anchor.lgtude  = fishing_area[i].longitude_fish + count_fr_fsh_ara * scale.minute;
 
 		 
-	   while(anchor.x  >= MAP_LEFT+(measuring_scale[scale_choose].pixel-shift_x))
+	   while(anchor.x  >= MAP_LEFT+(scale.pixel-shift_x))
 		 {
-			 anchor.x  -= measuring_scale[scale_choose].pixel;
-			 anchor.lgtude -= measuring_scale[scale_choose].minute;
+			 anchor.x  -= scale.pixel;
+			 anchor.lgtude -= scale.minute;
 		 }
-		 while(anchor.y  > MAP_TOP+(measuring_scale[scale_choose].pixel-shift_y))
+		 while(anchor.y  > MAP_TOP+(scale.pixel-shift_y))
 		 {
-			 anchor.y  -= measuring_scale[scale_choose].pixel;
-			 anchor.lttude  += measuring_scale[scale_choose].minute;
+			 anchor.y  -= scale.pixel;
+			 anchor.lttude  += scale.minute;
 		 }
 		  
 		 draw_map_grid(anchor);
@@ -355,6 +425,7 @@ void map_draw(long longitude,  long latitude, scale_map scale)
 		 tmp_lttude  = anchor.lttude;
 
 		 GUI_SetColor (GUI_BLACK);
+     GUI_SetFont(&GUI_Font16B_1);
      for(tmp_y=anchor.y;tmp_y<=MAP_BOTTOM;)			 
 		 {
 				 
@@ -363,11 +434,11 @@ void map_draw(long longitude,  long latitude, scale_map scale)
 					 tmp_x  = anchor.x;
 					 tmp_lgtude  = anchor.lgtude ;
 					 
-					 for(tmp_x=anchor.x; tmp_x<=MAP_RIGHT-(measuring_scale[scale_choose].pixel - shift_x);)
+					 for(tmp_x=anchor.x; tmp_x<=MAP_RIGHT-(scale.pixel - shift_x);)
 					 {
 							 fishingAreaId  = getFishingAreaId(tmp_lgtude, tmp_lttude);
 							 
-							 if(1 == scale_choose  && (0 != fishingAreaId))
+							 if(measuring_scale[1].minute == scale.minute  && (0 != fishingAreaId))
 							 {
 									 if( 1000 > (fishingAreaId&0x0fffffff))
 									 {
@@ -382,7 +453,7 @@ void map_draw(long longitude,  long latitude, scale_map scale)
 									GUI_DispDec(fishingAreaId>>(8*sizeof(int)-4), 1);							 
 							 
 						 }
-						 else if((0 == scale_choose) && (0 != fishingAreaId))
+						 else if((measuring_scale[0].minute == scale.minute) && (0 != fishingAreaId))
 						 {
 								 if(1000 > fishingAreaId)
 								 {
@@ -395,19 +466,23 @@ void map_draw(long longitude,  long latitude, scale_map scale)
 
 						 }
 						 
-						 tmp_x  += measuring_scale[scale_choose].pixel;
-						 tmp_lgtude  += measuring_scale[scale_choose].minute;
+						 tmp_x  += scale.pixel;
+						 tmp_lgtude  += scale.minute;
 					 }					 
 				 }
+         if( (tmp_y+latitude_display_y_shift) >= MAP_TOP-10 )
+         {
+           lltostr(tmp_lttude,pStrBuf);
+           GUI_DispStringExAt(pStrBuf, MAP_RIGHT+latitude_display_x_shift,tmp_y+latitude_display_y_shift);         
+         }
 
-	       display_longitude_latitude(tmp_lttude,MAP_RIGHT + latitude_display_x_shift,tmp_y + latitude_display_y_shift);						 
+//	         display_longitude_latitude(tmp_lttude,MAP_RIGHT + latitude_display_x_shift,tmp_y + latitude_display_y_shift);						 
 				 
-				 tmp_y  += measuring_scale[scale_choose].pixel;
-				 tmp_lttude  -= measuring_scale[scale_choose].minute;
+				 tmp_y  += scale.pixel;
+				 tmp_lttude  -= scale.minute;
 			 }
-		 
-
 }
+
 
 static void _PaintFrame(void) 
 {
@@ -426,11 +501,11 @@ static void _PaintFrame(void)
 
 }
 
-void _DeleteFrame(void) 
-{
-	WM_DeleteWindow(_hLastFrame);
-	_hLastFrame = 0;
-}
+//void _DeleteFrame(void) 
+//{
+//	WM_DeleteWindow(_hLastFrame);
+//	_hLastFrame = 0;
+//}
 
 void _CB_WM(WM_MESSAGE* pMsg)
 {
@@ -521,8 +596,7 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 				break;
 		case WM_TIMER:
 			 if(ID_TIMER_MAP_REFRESH == WM_GetTimerId(reTimer))
-				{
-MYDEBUG("entry timer and refresh map");					
+				{				
 						WM_InvalidateRect( hWin,pRect);
 					WM_RestartTimer(reTimer, 5000);
 				}
@@ -657,25 +731,25 @@ MYDEBUG("entry timer and refresh map");
 			switch (((WM_KEY_INFO*)(pMsg->Data.p))->Key) 
 			{
 				
-				case GUI_KEY_F1:
+//				case GUI_KEY_F1:
 //					isAllBoatVisible  = 1;
-					Doubleclick = 1;
-					WM_BringToTop (hDlg_AllList); //所有船舶列表
-					WM_SetFocus (hDlg_AllList);
-					GUI_CURSOR_Hide();
-				break;
+//					Doubleclick = 1;
+//					WM_BringToTop (hDlg_AllList); //所有船舶列表
+//					WM_SetFocus (hDlg_AllList);
+//					GUI_CURSOR_Hide();
+//				break;
 
-				case GUI_KEY_F2:
-					
-				  if(isAllBoatVisible)
-						isAllBoatVisible  = 0;
-					else
-						isAllBoatVisible  = 1;
-				  
+//				case GUI_KEY_F2:
+//					
+//				  if(isAllBoatVisible)
+//						isAllBoatVisible  = 0;
+//					else
+//						isAllBoatVisible  = 1;
+//				  
 
-					WM_InvalidateRect(hWin, pRect);
-				break;
-			
+//					WM_InvalidateRect(hWin, pRect);
+//				break;
+//			
 				
 				/*----------------------   捕捉到中心按键按下的响应:    -----------------------*/
 				/*   中心按键按下后：将本船位置和光标显示到map中心点 */
@@ -687,9 +761,9 @@ MYDEBUG("entry timer and refresh map");
 							__cursor.y = (MAP_TOP+MAP_BOTTOM)/2;
 
 				/* map中心点经纬度 */
-				   mothership.latitude = 1927265;
-				   mothership.longitude = 7128660;
-				   mothership.true_heading  = 0;
+//         mothership.latitude = 1927265;
+//         mothership.longitude = 7128660;
+//         mothership.true_heading  = 0;
 				
 				/* 光标代表的经纬度设置为母船的经纬度 */
 				   __cursor.latitude = mothership.latitude;
@@ -1033,17 +1107,24 @@ MYDEBUG("entry timer and refresh map");
 					flip_lngtude = measuring_scale[scale_choose].minute*(flip_speed_long)/measuring_scale[scale_choose].pixel;
 					break;
 					
-				case GUI_KEY_MENU:		
-					WM_BringToTop (hDlg_Menu);
-					WM_BringToTop (hDlg_MonitorList);
-					WM_SetFocus (WM_GetDialogItem (hDlg_Menu, GUI_ID_BUTTON0));
+				case GUI_KEY_MENU:	
+for(i=0;i<N_boat;i++)          
+INFO("%d-%s",i,boat_list_p[i]->name);
+          GUI_CURSOR_Hide();
+					WM_BringToTop (menuWin);
+					WM_ShowWindow(subWins[0]);
+          WM_ShowWindow(subWins[1]);
+          WM_ShowWindow(subWins[2]);
+          WM_ShowWindow(subWins[3]);
+          WM_SetFocus(menuWin);
+//					WM_SetFocus (WM_GetDialogItem (menuWin, GUI_ID_BUTTON0));
 				break;
 
 			}
 		break;
 			
 		case WM_PAINT: 
-MYDEBUG("AllFishmap paint");			
+
 //			GUI_MULTIBUF_Begin();
 		    GUI_SetBkColor(GUI_GRAY);
 		    GUI_Clear();
@@ -1053,32 +1134,24 @@ MYDEBUG("AllFishmap paint");
 		    GUI_DrawLine(0,MAP_TOP-2,800,MAP_TOP-2);
 				GUI_DispStringAt("航速:",340,1);
 				GUI_DispStringAt("航向:",490,1);
-				
-		     
-		  
-		printf("paint begin\r\n");
-			
+							
    _PaintFrame();
-		/*
-			GUI_RECT r;
-			WM_GetClientRect(&r);
-			GUI_SetBkColor(GUI_GRAY);
-			GUI_SetColor(GUI_WHITE);
-		  GUI_SetPenSize(1);
-			GUI_SetLineStyle(GUI_LS_DASH);
-			//GUI_SetFont(FRAME_FONT);
-			GUI_SetTextMode(GUI_TEXTMODE_NORMAL);
-			GUI_ClearRectEx(&r);
-		*/
 
-		
-		
-//		 _PaintFrame();
+
+
 		 GUI_SetColor(GUI_BLACK);
 		 GUI_SetLineStyle(GUI_LS_DASH);
 		 GUI_SetTextMode(GUI_TM_TRANS);
-			map_draw(__cursor.longitude,__cursor.latitude,measuring_scale[scale_choose]);
-//		
+     
+     
+     /// drawMapSwitch 置 1，不适配渔区，只会动态显示船舶
+     /// drawMapSwitch 置 0, 动态适配渔区，（后台经纬度数据会出错，运行一会儿GG）
+     drawMapSwitch  = 0;
+     
+     if(drawMapSwitch)
+     {
+			 map_draw(__cursor.longitude,__cursor.latitude,measuring_scale[scale_choose]);
+
 				center.x=(MAP_LEFT+MAP_RIGHT)/2;
 				center.y=(MAP_TOP+MAP_BOTTOM)/2;
 		
@@ -1088,7 +1161,15 @@ MYDEBUG("AllFishmap paint");
 			
 			GUI_SetLineStyle(GUI_LS_SOLID);
 			GUI_SetColor(GUI_BLUE);
-			disp_fish_boat(scale_choose,center.lgtude,center.lttude,center.x,center.y,boat_list_p,N_boat);
+			disp_fish_boat(&measuring_scale[scale_choose],center.lgtude,center.lttude,center.x,center.y,boat_list_p,N_boat);          
+     }
+     else
+     {
+        setWrapedView();
+     }
+
+      
+      
 			GUI_SetFont (&GUI_Font16B_1);
 			GUI_PNG_Draw(&acCompass,sizeof(acCompass),350,40);
 			
@@ -1111,7 +1192,7 @@ MYDEBUG("AllFishmap paint");
 //			GUI_DispDecAt (v , 150, 5, 10);
 //			v = GUI_ALLOC_GetNumUsedBytes();
 //			GUI_DispDecAt (v, 250, 5, 10);
-			Draw_ScaleRuler(MAP_RIGHT-200,MAP_BOTTOM-50,measuring_scale[scale_choose].scaleVal);
+//			Draw_ScaleRuler(MAP_RIGHT-200,MAP_BOTTOM-50,measuring_scale[scale_choose].scaleVal);
 		//////////////////
 		break;
 // 		case WM_NOTIFY_PARENT:

@@ -3,17 +3,17 @@
 
 
 
-#define MAX_GEAR  27
+#define MAX_GEAR  7
 
 #define MAP_LEFT   0
 #define MAP_RIGHT  800
 #define MAP_TOP    36
 #define MAP_BOTTOM 480
 
-#define MAP_LEFT_LG  6720000   /// E =112Â°
-#define MAP_RIGHT_LG 8100000  ///  E = 135Â°
-#define MAP_TOP_LT   2460000 ///   N =35Â°
-#define MAP_BOTTOM_LT 210000  //   N =3.5Â°
+#define MAP_LEFT_LG  6720000   /// E =112°
+#define MAP_RIGHT_LG 8100000  ///  E = 135°
+#define MAP_TOP_LT   2460000 ///   N =35°
+#define MAP_BOTTOM_LT 210000  //   N =3.5°
 
 #define ID_TIMER_MAP_REFRESH  0x01
 
@@ -30,7 +30,7 @@
 #define fish_number_x_shift -10;  //the text can be move, tune this number to make in the middle or other place
 #define fish_number_y_shift -30;
 
-#define latitude_display_x_shift -80 //the latitude text can be move
+#define latitude_display_x_shift -100 //the latitude text can be move
 #define latitude_display_y_shift 5
 
 #define longitude_display_x_shift 0 //longitude can be move
@@ -110,11 +110,16 @@ struct fishing_map{
 	 short exp_num;
 };
 
+//struct scale_map{
+//	 short pixel;
+//	 long minute_km;
+//	 long scaleVal;
+//	 long minute;
+//};
+
 struct scale_map{
-	 short pixel;
-	 long minute_km;
-	 long scaleVal;
-	 long minute;
+     short pixel;
+     long  minute;
 };
 
 struct display{
@@ -158,6 +163,18 @@ typedef short(*operation)(mapping, scale_map) ;
 long null_operation(long temp,long flip);
 
 //const static scale_map measuring_scale[5]={{110,30000},{120,10000},{130,3000},{100,106},{80,53}};
+const static scale_map measuring_scale[8]  =
+                                            {
+                                             {150, 30000},      //36km   /3  cm
+                                             {125, 10000},      //18km   /2.5cm 
+                                             {100, 5000},       //9km    /2  cm
+                                             {150, 3000},       //3.6km  /3  cm
+                                             {125, 1000},       //1.8km  /2.5cm
+                                             {125, 500},        //0.9km  /2.5cm
+                                             {100, 300},        //0.36km /2  cm
+                                             {100, 100}         //0.18km /2  cm
+                                            };
+/*
 const static scale_map measuring_scale[MAX_GEAR+1]={
 	                                          {160,   85,    50,   152},
 																						{160,   169,   100,  305},
@@ -196,6 +213,8 @@ const static scale_map measuring_scale[MAX_GEAR+1]={
 																						{80, 126960,  150000,228600},
 																						{80, 211600,  250000,381000}
 };
+
+*/
 const static fishing_map fishing_area[num_fish] = 
 {
 {7230000,2460000,1,0}, //?????,????,?????

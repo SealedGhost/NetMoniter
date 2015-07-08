@@ -11,8 +11,11 @@ void PaintFrame(void);
 void CleanText(WM_MESSAGE* pMsg);
 void InitText (WM_MESSAGE* pMsg,long user_id,short SOG,short COG,short true_heading,long longitude,long latitude,char *name,int type_of_electronic_position_fixing_device);
 void showShipName(WM_MESSAGE* pMsg,char*);
+int strtoi(const char*str);
 void lltostr(long l_o_l,char *str);
 void GUI_DispStringExAt(const unsigned char *str,const int x, const int y);
+void TEXT_SetTextEx(TEXT_Handle hObj, const unsigned char* s);
+
 #define SIZE_X   590
 #define SIZE_X1  630
 #define SIZE_X2  680

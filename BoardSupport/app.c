@@ -13,9 +13,9 @@
 //#endif
 
 /* 定义任务优先级 */
-#define User_Task_PRIO       12
-#define Touch_Task_PRIO      8
-#define Key_Task_PRIO        9
+#define UI_Task_PRIO       11
+#define Insert_Task_PRIO      8
+#define Refresh_Task_PRIO        9
 #define Task_Stack_Use_PRIO  10  
 /* 定义任务堆栈大小 */
 #define USER_TASK_STACK_SIZE 384
@@ -23,18 +23,21 @@
 #define KEY_TASK_STACK_SIZE 128
 #define Task_Stack_Use_STACK_SIZE 128
 /* 定义任务堆栈 */
-static	OS_STK	User_Task_Stack[USER_TASK_STACK_SIZE];
-static	OS_STK	Touch_Task_Stack[TOUCH_TASK_STACK_SIZE];
-static	OS_STK	Key_Task_Stack[KEY_TASK_STACK_SIZE];
+static	OS_STK	UI_Task_Stack[USER_TASK_STACK_SIZE];
+static	OS_STK	Insert_Task_Stack[TOUCH_TASK_STACK_SIZE];
+static	OS_STK	Refresh_Task_Stack[KEY_TASK_STACK_SIZE];
 static  OS_STK  Task_Stack_Use_Stack[Task_Stack_Use_STACK_SIZE];
 
-static  OS_STK_DATA User_Task_Stack_Use;
-static  OS_STK_DATA Touch_Task_Stack_Use;
-static  OS_STK_DATA Key_Task_Stack_Use;
+static  OS_STK_DATA UI_Task_Stack_Use;
+static  OS_STK_DATA Insert_Task_Stack_Use;
+static  OS_STK_DATA Refresh_Task_Stack_Use;
 
 static volatile int myCnt  = 0;
 static volatile int msgCnt  = 0;
 void SysTick_Init(void);
+
+
+extern boat mothership;
 extern void MainTask(void);
 extern void insert(boat* boats, struct message_18* p_msg);
 
@@ -112,7 +115,7 @@ SYS_SETTING SysSetting ={ {0,0},
 SYS_SETTING *p_SysSetting = &SysSetting;											
 
 
-void User_Task(void *p_arg)/*描述(Description):	任务User_Task*/
+void UI_Task(void *p_arg)/*描述(Description):	任务UI_Task*/
 {
 	
 //	while(1)
@@ -121,8 +124,8 @@ void User_Task(void *p_arg)/*描述(Description):	任务User_Task*/
 		MainTask();
 //	}
 }
-/*描述(Description):	任务Touch_Task*/
-void Touch_Task(void *p_arg)  //等待接收采集到的数据
+/*描述(Description):	任务Insert_Task*/
+void Insert_Task(void *p_arg)  //等待接收采集到的数据
 { 
 	uint8_t myVal  = 0;
 	int tmp  = 0;
@@ -140,26 +143,46 @@ void Touch_Task(void *p_arg)  //等待接收采集到的数据
     tmp  = translate_(s,&text_out,&text_out_24A,&text_out_type_of_ship);
 
     
-    if(tmp>0 && tmp<28)
+//    if(tmp>0 && tmp<28)
+//    {
+//      msgCnt++;
+//      INFO("msgID:%d  msgCnt:%d",tmp,msgCnt);
+//    }
+//		switch(tmp)
+//		{
+//			case 18:      
+//				insert_18(boat_list, &text_out);
+////        boat_list[0].user_id  = msg_18.user_id;
+//				break;
+//			case 240:				
+//				insert_24A(boat_list,&text_out_24A);
+//				break;
+//			case 241:			
+//				insert_24B(boat_list,&text_out_type_of_ship);
+//				break;
+//			default:			
+//				break;
+//		}
+    
+    switch(tmp)
     {
-      msgCnt++;
-      MYDEBUG("msgID:%d  msgCnt:%d",tmp,msgCnt);
+   
+       case 18:
+         insert_18(boat_list, &text_out);
+         break;
+        case 240:
+         insert_24A(boat_list, &text_out_24A);
+
+//#if INFO_ENABLE
+//INFO("insert 24A");         
+//#endif
+         break;
+        case 241:
+         insert_24B(boat_list, &text_out_type_of_ship);
+         break;
+        default:
+         break;
     }
-		switch(tmp)
-		{
-			case 18:      
-				insert(boat_list, &text_out);
-//        boat_list[0].user_id  = msg_18.user_id;
-				break;
-			case 240:				
-				insert_24A(boat_list,&text_out_24A);
-				break;
-			case 241:			
-				insert_24B(boat_list,&text_out_type_of_ship);
-				break;
-			default:			
-				break;
-		}
 		OSMemPut(PartitionPt,s);
 
 
@@ -167,13 +190,12 @@ void Touch_Task(void *p_arg)  //等待接收采集到的数据
 
 	}
 }
-void Key_Task(void *p_arg)//任务Key_Task
+void Refresh_Task(void *p_arg)//任务Refresh_Task
 {
 
 	while(1)
 	{
-
-MYDEBUG("egg pain");		
+	
 //		  OSTimeDly(30000); 		/* 延时8000ms */
 // 		if(boat_list_p) free(boat_list_p);
 // 		boat_list_p = (_boat**)malloc(sizeof(_boat*)*max_size);
@@ -189,12 +211,12 @@ void Task_Stack_Use(void *p_arg)
 	while(1)
 	{
 		OSMemQuery(PartitionPt,&MemInfo);
-//		OSTaskStkChk(User_Task_PRIO ,&User_Task_Stack_Use);
-// 		OSTaskStkChk(Touch_Task_PRIO,&Touch_Task_Stack_Use);
-//		OSTaskStkChk(Key_Task_PRIO,&Key_Task_Stack_Use);
-// 		printf("\n\rUser_Task             used/free:%d/%d  usage:%%%d\r\n",User_Task_Stack_Use.OSUsed,User_Task_Stack_Use.OSFree,(User_Task_Stack_Use.OSUsed*100)/(User_Task_Stack_Use.OSUsed+User_Task_Stack_Use.OSFree));
-// 		printf("Touch_Task_Stack_Use  used/free:%d/%d  usage:%%%d\r\n",Touch_Task_Stack_Use.OSUsed,Touch_Task_Stack_Use.OSFree,(Touch_Task_Stack_Use.OSUsed*100)/(Touch_Task_Stack_Use.OSUsed+Touch_Task_Stack_Use.OSFree));		
-// 		printf("Key_Task_Stack_Use    used/free:%d/%d  usage:%%%d\r\n",Key_Task_Stack_Use.OSUsed,Key_Task_Stack_Use.OSFree,(Key_Task_Stack_Use.OSUsed*100)/(Key_Task_Stack_Use.OSUsed+Key_Task_Stack_Use.OSFree));		
+//		OSTaskStkChk(UI_Task_PRIO ,&UI_Task_Stack_Use);
+// 		OSTaskStkChk(Insert_Task_PRIO,&Insert_Task_Stack_Use);
+//		OSTaskStkChk(Refresh_Task_PRIO,&Refresh_Task_Stack_Use);
+// 		printf("\n\rUI_Task             used/free:%d/%d  usage:%%%d\r\n",UI_Task_Stack_Use.OSUsed,UI_Task_Stack_Use.OSFree,(UI_Task_Stack_Use.OSUsed*100)/(UI_Task_Stack_Use.OSUsed+UI_Task_Stack_Use.OSFree));
+// 		printf("Insert_Task_Stack_Use  used/free:%d/%d  usage:%%%d\r\n",Insert_Task_Stack_Use.OSUsed,Insert_Task_Stack_Use.OSFree,(Insert_Task_Stack_Use.OSUsed*100)/(Insert_Task_Stack_Use.OSUsed+Insert_Task_Stack_Use.OSFree));		
+// 		printf("Refresh_Task_Stack_Use    used/free:%d/%d  usage:%%%d\r\n",Refresh_Task_Stack_Use.OSUsed,Refresh_Task_Stack_Use.OSFree,(Refresh_Task_Stack_Use.OSUsed*100)/(Refresh_Task_Stack_Use.OSUsed+Refresh_Task_Stack_Use.OSFree));		
 		printf("**********%d----------\n\r",MemInfo.OSNUsed);
 		printf("**********%d**********\n\r",MemInfo.OSNFree);
 		OSTimeDly(1000); 		/* 延时8000ms */
@@ -205,56 +227,59 @@ void App_TaskStart(void)//初始化UCOS，初始化SysTick节拍，并创建三个任务
 	INT8U err;
   
   int i  = 0;
-	N_boat = 3;	
+//	N_boat = 3;	
 
 	for(i=BOAT_LIST_SIZE_MAX;i>=0;i--)
   {
      boat_list[i].user_id  = 0;
   }
 	
-	msg_18.user_id  = 777777772;
-  msg_18.SOG      = 6;
-  msg_18.COG      = 2;
-  msg_18.longitude = 72630000;
-  msg_18.latitude  = 72630000;
-  
-  
-	test[0].user_id = 11029;
-	test[0].SOG = 5;
-	test[0].COG = 5;
-	test[0].isVisible = 1;
-	test[0].true_heading = 180;
-	test[0].longitude = 7305545;
-	test[0].latitude = 1940726;
+   mothership.latitude = 1927265;
+   mothership.longitude = 7128660;
+   mothership.true_heading  = 0;
+//	msg_18.user_id  = 777777772;
+//  msg_18.SOG      = 6;
+//  msg_18.COG      = 2;
+//  msg_18.longitude = 72630000;
+//  msg_18.latitude  = 72630000;
+//  
+//  
+//	test[0].user_id = 11029;
+//	test[0].SOG = 5;
+//	test[0].COG = 5;
+//	test[0].isVisible = 1;
+//	test[0].true_heading = 180;
+//	test[0].longitude = 7305545;
+//	test[0].latitude = 1940726;
 
-	
-	test[1].user_id = 19283;
-	test[0].SOG = 6;
-	test[0].COG = 8;
-	test[1].isVisible = 0;
-	test[1].true_heading = 60;
-	test[1].longitude = 7295545;
-	test[1].latitude = 1949726;
+//	
+//	test[1].user_id = 19283;
+//	test[0].SOG = 6;
+//	test[0].COG = 8;
+//	test[1].isVisible = 0;
+//	test[1].true_heading = 60;
+//	test[1].longitude = 7295545;
+//	test[1].latitude = 1949726;
 
 
-	test[2].user_id = 19289;
-	test[0].SOG = 9;
-	test[0].COG = 23;
-	test[2].isVisible = 1;
-	test[2].true_heading = 270;
-	test[2].longitude = 7299545;
-	test[2].latitude = 1955726;
+//	test[2].user_id = 19289;
+//	test[0].SOG = 9;
+//	test[0].COG = 23;
+//	test[2].isVisible = 1;
+//	test[2].true_heading = 270;
+//	test[2].longitude = 7299545;
+//	test[2].latitude = 1955726;
 
-	
-// 	test_p = (_boat**)malloc(sizeof(_boat*)*3);
-	test_p[0] = &test[0];
-	test_p[1] = &test[1];
-	test_p[2] = &test[2];
+//	
+//// 	test_p = (_boat**)malloc(sizeof(_boat*)*3);
+//	test_p[0] = &test[0];
+//	test_p[1] = &test[1];
+//	test_p[2] = &test[2];
 
-	test_p[0] = &test[0];
-	test_p[1] = &test[1];
-	test_p[2] = &test[2];
-  
+//	test_p[0] = &test[0];
+//	test_p[1] = &test[1];
+//	test_p[2] = &test[2];
+//  
   
   
 	OSInit();
@@ -262,10 +287,10 @@ void App_TaskStart(void)//初始化UCOS，初始化SysTick节拍，并创建三个任务
 	QSem = OSQCreate(&MsgQeueTb[0],MSG_QUEUE_TABNUM); //创建消息队列，10条消息
 	PartitionPt=OSMemCreate(Partition,MSG_QUEUE_TABNUM,100,&err);
 	
-	OSTaskCreateExt(User_Task, (void *)0,(OS_STK *)&User_Task_Stack[USER_TASK_STACK_SIZE-1],  User_Task_PRIO, User_Task_PRIO, (OS_STK *)&User_Task_Stack[0], USER_TASK_STACK_SIZE,(void*)0, OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR );/* 创建任务 User_Task */
-	OSTaskCreateExt(Touch_Task,(void *)0,(OS_STK *)&Touch_Task_Stack[TOUCH_TASK_STACK_SIZE-1],Touch_Task_PRIO,Touch_Task_PRIO,(OS_STK *)&Touch_Task_Stack[0],TOUCH_TASK_STACK_SIZE,(void*)0,OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR );/* 创建任务 Touch_Task */
-	OSTaskCreateExt(Key_Task,  (void *)0,(OS_STK *)&Key_Task_Stack[KEY_TASK_STACK_SIZE-1],    Key_Task_PRIO,  Key_Task_PRIO  ,(OS_STK *)&Key_Task_Stack[0],  KEY_TASK_STACK_SIZE,(void*)0,  OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR);/* 创建任务 Key_Task */
-	OSTaskCreate(Task_Stack_Use,(void *)0,(OS_STK *)&Task_Stack_Use_Stack[Task_Stack_Use_STACK_SIZE-1],  Task_Stack_Use_PRIO);/* 创建任务 Key_Task */
+	OSTaskCreateExt(UI_Task, (void *)0,(OS_STK *)&UI_Task_Stack[USER_TASK_STACK_SIZE-1],  UI_Task_PRIO, UI_Task_PRIO, (OS_STK *)&UI_Task_Stack[0], USER_TASK_STACK_SIZE,(void*)0, OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR );/* 创建任务 UI_Task */
+	OSTaskCreateExt(Insert_Task,(void *)0,(OS_STK *)&Insert_Task_Stack[TOUCH_TASK_STACK_SIZE-1],Insert_Task_PRIO,Insert_Task_PRIO,(OS_STK *)&Insert_Task_Stack[0],TOUCH_TASK_STACK_SIZE,(void*)0,OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR );/* 创建任务 Insert_Task */
+	OSTaskCreateExt(Refresh_Task,  (void *)0,(OS_STK *)&Refresh_Task_Stack[KEY_TASK_STACK_SIZE-1],    Refresh_Task_PRIO,  Refresh_Task_PRIO  ,(OS_STK *)&Refresh_Task_Stack[0],  KEY_TASK_STACK_SIZE,(void*)0,  OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR);/* 创建任务 Refresh_Task */
+//	OSTaskCreate(Task_Stack_Use,(void *)0,(OS_STK *)&Task_Stack_Use_Stack[Task_Stack_Use_STACK_SIZE-1],  Task_Stack_Use_PRIO);/* 创建任务 Refresh_Task */
 
 	OSStart();
 }

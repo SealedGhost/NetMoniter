@@ -2,12 +2,14 @@
 #include "51t9py_indexa.h"
 #include "string.h"
 #include "math.h"
+#include "Drawinformation.h"
+
 
 /* external variables */
 extern boat mothership;
 
-char strBuf[10];
-char* pStrBuf = strBuf;
+unsigned char strBuf[10];
+unsigned char* pStrBuf = strBuf;
 char du[5];
 char fen[6];
 
@@ -142,11 +144,11 @@ void lltostr(long l_o_l,char *str)
 	minute_dec = (l_o_l%(distance<<1))-minute_int*mul_pow;
 	
 //	ttoi(degree,tmp);
-	sprintf(str,"%3d",degree);
+	sprintf(str,"%03d",degree);
 	str[3]  = 176;
-	sprintf(str+4,"%2d",minute_int);
+	sprintf(str+4,"%02d",minute_int);
 	str[6] = '.';
-	sprintf(str+7,"%d",minute_dec);
+	sprintf(str+7,"%03d",minute_dec);
 }
 void PaintFrame() 
 {
@@ -365,3 +367,82 @@ void Draw_ScaleRuler(int x0, int y0, long scaleVal)
 }
 
 
+void strcpyEx( unsigned char* dest,  const unsigned char* src)
+{
+	int i  = 0;
+	while(src[i])
+	{
+		*(dest+i) = *(src+i);
+	}
+}
+
+int GUI__strlenEx(const unsigned char GUI_UNI_PTR * s) {
+ 
+  int r = -1;
+  if (s != '\0') {
+ 
+    do {
+ 
+      r++;
+     
+} while (*s++);
+   
+}
+  return r;
+ 
+}
+
+int GUI__SetTextEx(GUI_HMEM* phText, const unsigned char* s)
+{
+ 
+  int r = 0;
+ 
+    GUI_HMEM hMem;
+    hMem = GUI_ALLOC_AllocNoInit(GUI__strlenEx(s) + 1);
+    if (hMem)
+		{
+ 
+      unsigned char* pMem;
+      pMem = (unsigned char*) GUI_ALLOC_h2p(hMem);
+      strcpyEx(pMem, s);
+      GUI_ALLOC_FreePtr(phText);
+      *phText = hMem;
+      r = 1;
+		}
+  return r;
+ 
+}
+
+
+typedef struct {
+  WIDGET Widget;
+  WM_HMEM hpText;
+  const GUI_FONT GUI_UNI_PTR * pFont;
+  I16 Align;
+  GUI_COLOR TextColor;
+  GUI_COLOR BkColor;
+  #if GUI_DEBUG_LEVEL >= GUI_DEBUG_LEVEL_CHECK_ALL
+    int DebugId;
+  #endif  
+} TEXT_Obj;
+#define TEXT_H2P(h) (TEXT_Obj*) GUI_ALLOC_h2p(h)
+
+
+void TEXT_SetTextEx(TEXT_Handle hObj, const unsigned char* s) {
+ 
+  if (hObj) {
+ 
+    TEXT_Obj* pObj;
+    WM_LOCK();
+    pObj = TEXT_H2P(hObj);
+    if (GUI__SetTextEx(&pObj->hpText, s)) {
+ 
+      WM_Invalidate(hObj);
+     
+}
+    WM_UNLOCK();
+   
+}
+ 
+}
+ 

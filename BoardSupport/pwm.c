@@ -53,7 +53,7 @@ void PWM_SET(uint8_t PWM)//PWM_test
 {
 	  uint32_t BACK_LIGHT;
 	  BACK_LIGHT=pclk/_BACK_LIGHT_BASE_CLK/10;
-    printf("\r\nBACK_LIGHT:%d\n\r",PWM);
+//    printf("\r\nBACK_LIGHT:%d\n\r",PWM);
 		SetBackLight(BACK_LIGHT*PWM);
 }
 

@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include "GUI.h"
+#include "map_draw.h"
 
 #define choose_4 4
 #define choose_3 40
@@ -72,7 +73,7 @@ struct _boat_m24B{
 	};
 //-Add end	
 	
-void disp_fish_boat(char scale_choose,long center_longitude, long center_latitude,short center_x,short center_y,_boat **boat_array,short N);
+void disp_fish_boat(const scale_map * scale,long center_longitude, long center_latitude,short center_x,short center_y,_boat **boat_array,short N);
 
 
 extern _boat test[3];

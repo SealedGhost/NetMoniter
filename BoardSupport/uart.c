@@ -138,6 +138,11 @@ void USER_Init(void)
 // 	}
 // }
 
+
+
+
+
+
 PUTCHAR_PROTOTYPE//重定向C printf函数到Uart0
 {
 	UART_Send((UART_ID_Type)UART_0, (uint8_t*) &ch, 1, BLOCKING);  /* 发送一个字符到UART */

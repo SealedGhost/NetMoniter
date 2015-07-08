@@ -184,3 +184,16 @@ void lpc1788_SDRAM_Init( void )
 	LPC_EMC->DynamicConfig0 |=(1<<19);
 	for(i = 100000; i;i--);
 }
+
+
+void lpc1788_SDRAM_Clean()
+{
+  uint16_t * wr_ptr;
+  int  i  = 0;
+  
+  wr_ptr  = (uint16_t*)SDRAM_BASE_ADDR;
+  for(i=0;i<SDRAM_SIZE;i++)
+  {
+    *wr_ptr++  = 0x00;
+  }
+}

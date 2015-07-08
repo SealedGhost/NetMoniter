@@ -283,6 +283,7 @@ void _cbWindowMonitorList (WM_MESSAGE* pMsg)
 				GUI_DispStringAt ("船名:",352,70);
 				
 			  
+				
 				GUI_DispStringAt ("北纬:",352,170);
 				GUI_DispStringAt ("东经:",352,220);
 				GUI_DispStringAt ("航速:",352,270);
@@ -294,16 +295,14 @@ void _cbWindowMonitorList (WM_MESSAGE* pMsg)
 				GUI_SetFont(&GUI_Font32_1);
 				
 				GUI_DispStringAt(test[BoatIndex].name,420,70);
-MYDEBUG("%s",test[BoatIndex].name);	
+
         
 				lltostr(test[BoatIndex].latitude,pBuf);
 				GUI_DispStringExAt(pBuf,420,170);
-MYDEBUG("%ld",test[BoatIndex].latitude);		
+		
         lltostr(test[BoatIndex].longitude,pBuf);
 				GUI_DispStringExAt(pBuf,420,220);
-MYDEBUG("%ld",test[BoatIndex].latitude);	
-
-WM_InvalidateRect(WM_HBKWIN,&myRect);
+	
 		break;
 
 		case WM_KEY:

@@ -7,5 +7,5 @@
 
 void _cbWindowMonitSet(WM_MESSAGE * pMsg);
 void _cbWindowMessage(WM_MESSAGE * pMsg);
-extern GUI_WIDGET_CREATE_INFO _aDialogCreate[3];
+//extern GUI_WIDGET_CREATE_INFO _aDialogCreate[3];
 #endif

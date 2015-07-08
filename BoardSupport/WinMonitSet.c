@@ -37,53 +37,53 @@ int   RowNum_AllList = 0;  //行数
 int   RowNumSel_AllList = 0;//当前所选中的行数
 
 
-static void updateListViewContent(WM_HWIN thisWin)
-{
-	int i  = 0;
-	
-	unsigned int Counter    = 0;
-	unsigned int NumOfRows  = 0;
-	
-	
-	WM_HWIN hListView  = WM_GetDialogItem(thisWin,GUI_ID_LISTVIEW0);
-	
-MYDEBUG("hListView=%ld",hListView);	
+//static void updateListViewContent(WM_HWIN thisWin)
+//{
+//	int i  = 0;
+//	
+//	unsigned int Counter    = 0;
+//	unsigned int NumOfRows  = 0;
+//	
+//	
+//	WM_HWIN hListView  = WM_GetDialogItem(thisWin,GUI_ID_LISTVIEW0);
+//	
+//MYDEBUG("hListView=%ld",hListView);	
 
-	for(i=0;i<N_boat;i++)
-	{
+//	for(i=0;i<N_boat;i++)
+//	{
 
-			NumOfRows  = LISTVIEW_GetNumRows(hListView);
-			
-			if(i+1 > NumOfRows)
-			{
-				
-				//LISTVIEW_AddRow(hListView,NULL);
-				LISTVIEW_AddRow(hListView,NULL); 
-NumOfRows  = LISTVIEW_GetNumRows(hListView);
-MYDEBUG("num of rows=%d",NumOfRows);				
-			}
-			
-			LISTVIEW_SetItemText(hListView,0,i,test[i].name);
-MYDEBUG("%ld",test[i].user_id);			
-			sprintf(pBuf,"%ld",test[i].user_id);
-			LISTVIEW_SetItemText(hListView,1,i,pBuf);
-			
-			if(test[i].isVisible)
-				LISTVIEW_SetItemText(hListView,2,i,"o");
-			else
-				LISTVIEW_SetItemText(hListView,2,i,"x");
-	
-	}
-	
-	while(NumOfRows > i)
-	{
-		LISTVIEW_DeleteRow(hListView,i);
-		NumOfRows  = LISTVIEW_GetNumRows(hListView);
-	}
+//			NumOfRows  = LISTVIEW_GetNumRows(hListView);
+//			
+//			if(i+1 > NumOfRows)
+//			{
+//				
+//				//LISTVIEW_AddRow(hListView,NULL);
+//				LISTVIEW_AddRow(hListView,NULL); 
 //NumOfRows  = LISTVIEW_GetNumRows(hListView);
-//MYDEBUG("final num of rows=%d",NumOfRows);
-	
-}
+//MYDEBUG("num of rows=%d",NumOfRows);				
+//			}
+//			
+//			LISTVIEW_SetItemText(hListView,0,i,test[i].name);
+//MYDEBUG("%ld",test[i].user_id);			
+//			sprintf(pBuf,"%ld",test[i].user_id);
+//			LISTVIEW_SetItemText(hListView,1,i,pBuf);
+//			
+//			if(test[i].isVisible)
+//				LISTVIEW_SetItemText(hListView,2,i,"o");
+//			else
+//				LISTVIEW_SetItemText(hListView,2,i,"x");
+//	
+//	}
+//	
+//	while(NumOfRows > i)
+//	{
+//		LISTVIEW_DeleteRow(hListView,i);
+//		NumOfRows  = LISTVIEW_GetNumRows(hListView);
+//	}
+////NumOfRows  = LISTVIEW_GetNumRows(hListView);
+////MYDEBUG("final num of rows=%d",NumOfRows);
+//	
+//}
 
 
 /*监控设置界面 ListView 的回调*/
@@ -116,9 +116,9 @@ static void myListViewCBFunc(WM_MESSAGE * pMsg)
 				
 				case GUI_KEY_ENTER:				
 				  selectedRow  = LISTVIEW_GetSel(thisListView);			
-				  LISTVIEW_GetItemText(thisListView,2,selectedRow,pBuf,10);
+				  LISTVIEW_GetItemText(thisListView,2,selectedRow,buf,10);
 	
-					if(pBuf[0] == 'x' )
+					if(buf[0] == 'x' )
 					{					
 						test[selectedRow].isVisible = 1;
 						LISTVIEW_SetItemText(thisListView,2,selectedRow,"o");
@@ -495,7 +495,7 @@ void _cbWindowMonitSet(WM_MESSAGE* pMsg)
 //		
 //		 addrow_LISTVIEW_AllList (pMsg); //添加行数据		
 
-		updateListViewContent(hWin);
+//		updateListViewContent(hWin);
 		
 		EDIT_SetDefaultFont(&GUI_Font28);
 		EDIT_CreateEx(590,55,62,30,hWin,WM_CF_SHOW,0,GUI_ID_EDIT0,2);  //消失报警

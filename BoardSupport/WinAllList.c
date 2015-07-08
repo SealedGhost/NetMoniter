@@ -1,15 +1,11 @@
 #include "MainTask.h"
 
 extern int isAllBoatVisible;
-extern _boat* boat_list_p[BOAT_LIST_SIZE_MAX];
-
-
+extern _boat boat_list[BOAT_LIST_SIZE_MAX];
 
 static  char cBuf[12];
 static  char * pBuf = cBuf;
 
-
-static WM_HTIMER hTimer;
 static int v;
 static const char * _aTable_2[][4] = {
   { "8.105", "17°", "是" },
@@ -48,7 +44,7 @@ printf("ItemText=\"%s\"\r\n",cBuf);
 		SelectedID  = strtoi(cBuf);
 printf("SelectedID=%ld\r\n",SelectedID);	
 		
-		while((boat_list_p[i]->user_id!=SelectedID) && (i<N_boat))
+		while((test[i].user_id!=SelectedID) && (i<N_boat))
 		{
 			i++;
 		}
@@ -56,7 +52,7 @@ printf("SelectedID=%ld\r\n",SelectedID);
 		if(i < N_boat)
 		{	
        BoatIndex  = i;
-
+MYDEBUG("find boat =%d ",i);			
 		}
 
 	}
@@ -77,20 +73,20 @@ static void myListViewCBFunc(WM_MESSAGE * pMsg)
 			LISTVIEW_Callback(pMsg);		
 		break;
 		case WM_KEY:
-
+MYDEBUG("case key");		
 		
 			pInfo = (WM_KEY_INFO*)pMsg->Data.p;
-
+MYDEBUG("key=%d",pInfo->Key);
 			switch(pInfo->Key)
 			{
 				case GUI_KEY_UP:
-
+MYDEBUG("case lv up");
 				LISTVIEW_Callback(pMsg);
 				showSelectedBoatInfo(pMsg->hWin);
 				break;
 				
 				case GUI_KEY_DOWN:
-
+MYDEBUG("case lv down");
 				LISTVIEW_Callback(pMsg);
 				showSelectedBoatInfo(pMsg->hWin);
 				break;
@@ -130,10 +126,10 @@ static void updateListViewContent(WM_HWIN thisWin)
 NumOfRows  = LISTVIEW_GetNumRows(hListView);			
 			}
 				
-			sprintf(pBuf,"%ld",boat_list_p[i]->user_id);
+			sprintf(pBuf,"%ld",boat_list[i].user_id);
 			LISTVIEW_SetItemText(hListView,1,i,pBuf);	
 			
-			if(boat_list_p[i]->isVisible)
+			if(test[i].isVisible)
 				LISTVIEW_SetItemText(hListView,2,i,"是");
 			else
 				LISTVIEW_SetItemText(hListView,2,i,"否");
@@ -209,17 +205,8 @@ void _cbWindowAllList(WM_MESSAGE* pMsg)
 		case WM_CREATE:
 			WM_SetFocus (hWin);
 			InitLISTVIEW_AllList (pMsg);    //初始化LISTVIEW 小工具
-//			addrow_LISTVIEW_AllList_1 (pMsg); //添加行数据	
-//  hTimer  = WM_CreateTimer(pMsg->hWin, 1, 1000, 0);		
+//			addrow_LISTVIEW_AllList_1 (pMsg); //添加行数据		
 		break;
-		
-//		case WM_TIMER:
-//MYDEBUG("entry timer and refresh alllist");		
-//			WM_InvalidateRect(pMsg->hWin,&myRect);
-
-//		 WM_RestartTimer(hTimer, 1000);
-//	
-//			break;
 		
 		case WM_PAINT:
 				updateListViewContent(hWin);
@@ -264,9 +251,9 @@ void _cbWindowAllList(WM_MESSAGE* pMsg)
 				
 				GUI_DispStringAt(test[BoatIndex].name,420,70);
         
-				lltostr(boat_list_p[BoatIndex]->latitude,pBuf);
+				lltostr(test[BoatIndex].latitude,pBuf);
 				GUI_DispStringExAt(pBuf,420,170);		
-        lltostr(boat_list_p[BoatIndex]->longitude,pBuf);
+        lltostr(test[BoatIndex].longitude,pBuf);
 				GUI_DispStringExAt(pBuf,420,220);
 				
 				WM_InvalidateWindow(hWin);

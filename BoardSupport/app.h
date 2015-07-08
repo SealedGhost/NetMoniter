@@ -1,5 +1,6 @@
 #include "analysis_function.h"
 #include "boat_struct.h"
+#include "Config.h"
 
 //--消息类型定义
 // typedef struct message_18 message_18;
@@ -153,6 +154,8 @@ message_18 translate_m18(unsigned char *text,int start)
 /////////////////////////////////////////////////////////////
 message_24_partA translate_m24A(unsigned char *text,int start){
   message_24_partA message_text;
+  char tmp  = 0;
+  
   int i=0,tmp_6_bin[27],j=0;
   for(i=0;(text[start]!=',')&&(i<27);i++,start++)
 		tmp_6_bin[i]=change_table(text[start]);
@@ -160,10 +163,22 @@ message_24_partA translate_m24A(unsigned char *text,int start){
   message_text.message_id=tmp_6_bin[0];
   message_text.repeat_indicator=(tmp_6_bin[1]>>4);
   message_text.user_id=((tmp_6_bin[1]&15)<<26)|(tmp_6_bin[2]<<20)|(tmp_6_bin[3]<<14)|(tmp_6_bin[4]<<8)|(tmp_6_bin[5]<<2)|(tmp_6_bin[6]>>4);
+  
+  
   message_text.part_number=((tmp_6_bin[6]&12)>>2);
-  for(i=0,j=6;i<20;i++,j++){
-    message_text.name[i]=six2asc(((tmp_6_bin[j]&3)<<4)|(tmp_6_bin[j+1]>>2));
+  for(i=0,j=6;i<19;i++,j++)
+  {
+    tmp  = six2asc(((tmp_6_bin[j]&3)<<4)|(tmp_6_bin[j+1]>>2));
+    if(tmp != '@')
+      message_text.name[i]=tmp;
+    else
+    {
+      message_text.name[i]  = '\0';
+//INFO("name:%s",message_text.name);      
+      break;
+    }
   }
+  message_text.name[19]  = '\0';
   return message_text;
 }
 
@@ -182,13 +197,13 @@ type_of_ship translate_m24B(unsigned char *text,int start){
 }
 
 //函数声明
-void User_Task(void *p_arg);
-void Touch_Task(void *p_arg);
-void Key_Task(void *p_arg);
+void UI_Task(void *p_arg);
+void Insert_Task(void *p_arg);
+void Refresh_Task(void *p_arg);
 void App_TaskStart(void);
 int translate_(unsigned char *text,message_18 *text_out,message_24_partA *text_out_24A,type_of_ship *text_out_type_of_ship);
 
-void insert(boat * boats,  struct message_18* p_msg );
+void insert_18(boat * boats,  struct message_18* p_msg );
 
 void insert_24A(boat* boats, struct message_24_partA* p_msg);
 

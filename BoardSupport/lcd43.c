@@ -27,6 +27,7 @@ void lpc1788_Lcd_Init(void)
 
 	/* 初始化SDRAM */
 	lpc1788_SDRAM_Init();
+  lpc1788_SDRAM_Clean();
 
 	/* 关闭LCD控制 */
 	LCD_Enable (FALSE);
