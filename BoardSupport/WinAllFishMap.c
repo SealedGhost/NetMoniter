@@ -103,7 +103,7 @@ void display_longitude_latitude(unsigned long l_o_l,short x, short y)
 *
 *
 */
-void draw_map_grid(mapping gridAnchor)
+void draw_map_grid(mapping gridAnchor,scale_map scale)
 {
 	short x = 0;
 	short y = 0;
@@ -115,22 +115,22 @@ void draw_map_grid(mapping gridAnchor)
   GUI_SetColor(GUI_WHITE);
 	while(x<MAP_LEFT)
 	{
-		x  += measuring_scale[scale_choose].pixel;
+		x  += scale.pixel;
 	}
 	while(x<MAP_RIGHT)
 	{
 		GUI_DrawLine(x, MAP_TOP, x, MAP_BOTTOM);
-		x  += measuring_scale[scale_choose].pixel;
+		x  += scale.pixel;
 	}
 	
 	while(y<MAP_TOP)
 	{
-		y  += measuring_scale[scale_choose].pixel;
+		y  += scale.pixel;
 	}
 	while(y<MAP_BOTTOM)
 	{
 		GUI_DrawLine(MAP_LEFT, y,MAP_RIGHT, y);
-		y  += measuring_scale[scale_choose].pixel;
+		y  += scale.pixel;
 	}
 }
 
@@ -417,7 +417,7 @@ void map_draw(long longitude,  long latitude, scale_map scale)
 			 anchor.lttude  += scale.minute;
 		 }
 		  
-		 draw_map_grid(anchor);
+		 draw_map_grid(anchor, scale);
 		 
 		 tmp_x  = anchor.x;
 		 tmp_y  = anchor.y;
@@ -470,7 +470,7 @@ void map_draw(long longitude,  long latitude, scale_map scale)
 						 tmp_lgtude  += scale.minute;
 					 }					 
 				 }
-         if( (tmp_y+latitude_display_y_shift) >= MAP_TOP-10 )
+         if( (tmp_y+latitude_display_y_shift) >= MAP_TOP )
          {
            lltostr(tmp_lttude,pStrBuf);
            GUI_DispStringExAt(pStrBuf, MAP_RIGHT+latitude_display_x_shift,tmp_y+latitude_display_y_shift);         

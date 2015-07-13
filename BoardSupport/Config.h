@@ -83,9 +83,16 @@
 
 #define MSG_QUEUE_TABNUM   20
 
-#define INFO_ENABLE  1
+//#define __INFO_ENABLE 
+
+#ifndef __INFO_ENABLE
+
+#define INFO(format,...) 
+
+#else
 
 #define INFO(format,...)  printf("FILE:%s,LINE:%d,"format"\r\n",__FILE__,__LINE__,##__VA_ARGS__)
 
+#endif
 
 #endif

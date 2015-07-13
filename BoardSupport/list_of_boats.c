@@ -41,16 +41,16 @@ extern boat mothership;
            boats[i].SOG          = p_msg->SOG;
            boats[i].COG          = p_msg->COG;
            boats[i].true_heading = p_msg->true_heading;
-//           boats[i].longitude    = p_msg->longitude/10;
-//           boats[i].latitude     = p_msg->latitude/10;
-           tmp  = p_msg->longitude/10;
-//           if( (tmp >= mothership.longitude-30000)  &&  (tmp <= mothership.latitude+30000) )  /// WARNING: ，若本行打开，经度一直为 0 还不知道原因
-              boats[i].longitude  = tmp;
-           tmp  = p_msg->latitude/10;
+           boats[i].longitude    = p_msg->longitude/10;
+           boats[i].latitude     = p_msg->latitude/10;
+//           tmp  = p_msg->longitude/10;
+//           if( (tmp >= mothership.longitude-30000)  &&  (tmp <= mothership.longitude+30000) )  /// WARNING: ，若本行打开，经度一直为 0 还不知道原因
+//              boats[i].longitude  = tmp;
+//           tmp  = p_msg->latitude/10;
 //           if( (tmp >= mothership.latitude-30000)  &&  (tmp <= mothership.latitude+30000) )   ///本行打开 纬度也正常
-              boats[i].latitude  = tmp;
+//              boats[i].latitude  = tmp;
            boats[i].time_cnt     = TIMESTAMP; ///刷新时间戳变量
-INFO("boats[%d].(lg,lt) = %ld,%ld",i,boats[i].longitude,boats[i].latitude);
+INFO("update boats[%d].(lg,lt) = %ld,%ld",i,boats[i].longitude,boats[i].latitude);
            return ;
         }
      }
@@ -59,42 +59,42 @@ INFO("boats[%d].(lg,lt) = %ld,%ld",i,boats[i].longitude,boats[i].latitude);
      for(i=0;i<BOAT_LIST_SIZE_MAX;i++)
      {
      
-//INFO ("%d-user_id:%ld",i,boats[i].user_id);
         if(boats[i].user_id == 0)
         {
            boats[i].user_id      = p_msg->user_id;
            boats[i].SOG          = p_msg->SOG;
            boats[i].COG          = p_msg->COG;
            boats[i].true_heading = p_msg->true_heading;
-//           boats[i].longitude    = p_msg->longitude/10;
-//           boats[i].latitude     = p_msg->latitude/10;
-           tmp  = p_msg->longitude/10;
-INFO("tmp:%ld",tmp);           
-           if( (tmp >= mothership.longitude-30000)  &&  (tmp <= mothership.latitude+30000) )
-           {
-              boats[i].longitude  = tmp;
-INFO("boats[%d].lg = %ld",i, boats[i].longitude);              
-           }           
+           boats[i].longitude    = p_msg->longitude/10;
+           boats[i].latitude     = p_msg->latitude/10;
+//           tmp  = p_msg->longitude/10;
+//INFO("tmp:%ld",tmp);           
+//           if( (tmp >= mothership.longitude-30000)  &&  (tmp <= mothership.longitude+30000) )
+//           {
+//              boats[i].longitude  = tmp;
+//INFO("boats[%d].lg = %ld",i, boats[i].longitude);              
+//           }           
 
-           tmp  = p_msg->latitude/10;
-INFO("tmp:%ld",tmp);           
-           if( (tmp >= mothership.latitude-30000)  &&  (tmp <= mothership.latitude+30000) )
-           {
-              boats[i].latitude  = tmp;
-INFO("boats[%d].lt = %ld",i, boats[i].latitude);              
-           }    
+//           tmp  = p_msg->latitude/10;
+//INFO("tmp:%ld",tmp);           
+//           if( (tmp >= mothership.latitude-30000)  &&  (tmp <= mothership.latitude+30000) )
+//           {
+//              boats[i].latitude  = tmp;
+//INFO("boats[%d].lt = %ld",i, boats[i].latitude);              
+//           }    
            boats[i].time_cnt     = TIMESTAMP;
            
-           ///若插入位置已超出尾端索引，更新尾端索引                           /// |___________________|_______| <--boats[]
+           ///若插入位置已超出尾端索引，更新尾端索引                          
            if(i > list_endIndex) list_endIndex  = i;
-INFO("boats[%d].(lg,lt) = %ld,%ld",i,boats[i].longitude,boats[i].latitude);    ///                     ^       
-           return ;                                                            ///                     |
-        }                                                                      ///                   list_endIndex
+                                                                                      /// |___________________|_______| <--boats[]
+INFO("insert boats[%d].(lg,lt) = %ld,%ld",i,boats[i].longitude,boats[i].latitude);    ///                     ^       
+           return ;                                                                   ///                     |
+        }                                                                             ///                   list_endIndex
      }
      
-#if INFO_ENABLE
+
      INFO("Error:boat list full.");
-#endif
+
   }
   
   
@@ -154,9 +154,8 @@ INFO("boats[%d].(lg,lt) = %ld,%ld",i,boats[i].longitude,boats[i].latitude);    /
         }
      }
      
-#if INFO_ENABLE
+
      INFO("Error:boat list full.");
-#endif
   }
   
   
@@ -188,9 +187,8 @@ INFO("boats[%d].(lg,lt) = %ld,%ld",i,boats[i].longitude,boats[i].latitude);    /
            return;
         }
      }
-#if INFO_ENABLE
-     INFO("Error:boat list full.");
-#endif     
+
+     INFO("Error:boat list full.");     
   }
   
  ///每隔若干秒后调用本函数，遍历boats数组对所有船舶的time_cnt变量减一，若有船的time_cnt减为 0 ，
@@ -210,6 +208,11 @@ INFO("boats[%d].(lg,lt) = %ld,%ld",i,boats[i].longitude,boats[i].latitude);    /
         else
         {
            boats[i].user_id  = 0;
+           boats[i].longitude  = 0;
+           boats[i].latitude  = 0;
+           boats[i].true_heading  = 0;
+           boats[i].type_of_electronic_position_fixing_device  = 0;
+           boats[i].name[0] = '\0';
         }
      }
      
