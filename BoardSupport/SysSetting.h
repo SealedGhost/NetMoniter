@@ -34,4 +34,37 @@ typedef struct
 	unsigned int  SoftVersion;
 }SYS_SETTING;
 
+
+
+///
+typedef struct{
+  uint8_t isEnable;
+}DSP_SETTING;
+
+typedef struct{
+   uint8_t isEnable;
+   uint8_t isSndEnable;
+   uint32_t dist;         /// Unit (m)
+}BGL_SETTING;
+
+typedef struct{
+   uint8_t isEnable;
+   uint8_t isSndEnable;
+   uint32_t dist;   
+}DRG_SETTING;  /// Dragging anchor setting
+
+typedef struct
+{
+   DSP_SETTING DSP_Setting;
+   BGL_SETTING BGL_Setting;
+   DRG_SETTING DRG_Setting;
+}MNT_SETTING;
+
+typedef struct
+{
+   long mmsi;
+   MNT_SETTING MNTSetting;
+   uint8_t MNTState;
+}MNT_BOAT;
+
 #endif

@@ -79,6 +79,9 @@
 
 
 #define BOAT_LIST_SIZE_MAX 400
+
+#define MNT_BOAT_NUM_MAX   20
+
 #define TIMESTAMP          100
 
 #define MSG_QUEUE_TABNUM   20

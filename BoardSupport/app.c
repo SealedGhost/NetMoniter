@@ -99,6 +99,8 @@ _boat_m24B *boat_end24B = boat_list_24B;
 //_boat_m24B *boat_end24B = boat_list_24B;
 
 
+MNT_SETTING mntSetting;
+MNT_BOAT  mntBoats[MNT_BOAT_NUM_MAX];
 struct message_18 msg_18;
 
 short N_boat = 0;
@@ -233,7 +235,10 @@ void App_TaskStart(void)//初始化UCOS，初始化SysTick节拍，并创建三个任务
   {
      boat_list[i].user_id  = 0;
   }
-	
+
+   mntSetting_init();
+   
+   
    mothership.latitude = 1927265;
    mothership.longitude = 7128660;
    mothership.true_heading  = 0;
@@ -345,3 +350,18 @@ return 0;
 }
 
 /************************************* End *************************************/
+
+
+
+void mntSetting_init()
+{
+  MNT_Setting.DSP_Setting.isEnable  = ENABLE;
+  
+  MNT_Setting.BGL_Setting.isEnable  = ENABLE;
+  MNT_Setting.BGL_Setting.isSndEnable  = ENABLE;
+  MNT_Setting.BGL_Setting.dist      = 1000;
+  
+	 MNT_Setting.DRG_Setting.isEnable  = ENABLE;
+  MNT_Setting.DRG_Setting.isSndEnable  = ENABLE;
+  MNT_Setting.DRG_Setting.dist      = 1000;   
+}

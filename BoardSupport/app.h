@@ -210,3 +210,4 @@ void insert_24A(boat* boats, struct message_24_partA* p_msg);
 void insert_24B(boat* boats,  struct type_of_ship* p_msg);
 
 void updateTimeStamp(boat* boats);
+void mntSetting_init(void);
