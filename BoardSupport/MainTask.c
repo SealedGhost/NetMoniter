@@ -17,7 +17,7 @@ extern WM_HWIN subWins[4];
 
 extern WM_HWIN menuWinCreate(void);
 extern WM_HWIN subCreateWindow(void);
-extern WM_HWIN ConfirmWinCreateFrm_Confirm(void);
+extern WM_HWIN confirmWinCreate(void);
 
 
 void MainTask(void) {
@@ -32,9 +32,10 @@ void MainTask(void) {
 	//创建窗口 
 
 	
-
-	  menuWin  = menuWinCreate();
-    hDlg_FishMap = WM_CreateWindowAsChild (0, 0, 800, 480, WM_HBKWIN, WM_CF_SHOW, &_cbWindowAllFishMap, 0);
+  
+	menuWin  = menuWinCreate();
+ confirmWin  = confirmWinCreate();
+ hDlg_FishMap = WM_CreateWindowAsChild (0, 0, 800, 480, WM_HBKWIN, WM_CF_SHOW, &_cbWindowAllFishMap, 0);
 	//焦点设置
 
 	
@@ -46,6 +47,7 @@ void MainTask(void) {
 //	  WM_Invalidate(subWins[2]);
 //		WM_InvalidateWindow(subWins[2]);
 //		WM_InvalidateWindow(WM_GetDialogItem(subWins[2],GUI_ID_USER + 0x01));
+//printf("\r\nUI task");
 		GUI_Delay(200);
 	}
 	

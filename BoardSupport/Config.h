@@ -78,9 +78,9 @@
 
 
 
-#define BOAT_LIST_SIZE_MAX 400
+#define BOAT_LIST_SIZE_MAX 500
 
-#define MNT_BOAT_NUM_MAX   20
+
 
 #define TIMESTAMP          100
 

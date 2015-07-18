@@ -247,12 +247,9 @@ void getWrapPara(long * halfDiff_lg, long * halfDiff_lt, scale_map* wrap_scale)
        max_lt_index  = i;     
   }
   
-INFO("min:boat_list_p[%d].lg = %ld",min_lg_index, boat_list_p[min_lg_index]->longitude);  
-INFO("min:boat_list_p[%d].lt = %ld",min_lt_index, boat_list_p[min_lt_index]->latitude);
-INFO("max:boat_list_p[%d].lg = %ld",max_lg_index, boat_list_p[max_lg_index]->longitude);
-INFO("max:boat_list_p[%d].lt = %ld",max_lt_index, boat_list_p[max_lt_index]->latitude);
 
-INFO("mothership.lg = %ld,mothership.lt = %ld",mothership.longitude,mothership.latitude); 
+
+
 
  ///将母船考虑在内后，计算要适配的区域的三个参数：
  ///   maxDiff_lg:表示适配区域的经度差（宽度）
@@ -262,22 +259,19 @@ INFO("mothership.lg = %ld,mothership.lt = %ld",mothership.longitude,mothership.l
   {
      maxDiff_lg  = mothership.longitude - boat_list_p[min_lg_index]->longitude;  
      *halfDiff_lg = mothership.longitude/2 + boat_list_p[min_lg_index]->longitude/2;
-INFO("  maxDiff_lg = %ld",maxDiff_lg);      
-INFO("*halfDiff_lg = %ld",*halfDiff_lg);     
+   
   }
   else if(mothership.longitude < boat_list_p[min_lg_index]->longitude)
   {
      maxDiff_lg  = boat_list_p[max_lg_index]->longitude - mothership.longitude;
      *halfDiff_lg = mothership.longitude/2 + boat_list_p[max_lg_index]->longitude/2;
-INFO("  maxDiff_lg = %ld",maxDiff_lg);      
-INFO("*halfDiff_lg = %ld",*halfDiff_lg);     
+   
   }
   else  
   {
      maxDiff_lg  = boat_list_p[max_lg_index]->longitude - boat_list_p[min_lg_index]->longitude;
      *halfDiff_lg = boat_list_p[max_lg_index]->longitude/2 + boat_list_p[min_lg_index]->longitude/2;
-INFO("  maxDiff_lg = %ld",maxDiff_lg);     
-INFO("*halfDiff_lg = %ld",*halfDiff_lg);     
+     
   }
      
      
@@ -285,24 +279,21 @@ INFO("*halfDiff_lg = %ld",*halfDiff_lg);
   {
      maxDiff_lt  = mothership.latitude - boat_list_p[min_lt_index]->latitude;
      *halfDiff_lt = mothership.latitude/2 + boat_list_p[min_lt_index]->latitude/2;
-INFO("  maxDiff_lt = %ld",maxDiff_lt);     
-INFO("*halfDiff_lt = %ld",*halfDiff_lt);     
+    
   }
      
   else if(mothership.latitude < boat_list_p[min_lt_index]->latitude)
   {
      maxDiff_lt  = boat_list_p[max_lt_index]->latitude - mothership.latitude;
      *halfDiff_lt = mothership.latitude/2 + boat_list_p[max_lt_index]->latitude/2;
-INFO("  maxDiff_lt = %ld",maxDiff_lt);     
-INFO("*halfDiff_lt = %ld",*halfDiff_lt);     
+    
   }
      
   else
   {
      maxDiff_lt  = boat_list_p[max_lt_index]->latitude  - boat_list_p[min_lt_index]->latitude;
      *halfDiff_lt = boat_list_p[max_lt_index]->latitude/2 + boat_list_p[min_lt_index]->latitude/2;
-INFO("  maxDiff_lt = %ld",maxDiff_lt);     
-INFO("*halfDiff_lt = %ld",*halfDiff_lt);     
+    
   }
   
    
@@ -336,10 +327,7 @@ void setWrapedView()
    if(N_boat > 0)
       getWrapPara(&lg, &lt, &wrapScale);
    
-INFO("lg:%ld",lg);   
-INFO("lt:%ld",lt);
 
-INFO("wrapScale.pixel:%d,wrapScale.minute:%ld",wrapScale.pixel,wrapScale.minute);
    
    map_draw(lg, lt, wrapScale);
    
@@ -592,13 +580,13 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 				TEXT_CreateEx(650,3,180,30,hWin,WM_CF_SHOW,TEXT_CF_LEFT,GUI_ID_TEXT0,"06/04/4:55"); //时间
 		  
 		
-		  reTimer  = WM_CreateTimer(pMsg->hWin, ID_TIMER_MAP_REFRESH,5000, 0);
+		  reTimer  = WM_CreateTimer(pMsg->hWin, ID_TIMER_MAP_REFRESH,3000, 0);
 				break;
 		case WM_TIMER:
 			 if(ID_TIMER_MAP_REFRESH == WM_GetTimerId(reTimer))
-				{				
+				{		    
 						WM_InvalidateRect( hWin,pRect);
-					WM_RestartTimer(reTimer, 5000);
+					WM_RestartTimer(reTimer, 3000);
 				}
 				break;
 		
@@ -1107,9 +1095,7 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 					flip_lngtude = measuring_scale[scale_choose].minute*(flip_speed_long)/measuring_scale[scale_choose].pixel;
 					break;
 					
-				case GUI_KEY_MENU:	
-for(i=0;i<N_boat;i++)          
-INFO("%d-%s",i,boat_list_p[i]->name);
+				case GUI_KEY_MENU:	         
           GUI_CURSOR_Hide();
 					WM_BringToTop (menuWin);
 					WM_ShowWindow(subWins[0]);

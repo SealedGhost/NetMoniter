@@ -6,7 +6,7 @@
 #include "lpc177x_8x_uart.h"
 #include "lpc177x_8x_timer.h"
 #include "Config.h"
-#include "SysSetting.h"
+#include "setting.h"
 
 //#ifndef test_test
 //	#define test_test
@@ -24,15 +24,19 @@
 #define Task_Stack_Use_STACK_SIZE 128
 /* 定义任务堆栈 */
 static	OS_STK	UI_Task_Stack[USER_TASK_STACK_SIZE];
+
+#pragma pack(8)
 static	OS_STK	Insert_Task_Stack[TOUCH_TASK_STACK_SIZE];
+#pragma pcak();
+
 static	OS_STK	Refresh_Task_Stack[KEY_TASK_STACK_SIZE];
 static  OS_STK  Task_Stack_Use_Stack[Task_Stack_Use_STACK_SIZE];
 
-static  OS_STK_DATA UI_Task_Stack_Use;
-static  OS_STK_DATA Insert_Task_Stack_Use;
-static  OS_STK_DATA Refresh_Task_Stack_Use;
+//static  OS_STK_DATA UI_Task_Stack_Use;
+//static  OS_STK_DATA Insert_Task_Stack_Use;
+//static  OS_STK_DATA Refresh_Task_Stack_Use;
 
-static volatile int myCnt  = 0;
+extern volatile int myCnt ;
 static volatile int msgCnt  = 0;
 void SysTick_Init(void);
 
@@ -40,6 +44,7 @@ void SysTick_Init(void);
 extern boat mothership;
 extern void MainTask(void);
 extern void insert(boat* boats, struct message_18* p_msg);
+void mntSetting_init(void);
 
 ///--消息队列的定义部分---
 OS_EVENT *QSem;//定义消息队列指针
@@ -50,7 +55,7 @@ uint8_t  Partition[MSG_QUEUE_TABNUM][100];
 // #pragma arm section rwdata
 // uint8_t  Partition[20][300]__attribute__((at(0xA1FF0000)));
 
-int list_endIndex  = 0;
+int list_endIndex  = -1;
 
 ///* ADDRESS: 0xAC000000  SIZE: 0x400000  */
 #pragma arm section rwdata = "SD_RAM1", zidata = "SD_RAM1"
@@ -98,12 +103,12 @@ _boat_m24B *boat_end24B = boat_list_24B;
 //_boat_m24B *boat_start24B = boat_list_24B;
 //_boat_m24B *boat_end24B = boat_list_24B;
 
-
+MNT_BOAT mntBoats[MNT_BOAT_NUM_MAX];
 MNT_SETTING mntSetting;
-MNT_BOAT  mntBoats[MNT_BOAT_NUM_MAX];
 struct message_18 msg_18;
 
 short N_boat = 0;
+short N_monitedBoat  = 0;
 _boat test[3];
 _boat *test_p[500];
 char name1[20]="MAN DE LI";
@@ -129,7 +134,6 @@ void UI_Task(void *p_arg)/*描述(Description):	任务UI_Task*/
 /*描述(Description):	任务Insert_Task*/
 void Insert_Task(void *p_arg)  //等待接收采集到的数据
 { 
-	uint8_t myVal  = 0;
 	int tmp  = 0;
 	uint8_t *s; 
 	INT8U err;
@@ -138,8 +142,11 @@ void Insert_Task(void *p_arg)  //等待接收采集到的数据
 	message_24_partA text_out_24A;
 	type_of_ship text_out_type_of_ship;
 	
+
+ 
 	while(1)
-	{		 
+	{	
+// printf("\r\nInsert task"); 
 		s = OSQPend(QSem,0,&err);
     
     tmp  = translate_(s,&text_out,&text_out_24A,&text_out_type_of_ship);
@@ -201,7 +208,7 @@ void Refresh_Task(void *p_arg)//任务Refresh_Task
 //		  OSTimeDly(30000); 		/* 延时8000ms */
 // 		if(boat_list_p) free(boat_list_p);
 // 		boat_list_p = (_boat**)malloc(sizeof(_boat*)*max_size);
-		
+//printf("\r\nRefresh task and myCnt = %d",myCnt);		
 		updateTimeStamp(boat_list);
 		OSTimeDlyHMSM(0,0,3,0);
 	}
@@ -219,8 +226,8 @@ void Task_Stack_Use(void *p_arg)
 // 		printf("\n\rUI_Task             used/free:%d/%d  usage:%%%d\r\n",UI_Task_Stack_Use.OSUsed,UI_Task_Stack_Use.OSFree,(UI_Task_Stack_Use.OSUsed*100)/(UI_Task_Stack_Use.OSUsed+UI_Task_Stack_Use.OSFree));
 // 		printf("Insert_Task_Stack_Use  used/free:%d/%d  usage:%%%d\r\n",Insert_Task_Stack_Use.OSUsed,Insert_Task_Stack_Use.OSFree,(Insert_Task_Stack_Use.OSUsed*100)/(Insert_Task_Stack_Use.OSUsed+Insert_Task_Stack_Use.OSFree));		
 // 		printf("Refresh_Task_Stack_Use    used/free:%d/%d  usage:%%%d\r\n",Refresh_Task_Stack_Use.OSUsed,Refresh_Task_Stack_Use.OSFree,(Refresh_Task_Stack_Use.OSUsed*100)/(Refresh_Task_Stack_Use.OSUsed+Refresh_Task_Stack_Use.OSFree));		
-		printf("**********%d----------\n\r",MemInfo.OSNUsed);
-		printf("**********%d**********\n\r",MemInfo.OSNFree);
+		printf("\r\n**********%d----------\n\r",MemInfo.OSNUsed);
+		printf("\r\n**********%d**********\n\r",MemInfo.OSNFree);
 		OSTimeDly(1000); 		/* 延时8000ms */
 	}
 }
@@ -355,13 +362,16 @@ return 0;
 
 void mntSetting_init()
 {
-  MNT_Setting.DSP_Setting.isEnable  = ENABLE;
+  mntSetting.DSP_Setting.isEnable  = ENABLE;
   
-  MNT_Setting.BGL_Setting.isEnable  = ENABLE;
-  MNT_Setting.BGL_Setting.isSndEnable  = ENABLE;
-  MNT_Setting.BGL_Setting.dist      = 1000;
+  mntSetting.BGL_Setting.isEnable  = DISABLE;
+  mntSetting.BGL_Setting.isSndEnable  = DISABLE;
+  mntSetting.BGL_Setting.dist      = 0;
   
-	 MNT_Setting.DRG_Setting.isEnable  = ENABLE;
-  MNT_Setting.DRG_Setting.isSndEnable  = ENABLE;
-  MNT_Setting.DRG_Setting.dist      = 1000;   
+	 mntSetting.DRG_Setting.isEnable  = DISABLE;
+  mntSetting.DRG_Setting.isSndEnable  = DISABLE;
+  mntSetting.DRG_Setting.dist      = 0;   
 }
+
+
+

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "GUI.h"
 #include "map_draw.h"
+#include "setting.h"
 
 #define choose_4 4
 #define choose_3 40
@@ -24,15 +25,16 @@ struct _boat
   short SOG;
   short COG;
   short true_heading;
-	short isVisible;
-	long user_id;
+  short time_cnt; 
+
+	 long user_id;
   long longitude;
   long latitude;
   float x;
   float y;
-	
-	char name[20];
-  short time_cnt; 
+	 float dist;
+ 	char name[20];
+	 MNTStates mntState;
 	int type_of_electronic_position_fixing_device;
 };
 

@@ -131,10 +131,10 @@ message_18 translate_m18(unsigned char *text,int start)
   message_text.position_accuracy=tmp_6_bin[9]&8;//position accuracy
 
   longitude=((tmp_6_bin[9]&7)<<25)|(tmp_6_bin[10]<<19)|(tmp_6_bin[11]<<13)|(tmp_6_bin[12]<<7)|(tmp_6_bin[13]<<1)|(tmp_6_bin[14]>>5);
-  message_text.longitude=longitude;
+  message_text.longitude=longitude/10;
   
   latitude=((tmp_6_bin[14]&31)<<22)|(tmp_6_bin[15]<<16)|(tmp_6_bin[16]<<10)|(tmp_6_bin[17]<<4)|(tmp_6_bin[18]>>2);
-  message_text.latitude=latitude;
+  message_text.latitude=latitude/10;
 
   message_text.COG=((tmp_6_bin[18]&3)<<10)|(tmp_6_bin[19]<<4)|(tmp_6_bin[20]>>2);
   message_text.true_heading=((tmp_6_bin[20]&3)<<7)|(tmp_6_bin[21]<<1)|(tmp_6_bin[22]>>5);
@@ -211,3 +211,14 @@ void insert_24B(boat* boats,  struct type_of_ship* p_msg);
 
 void updateTimeStamp(boat* boats);
 void mntSetting_init(void);
+
+
+
+
+
+
+
+
+
+
+
