@@ -78,7 +78,7 @@
 
 
 
-#define BOAT_LIST_SIZE_MAX 500
+#define BOAT_LIST_SIZE_MAX 100
 
 
 

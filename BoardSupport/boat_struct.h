@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include "GUI.h"
 #include "map_draw.h"
-#include "setting.h"
 
 #define choose_4 4
 #define choose_3 40
@@ -34,9 +33,17 @@ struct _boat
   float y;
 	 float dist;
  	char name[20];
-	 MNTStates mntState;
 	int type_of_electronic_position_fixing_device;
 };
+
+//typedef struct _BERTH BERTH;
+//struct _BERTH
+//{
+//   boat boat;
+//   BERTH * pLast;
+//   BERTH * pNext;
+//};
+
 
 struct _boat_m24A{
 	long user_id;

@@ -6,7 +6,7 @@
 #include "lpc177x_8x_uart.h"
 #include "lpc177x_8x_timer.h"
 #include "Config.h"
-#include "setting.h"
+
 
 //#ifndef test_test
 //	#define test_test
@@ -25,9 +25,8 @@
 /* 定义任务堆栈 */
 static	OS_STK	UI_Task_Stack[USER_TASK_STACK_SIZE];
 
-#pragma pack(8)
+
 static	OS_STK	Insert_Task_Stack[TOUCH_TASK_STACK_SIZE];
-#pragma pcak();
 
 static	OS_STK	Refresh_Task_Stack[KEY_TASK_STACK_SIZE];
 static  OS_STK  Task_Stack_Use_Stack[Task_Stack_Use_STACK_SIZE];
@@ -103,8 +102,6 @@ _boat_m24B *boat_end24B = boat_list_24B;
 //_boat_m24B *boat_start24B = boat_list_24B;
 //_boat_m24B *boat_end24B = boat_list_24B;
 
-MNT_BOAT mntBoats[MNT_BOAT_NUM_MAX];
-MNT_SETTING mntSetting;
 struct message_18 msg_18;
 
 short N_boat = 0;
@@ -113,13 +110,7 @@ _boat test[3];
 _boat *test_p[500];
 char name1[20]="MAN DE LI";
 char name2[20]="ZHE DAI YU ";
-SYS_SETTING SysSetting ={ {0,0},
-                          {0,0},
-													{0,0},
-													UNITS_Km,
-													1
-                          };
-SYS_SETTING *p_SysSetting = &SysSetting;											
+								
 
 
 void UI_Task(void *p_arg)/*描述(Description):	任务UI_Task*/
@@ -243,7 +234,7 @@ void App_TaskStart(void)//初始化UCOS，初始化SysTick节拍，并创建三个任务
      boat_list[i].user_id  = 0;
   }
 
-   mntSetting_init();
+//   mntSetting_init();
    
    
    mothership.latitude = 1927265;
@@ -360,18 +351,6 @@ return 0;
 
 
 
-void mntSetting_init()
-{
-  mntSetting.DSP_Setting.isEnable  = ENABLE;
-  
-  mntSetting.BGL_Setting.isEnable  = DISABLE;
-  mntSetting.BGL_Setting.isSndEnable  = DISABLE;
-  mntSetting.BGL_Setting.dist      = 0;
-  
-	 mntSetting.DRG_Setting.isEnable  = DISABLE;
-  mntSetting.DRG_Setting.isSndEnable  = DISABLE;
-  mntSetting.DRG_Setting.dist      = 0;   
-}
 
 
 
