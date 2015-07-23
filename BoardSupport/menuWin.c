@@ -366,8 +366,7 @@ static void myButtonListener(WM_MESSAGE * pMsg)
 				case GUI_KEY_RIGHT:
           WM_SetFocus(subWins[i]);
 				  break;
-				case GUI_KEY_MENU:
-INFO("reach");        
+				case GUI_KEY_MENU:       
 				 WM_BringToTop(hDlg_FishMap);
          WM_BringToBottom(menuWin);
          WM_HideWindow(subWins[0]);

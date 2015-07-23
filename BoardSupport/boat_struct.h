@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "GUI.h"
 #include "map_draw.h"
+#include "Setting.h"
 
 #define choose_4 4
 #define choose_3 40
@@ -29,12 +30,30 @@ struct _boat
 	 long user_id;
   long longitude;
   long latitude;
-  float x;
-  float y;
-	 float dist;
+	 int dist;
  	char name[20];
+  MNT_States mntStates;
 	int type_of_electronic_position_fixing_device;
 };
+
+
+typedef struct _BERTH BERTH;
+struct _BERTH
+{
+   boat Boat;
+   BERTH * pLast;
+   BERTH * pNext;
+};
+
+typedef struct  _SIMP_BERTH SIMP_BERTH;
+struct _SIMP_BERTH
+{
+   long longitude;
+   long latitude;
+   int  Dist;
+   boat * pBoat;
+};
+
 
 //typedef struct _BERTH BERTH;
 //struct _BERTH
@@ -82,7 +101,7 @@ struct _boat_m24B{
 	};
 //-Add end	
 	
-void disp_fish_boat(const scale_map * scale,long center_longitude, long center_latitude,short center_x,short center_y,_boat **boat_array,short N);
+void disp_fish_boat(const scale_map * scale,long center_longitude, long center_latitude,SIMP_BERTH* pSimpBerth,short N);
 
 
 extern _boat test[3];

@@ -37,15 +37,29 @@
 #define ID_BUTTON_1 (GUI_ID_USER + 0x02)
 #define ID_TEXT_0 (GUI_ID_USER + 0x03)
 
+
+/*------------------------- external variables -------------------------*/
 extern short N_monitedBoat;
-
-
 extern WM_HWIN menuWin;
 extern WM_HWIN subWins[4];
 extern WM_HWIN confirmWin;
+extern MNT_BOAT MNT_Boats[MNT_NUM_MAX];
+extern MNT_SETTING mntSetting;
 
+/*------------------------- external functions -------------------------*/
+
+
+
+
+/*------------------------- local variables ----------------------------*/
+
+
+
+
+
+/*------------------------- local functions -----------------------------*/
 void printMoniteSetting(void);
-//void printSetting(MNT_SETTING * p_setting);
+void printSetting(MNT_SETTING * p_setting);
 //extern void mntSetting_init(void);
 // USER START (Optionally insert additional defines)
 // USER END
@@ -158,35 +172,39 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         // USER START (Optionally insert code for reacting on notification message)
 printf("\r\n");
 
-//         for(i=0;i<N_monitedBoat;i++)
-//         {
-//            if(   (mntBoats[i].MNTState == MNTState_Choosen)
-//                ||(mntBoats[i].MNTState == MNTState_Default)   )
-//            {
-////               if(mntBoats[i].MNTState == MNTState_Choosen)
-//                  mntBoats[i].MNTState  = MNTState_Monite;
-//               mntBoats[i].MNTSetting.DSP_Setting  = mntSetting.DSP_Setting;
+         for(i=0;i<N_monitedBoat;i++)
+         {
+            if(   (MNT_Boats[i].mntState == MNTState_Choosen)
+                ||(MNT_Boats[i].mntState == MNTState_Default)   )
+            {
+//               if(mntBoats[i].MNTState == MNTState_Choosen)
+               MNT_Boats[i].mntState  = MNTState_Monited;
+               MNT_Boats[i].mntSetting.DSP_Setting  = mntSetting.DSP_Setting;
 
-//               mntBoats[i].MNTSetting.BGL_Setting.isEnable  = 
-//                           mntSetting.BGL_Setting.isEnable;
-//               mntBoats[i].MNTSetting.BGL_Setting.isSndEnable  = 
-//                           mntSetting.BGL_Setting.isSndEnable;
-//               mntBoats[i].MNTSetting.BGL_Setting.dist  = 
-//                           mntSetting.BGL_Setting.dist;   
-//               
-//               mntBoats[i].MNTSetting.DRG_Setting.isEnable  = 
-//                           mntSetting.DRG_Setting.isEnable;
-//               mntBoats[i].MNTSetting.DRG_Setting.isSndEnable  = 
-//                           mntSetting.DRG_Setting.isSndEnable;
-//               mntBoats[i].MNTSetting.DRG_Setting.dist  = 
-//                           mntSetting.DRG_Setting.dist;                 
-//            }
-//         }
+               MNT_Boats[i].mntSetting.BGL_Setting.isEnable  = 
+                           mntSetting.BGL_Setting.isEnable;
+               MNT_Boats[i].mntSetting.BGL_Setting.isSndEnable  = 
+                           mntSetting.BGL_Setting.isSndEnable;
+               MNT_Boats[i].mntSetting.BGL_Setting.Dist  = 
+                           mntSetting.BGL_Setting.Dist;   
+               
+               MNT_Boats[i].mntSetting.DRG_Setting.isEnable  = 
+                           mntSetting.DRG_Setting.isEnable;
+               MNT_Boats[i].mntSetting.DRG_Setting.isSndEnable  = 
+                           mntSetting.DRG_Setting.isSndEnable;
+               MNT_Boats[i].mntSetting.DRG_Setting.Dist  = 
+                           mntSetting.DRG_Setting.Dist;                 
+            }
+            else if(MNT_Boats[i].mntState == MNTState_None)
+            {
+               MNT_Boats[i].mntState  = MNTState_Default;
+            }
+         }
 //         
 
 //         mntSetting_init();
-//         printMoniteSetting();
-//         
+         printMoniteSetting();
+           
 					WM_BringToBottom(pMsg->hWin);
 					WM_SetFocus(menuWin);
 
@@ -277,18 +295,18 @@ WM_HWIN confirmWinCreate(void) {
 //}
 
 /*************************** End of file ****************************/
-/*
+
 void printMoniteSetting()
 {
    int i  = 0;
    int cnt  = 0;
    for(i=0;i<N_monitedBoat;i++)
    {
-      if(mntBoats[i].MNTState == MNTState_None)
+      if(MNT_Boats[i].mntState == MNTState_None)
          cnt++;
       printf("\r\n");
-      printf("%d-mmsi %ld\r\n",i,mntBoats[i].mmsi);
-      printf("%d-name %s\r\n", i,mntBoats[i].name);
+      printf("%d-mmsi %ld\r\n",i,MNT_Boats[i].mmsi);
+      printf("%d-name %s\r\n", i,MNT_Boats[i].name);
 //      printf("   DSP     %s\r\n",mntBoats[i].MNTSetting.DSP_Setting.isEnable>DISABLE?"Enable":"Disable");
 //      printf("   BGL     %s\r\n",mntBoats[i].MNTSetting.BGL_Setting.isEnable>DISABLE?"Enable":"Disable");
 //      printf("       snd %s\r\n",mntBoats[i].MNTSetting.BGL_Setting.isSndEnable>DISABLE?"Enable":"Disable");
@@ -296,7 +314,8 @@ void printMoniteSetting()
 //      printf("   DRG     %s\r\n",mntBoats[i].MNTSetting.DRG_Setting.isEnable>DISABLE?"Enable":"Disable");
 //      printf("       snd %s\r\n",mntBoats[i].MNTSetting.DRG_Setting.isSndEnable>DISABLE?"Enable":"Disable");
 //      printf("      dist %d\r\n",mntBoats[i].MNTSetting.DRG_Setting.dist);
-      printSetting(&(mntBoats[i].MNTSetting));
+      printSetting(&(MNT_Boats[i].mntSetting));
+      printf("/r/nState:%d",MNT_Boats[i].mntState);
       printf("still hava %d is default\r\n",cnt);
    } 
 }
@@ -306,10 +325,9 @@ void printSetting(MNT_SETTING * p_setting)
       printf("   DSP     %s\r\n",p_setting->DSP_Setting.isEnable>DISABLE?"Enable":"Disable");
       printf("   BGL     %s\r\n",p_setting->BGL_Setting.isEnable>DISABLE?"Enable":"Disable");
       printf("       snd %s\r\n",p_setting->BGL_Setting.isSndEnable>DISABLE?"Enable":"Disable");
-      printf("      dist %d\r\n",p_setting->BGL_Setting.dist);
+      printf("      dist %d\r\n",p_setting->BGL_Setting.Dist);
       printf("   DRG     %s\r\n",p_setting->DRG_Setting.isEnable>DISABLE?"Enable":"Disable");
       printf("       snd %s\r\n",p_setting->DRG_Setting.isSndEnable>DISABLE?"Enable":"Disable");
-      printf("      dist %d\r\n",p_setting->DRG_Setting.dist);
+      printf("      dist %d\r\n",p_setting->DRG_Setting.Dist);
 }
 
-*/

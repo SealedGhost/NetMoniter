@@ -19,7 +19,6 @@ extern const LPC_GPDMACH_TypeDef *pGPDMACh[8];
 extern const uint8_t GPDMA_LUTPerBurst[];
 extern const uint8_t GPDMA_LUTPerWid[];
 volatile int myCnt = 0;
-
 __IO uint8_t UART2_RX[50];//
 extern OS_EVENT *QSem;//
 extern OS_MEM   *PartitionPt;
@@ -27,10 +26,11 @@ extern uint8_t  Partition[MSG_QUEUE_TABNUM][100];
 void DMA_IRQHandler (void)
 {
 	uint8_t *pt,*pt0,index,err;	
-   printf("\r\nreach\r\n");
+
 	if (GPDMA_IntGetStatus(GPDMA_STAT_INT, 0))	/* 检查DMA通道0中断状态 */
 	{ 
 		GPDMA_ChannelCmd(0, DISABLE); 
+ 
 		if(GPDMA_IntGetStatus(GPDMA_STAT_INTTC, 0))/* 检查DMA通道0终端计数请求状态，读取DMACIntTCStatus寄存器来判断中断是否因为传输的结束而产生（终端计数） */ 
 		{			
 			GPDMA_ClearIntPending (GPDMA_STATCLR_INTTC, 0);/* 清除DMA通道0终端计数中断请求 */				
@@ -122,8 +122,8 @@ void DMA_IRQHandler (void)
 		}
 		if (GPDMA_IntGetStatus(GPDMA_STAT_INTERR, 0))		/* 检查DMA通道0中断错误状态 */
 		{
-  printf("\r\nerr\r\n");
 			GPDMA_ClearIntPending (GPDMA_STATCLR_INTERR, 0);//Channel0_Err++;	/* 清除DMA通道0中断错误请求 */
+   //lpc1788_DMA_Init();
 		}
 		GPDMA_ChannelCmd(0, ENABLE);
 	}
@@ -131,41 +131,42 @@ void DMA_IRQHandler (void)
 	if (GPDMA_IntGetStatus(GPDMA_STAT_INT, 1))
 	{
     GPDMA_ChannelCmd(1, DISABLE);
-		if(GPDMA_IntGetStatus(GPDMA_STAT_INTTC, 1))/* 检查DMA通道1终端计数请求状态，读取DMACIntTCStatus寄存器来判断中断是否因为传输的结束而产生（终端计数） */ 		
-		{
-			GPDMA_ClearIntPending (GPDMA_STATCLR_INTTC, 1);
-myCnt++;
-				pt=OSMemGet(PartitionPt,&err);
-				pt0=pt;
- 				for(index=0;index<50;index++)	
- 				{
- 					*pt=UART2_RX[index];
-					pt++;
-        }
-			  OSQPost(QSem,(void *)pt0);		
-    	
-       
-       
-//      for(index=0;index<50;index++)	
-//      {
-//        Partition[myCnt][index]=UART2_RX[index];
-//      }
+     
+    if(GPDMA_IntGetStatus(GPDMA_STAT_INTTC, 1))/* 检查DMA通道1终端计数请求状态，读取DMACIntTCStatus寄存器来判断中断是否因为传输的结束而产生（终端计数） */ 		
+    {
+       GPDMA_ClearIntPending (GPDMA_STATCLR_INTTC, 1);
+//       pt=OSMemGet(PartitionPt,&err);
+//       pt0=pt;
+//        for(index=0;index<50;index++)	
+//        {
+//          *pt=UART2_RX[index];
+//           pt++;
+//        }
+//        OSQPost(QSem,(void *)pt0);		
 
-//     OSQPost(QSem,(void *)Partition[myCnt]); 
-//     myCnt++;
-//     myCnt  = myCnt%(MSG_QUEUE_TABNUM+1);
-//						
+        
+       for(index=0;index<50;index++)	
+       {
+         Partition[myCnt][index]=UART2_RX[index];
+       }
+
+       OSQPost(QSem,(void *)Partition[myCnt]); 
+       myCnt++;
+       myCnt  = myCnt%(MSG_QUEUE_TABNUM);  
+printf("myCnt:%d",myCnt);       
+      
+       LPC_GPDMACH1->CControl = (LPC_GPDMACH1->CControl & 0xfffff000)|(sizeof(UART2_RX) &0x0fff);
+       LPC_GPDMACH1->CDestAddr = (uint32_t) &UART2_RX;//ÖØÖÃÆðÊ¼µØÖ·		
+printf("\r\nDMA OK.");
+       if (GPDMA_IntGetStatus(GPDMA_STAT_INTERR, 1))		/* 检查DMA通道0中断错误状态 */
+       {
+printf("\r\nDMA Err!");
+        GPDMA_ClearIntPending (GPDMA_STATCLR_INTERR, 1);//Channel0_Err++;	/* 清除DMA通道0中断错误请求 */
+        DMA_Config(2);  //lpc1788_DMA_Init();
+       }
+       GPDMA_ChannelCmd(1, ENABLE);		
     }
-		LPC_GPDMACH1->CControl = (LPC_GPDMACH1->CControl & 0xfffff000)|(sizeof(UART2_RX) &0x0fff);
- 		LPC_GPDMACH1->CDestAddr = (uint32_t) &UART2_RX;//ÖØÖÃÆðÊ¼µØÖ·		
-   
-  if (GPDMA_IntGetStatus(GPDMA_STAT_INTERR, 0))		/* 检查DMA通道0中断错误状态 */
-		{
-  printf("\r\nerr\r\n");
-			GPDMA_ClearIntPending (GPDMA_STATCLR_INTERR, 0);//Channel0_Err++;	/* 清除DMA通道0中断错误请求 */
-		}
-    GPDMA_ChannelCmd(1, ENABLE);		
-  }
+ }
 }
 
 

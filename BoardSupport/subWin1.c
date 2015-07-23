@@ -24,6 +24,7 @@
 #include "DIALOG.h"
 #include "Config.h"
 #include "MainTask.h"
+#include "Setting.h"
 
 /*********************************************************************
 *
@@ -35,6 +36,7 @@
 #define ID_LISTVIEW_0   (GUI_ID_USER + 0x01)
 #define ID_TEXT_0       (GUI_ID_USER + 0x02)
 
+/*------------------ external variables --------------------*/
 extern _boat* boat_list_p[BOAT_LIST_SIZE_MAX];
 
 extern WM_HWIN etWin;
@@ -44,17 +46,22 @@ extern WM_HWIN etWinCreate(void);
 
 extern short N_boat;
 extern short N_monitedBoat;
+extern MNT_BOAT MNT_Boats[MNT_NUM_MAX];
 extern unsigned char* pStrBuf;
 
-extern _boat* boat_list_p[BOAT_LIST_SIZE_MAX];
-extern _boat  boat_list[BOAT_LIST_SIZE_MAX];
 //extern MNT_BOAT mntBoats[MNT_BOAT_NUM_MAX];
 
-
+/*----------------- external functions --------------------------*/
 extern int getSelectedBoatIndex(WM_HWIN thisHandle, int col, int row);
 
+
+/*------------------ local variables ----------------------------*/
+
+
+
+/*------------------ local functions -----------------------------*/
 static void myListViewListener(WM_MESSAGE* pMsg);
-static void updateListViewContent(WM_HWIN thisHandle);
+static void UpdateListViewContent(WM_HWIN thisHandle);
 
 
 
@@ -134,7 +141,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     LISTVIEW_SetTextColor(hItem, LISTVIEW_CI_SELFOCUS,GUI_BLACK);
     LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SELFOCUS, GUI_WHITE);
     LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SEL, DEEPBLUE);
-    updateListViewContent(hItem);
+    UpdateListViewContent(hItem);
     // USER START (Optionally insert additional code for further widget initialization)
 	  	hItem  = etWinCreate();
     // USER 
@@ -215,7 +222,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 
       if(LISTVIEW_GetNumRows(pMsg->hWin) && (LISTVIEW_GetSel(pMsg->hWin)<0))
          LISTVIEW_SetSel(pMsg->hWin, 0);
-      updateListViewContent(thisListView);
+      UpdateListViewContent(thisListView);
       LISTVIEW_Callback(pMsg);
       break;		
     case WM_KEY:
@@ -226,7 +233,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 				case GUI_KEY_UP:
 				case GUI_KEY_DOWN:
 					LISTVIEW_Callback(pMsg);
-				  //showSelectedBoatInfo(thisListView);
+     
 					break;
 				
 				case GUI_KEY_LEFT:				
@@ -239,47 +246,36 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 				
 				
 				case GUI_KEY_ENTER:
-//      selectedRow  = LISTVIEW_GetSel(thisListView);
-//				 	index  = getSelectedBoatIndex(thisListView, 1, selectedRow);
-      index  = LISTVIEW_GetSel(thisListView);
-				  if(index >= 0)
-      {
-//         if( mntBoats[index].MNTState == MNTState_Default )
-//         {
-//            mntBoats[index].MNTState  = MNTState_None;
-//            LISTVIEW_SetItemText(thisListView, 2, index, "x");
-//         } 
-//         else if(mntBoats[index].MNTState == MNTState_Monite)           
-//         {
-//            mntBoats[index].MNTState  = MNTState_Choosen;
-//            LISTVIEW_SetItemText(thisListView, 2, index, "o");
-//         }
-//         switch(mntBoats[index].MNTState)
-//         {
-//            case MNTState_Choosen:
-//                 mntBoats[index].MNTState  = MNTState_Monite;
-//                 LISTVIEW_SetItemText(thisListView, 2, index, "x");
-//                 break;
-//            case MNTState_Default:  
-//                 mntBoats[index].MNTState  = MNTState_None;
-//                 LISTVIEW_SetItemText(thisListView, 2, index, "x");
-//                 break;
-//            case MNTState_Monite:
-//                 mntBoats[index].MNTState  = MNTState_Choosen;
-//                 LISTVIEW_SetItemText(thisListView, 2, index, "o");
-//                 break;
-//            case MNTState_None:
-//                 mntBoats[index].MNTState  = MNTState_Default;
-//                 LISTVIEW_SetItemText(thisListView, 2, index, "o");
-//                 break;
-//         }
-       
-      }
-      
-					break;
+         index  = LISTVIEW_GetSel(thisListView);
+         
+         if(index >= 0)
+         {
+           switch(MNT_Boats[index].mntState)
+           {
+              case MNTState_Choosen:          
+                   MNT_Boats[index].mntState  = MNTState_Monited;
+                   LISTVIEW_SetItemText(thisListView, 2, index, "N");
+                   break;
+              case MNTState_Default:  
+                   MNT_Boats[index].mntState  = MNTState_None;
+                   LISTVIEW_SetItemText(thisListView, 2, index, "N");
+                   break;
+              case MNTState_Monited:
+                   MNT_Boats[index].mntState  = MNTState_Choosen;
+                   LISTVIEW_SetItemText(thisListView, 2, index, "Y");
+                   break;
+              case MNTState_None:
+                   MNT_Boats[index].mntState  = MNTState_Default;
+                   LISTVIEW_SetItemText(thisListView, 2, index, "Y");
+                   break;
+               default:      
+                   break;
+           }
+           LISTVIEW_Callback(pMsg);
+         }   
+			    		break;
 					
-				case GUI_KEY_BACKSPACE:
-INFO("case backspace");    
+				case GUI_KEY_BACKSPACE:   
 					WM_BringToTop(confirmWin);
 				  WM_SetFocus(confirmWin);
           break;					
@@ -306,41 +302,39 @@ INFO("case backspace");
 /* 更新监控设置的 LISTVIEW 条目
 *
 */
-static void updateListViewContent(WM_HWIN thisHandle)
+static void UpdateListViewContent(WM_HWIN thisHandle)
 {
 	WM_HWIN thisListView  = thisHandle;
 	
 	int i  = 0;
 	int NumOfRows  = 0;
-	
-	NumOfRows  = LISTVIEW_GetNumRows(thisListView);
-//	for(i=0;i<N_boat;i++)
-//	{
-//		// LISTVIEW 行数小于要显示的船的数量，添加行
-//		if(i+1 > NumOfRows)
-//		{
-//			LISTVIEW_AddRow(thisListView, NULL);
-//			NumOfRows  = LISTVIEW_GetNumRows(thisListView);
-//		}
-//		
-//    if(boat_list_p[i]->name[0] != '\0')
-//		   LISTVIEW_SetItemText(thisListView, 0, i, boat_list_p[i]->name);
-//		
-////		sprintf(pStrBuf, "%ld", test[i].user_id);
-////		LISTVIEW_SetItemText(thisListView, 1, i, pStrBuf);
-//		sprintf(pStrBuf, "%ld", boat_list_p[i]->user_id);
-//		LISTVIEW_SetItemText(thisListView, 1, i, pStrBuf);
-//		
-//		if(boat_list_p[i]->mntState)
-//			LISTVIEW_SetItemText(thisListView, 2, i, "o");
-//		else
-//			LISTVIEW_SetItemText(thisListView, 2, i, "x");
-//	}
 
-	
-	// LISTVIEW 行数大于要显示的船的数量，删除行
-//  NumOfRows  = LISTVIEW_GetNumRows(thisListView);
-	while(NumOfRows > N_boat)
+	NumOfRows  = LISTVIEW_GetNumRows(thisListView);
+ 
+ for(i=0;i<N_monitedBoat;i++)
+ {
+    if(i+1 > NumOfRows)
+    {
+       LISTVIEW_AddRow(thisListView, NULL);
+       NumOfRows  = LISTVIEW_GetNumRows(thisListView);
+    }
+INFO("\r\nmnt name:%s",MNT_Boats[i].name);    
+    sprintf(pStrBuf, "%s", MNT_Boats[i].name);
+    LISTVIEW_SetItemText(thisListView, 0, i, pStrBuf);
+    
+    sprintf(pStrBuf, "%09ld", MNT_Boats[i].mmsi);
+    LISTVIEW_SetItemText(thisListView, 1, i, pStrBuf);
+    
+    if(MNTState_Default == MNT_Boats[i].mntState)
+    {
+       LISTVIEW_SetItemText(thisListView, 2, i, "Y");
+    }
+    else
+    {
+       LISTVIEW_SetItemText(thisListView, 2, i, "N");
+    }
+ }
+	while(NumOfRows > N_monitedBoat)
 	{
 		LISTVIEW_DeleteRow(thisListView, NumOfRows-1);
 		NumOfRows  = LISTVIEW_GetNumRows(thisListView);

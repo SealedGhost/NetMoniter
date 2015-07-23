@@ -44,7 +44,7 @@
 #define ID_TEXT_7     (GUI_ID_USER + 0x19)
 #define ID_TEXT_8     (GUI_ID_USER + 0x1a)
 
-extern _boat* boat_list_p[BOAT_LIST_SIZE_MAX];
+//extern _boat* boat_list_p[BOAT_LIST_SIZE_MAX];
 
 extern WM_HWIN hDlg_FishMap;
 extern WM_HWIN menuWin;
@@ -163,19 +163,19 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 		GUI_SetColor(GUI_YELLOW);
 		GUI_SetTextMode(GUI_TM_TRANS);
 	  
-	  if( (index>=0) && (index<N_boat) )
-		{
-			GUI_DispStringAt(boat_list_p[index]->name,LV_MoniteList_WIDTH+90,80);
-			
-			lltostr(boat_list_p[index]->latitude,pStrBuf);
-			GUI_DispStringExAt(pStrBuf,LV_MoniteList_WIDTH+20,120);	
-			
-			lltostr(boat_list_p[index]->longitude,pStrBuf);
-			GUI_DispStringExAt(pStrBuf,LV_AllList_WIDTH,160);
-			
-			sprintf(pStrBuf, "%d", boat_list_p[index]->SOG);
-			GUI_DispStringExAt(pStrBuf,LV_AllList_WIDTH+40,200);
-  	}
+//	  if( (index>=0) && (index<N_boat) )
+//		{
+//			GUI_DispStringAt(boat_list_p[index]->name,LV_MoniteList_WIDTH+90,80);
+//			
+//			lltostr(boat_list_p[index]->latitude,pStrBuf);
+//			GUI_DispStringExAt(pStrBuf,LV_MoniteList_WIDTH+20,120);	
+//			
+//			lltostr(boat_list_p[index]->longitude,pStrBuf);
+//			GUI_DispStringExAt(pStrBuf,LV_AllList_WIDTH,160);
+//			
+//			sprintf(pStrBuf, "%d", boat_list_p[index]->SOG);
+//			GUI_DispStringExAt(pStrBuf,LV_AllList_WIDTH+40,200);
+//  	}
 		break;
 
   case WM_NOTIFY_PARENT:
@@ -268,9 +268,9 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 			{
 				case GUI_KEY_UP:
 				case GUI_KEY_DOWN:
-					LISTVIEW_Callback(pMsg);	
-   				showSelectedBoatInfo(thisListView);			
-					break;
+       LISTVIEW_Callback(pMsg);	
+//       showSelectedBoatInfo(thisListView);	
+       break;
 				
 				case GUI_KEY_LEFT:				
 					WM_SetFocus(menuWin);
@@ -311,17 +311,17 @@ static void updateListViewContent(WM_HWIN thisHandle)
 //		{	
 			Cnt++;
 			
-			if(Cnt > NumOfRows)
-			{
-				LISTVIEW_AddRow(thisListView, NULL);
-				NumOfRows  = LISTVIEW_GetNumRows(thisListView);
-			}
-			
-			sprintf(pStrBuf, "%ld", boat_list_p[i]->user_id);
-			LISTVIEW_SetItemText(thisListView, 1, i, pStrBuf);
-			
-			sprintf(pStrBuf, "%d", boat_list_p[i]->true_heading);
-			LISTVIEW_SetItemText(thisListView, 2, i, pStrBuf);
+//			if(Cnt > NumOfRows)
+//			{
+//				LISTVIEW_AddRow(thisListView, NULL);
+//				NumOfRows  = LISTVIEW_GetNumRows(thisListView);
+//			}
+//			
+//			sprintf(pStrBuf, "%ld", boat_list_p[i]->user_id);
+//			LISTVIEW_SetItemText(thisListView, 1, i, pStrBuf);
+//			
+//			sprintf(pStrBuf, "%d", boat_list_p[i]->true_heading);
+//			LISTVIEW_SetItemText(thisListView, 2, i, pStrBuf);
 //		}
 	}
 	NumOfRows  = LISTVIEW_GetNumRows(thisListView);
@@ -345,25 +345,7 @@ static void showSelectedBoatInfo(WM_HWIN thisHandle)
 	SelectedRow  = LISTVIEW_GetSel(thisListView);
 	
 	
-	if(SelectedRow >= 0)
-	{
-		LISTVIEW_GetItemText(thisListView,1,SelectedRow,pStrBuf,10);
-		
-		SelectedID  = strtoi(pStrBuf);
-		
-		while((boat_list_p[i]->user_id!=SelectedID) && (i<3))
-		{
-			i++;
-		}
-		/// Find the boat
-		if(i < 3)
-		{	
-       index  = i;
-		}
-		
-		WM_InvalidateRect(subWins[0],&infoRect);
 
-	}
 
 }
 

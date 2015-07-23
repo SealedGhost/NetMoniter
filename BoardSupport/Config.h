@@ -78,15 +78,15 @@
 
 
 
-#define BOAT_LIST_SIZE_MAX 100
-
+#define BOAT_LIST_SIZE_MAX  400
+#define MNT_NUM_MAX         20
 
 
 #define TIMESTAMP          100
 
 #define MSG_QUEUE_TABNUM   20
 
-//#define __INFO_ENABLE 
+#define __INFO_ENABLE 
 
 #ifndef __INFO_ENABLE
 

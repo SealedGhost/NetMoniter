@@ -6,6 +6,7 @@
 #include "lpc177x_8x_uart.h"
 #include "lpc177x_8x_timer.h"
 #include "Config.h"
+#include "Setting.h"
 
 
 //#ifndef test_test
@@ -13,10 +14,10 @@
 //#endif
 
 /* 定义任务优先级 */
-#define UI_Task_PRIO       11
-#define Insert_Task_PRIO      8
+#define UI_Task_PRIO             11
+#define Insert_Task_PRIO         8
 #define Refresh_Task_PRIO        9
-#define Task_Stack_Use_PRIO  10  
+#define Task_Stack_Use_PRIO      10  
 /* 定义任务堆栈大小 */
 #define USER_TASK_STACK_SIZE 384
 #define TOUCH_TASK_STACK_SIZE 256
@@ -42,8 +43,15 @@ void SysTick_Init(void);
 
 extern boat mothership;
 extern void MainTask(void);
-extern void insert(boat* boats, struct message_18* p_msg);
+extern int insert_18(struct message_18 * p_msg);
+extern int insert_24A(struct message_24_partA * p_msg);
+extern void updateTimeStamp(void);
+extern void myPrint(void);
 void mntSetting_init(void);
+
+///Insert , Refresh互斥信号量
+OS_EVENT * Refresher;
+OS_EVENT * Updater;
 
 ///--消息队列的定义部分---
 OS_EVENT *QSem;//定义消息队列指针
@@ -53,32 +61,37 @@ OS_MEM   *PartitionPt;//定义内存分区指针
 uint8_t  Partition[MSG_QUEUE_TABNUM][100];
 // #pragma arm section rwdata
 // uint8_t  Partition[20][300]__attribute__((at(0xA1FF0000)));
-
+uint8_t myErr;
+uint8_t myErr_2;
 int list_endIndex  = -1;
 
 ///* ADDRESS: 0xAC000000  SIZE: 0x400000  */
 #pragma arm section rwdata = "SD_RAM1", zidata = "SD_RAM1"
-_boat boat_list[BOAT_LIST_SIZE_MAX]; // 0x10000: 64K
-_boat *boat_list_p[BOAT_LIST_SIZE_MAX];
+//_boat boat_list[BOAT_LIST_SIZE_MAX];  0x10000: 64K
+//_boat *boat_list_p[BOAT_LIST_SIZE_MAX];
+SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
 _boat_m24A boat_list_24A[BOAT_LIST_SIZE_MAX];
 _boat_m24A *boat_list_p24A[BOAT_LIST_SIZE_MAX];
+BERTH Berthes[BOAT_LIST_SIZE_MAX];
 #pragma arm section rwdata
-//_boat boat_list[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1C00000)));
-_boat boat_list[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1D00000)));
 
-_boat *boat_list_p[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1E00000)));
-_boat *boat_start = boat_list;
-_boat *boat_end = boat_list;
+//_boat boat_list[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1C00000)));
+BERTH Berthes[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1D00000)));
+
+//_boat boat_list[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1D00000)));
+
+//_boat *boat_list_p[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1E00000)));
+SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1E00000)));
 
 _boat_m24A boat_list_24A[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1F00000)));;
 _boat_m24A *boat_list_p24A[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1F80000)));
-_boat_m24A *boat_start24A = boat_list_24A;
-_boat_m24A *boat_end24A = boat_list_24A;
+
 
 _boat_m24B boat_list_24B[BOAT_LIST_SIZE_MAX];
 _boat_m24B *boat_lisp_p24B[BOAT_LIST_SIZE_MAX];
-_boat_m24B *boat_start24B = boat_list_24B;
-_boat_m24B *boat_end24B = boat_list_24B;
+
+MNT_BOAT MNT_Boats[MNT_NUM_MAX];
+
 
 ///* ADDRESS: 0xAC000000  SIZE: 0x400000  */
 
@@ -105,12 +118,6 @@ _boat_m24B *boat_end24B = boat_list_24B;
 struct message_18 msg_18;
 
 short N_boat = 0;
-short N_monitedBoat  = 0;
-_boat test[3];
-_boat *test_p[500];
-char name1[20]="MAN DE LI";
-char name2[20]="ZHE DAI YU ";
-								
 
 
 void UI_Task(void *p_arg)/*描述(Description):	任务UI_Task*/
@@ -131,59 +138,34 @@ void Insert_Task(void *p_arg)  //等待接收采集到的数据
 //	static int a=0;
 	message_18 text_out;
 	message_24_partA text_out_24A;
-	type_of_ship text_out_type_of_ship;
-	
+	type_of_ship text_out_type_of_ship; 
 
+ USER_Init();
  
 	while(1)
 	{	
-// printf("\r\nInsert task"); 
+
 		s = OSQPend(QSem,0,&err);
     
     tmp  = translate_(s,&text_out,&text_out_24A,&text_out_type_of_ship);
 
-    
-//    if(tmp>0 && tmp<28)
-//    {
-//      msgCnt++;
-//      INFO("msgID:%d  msgCnt:%d",tmp,msgCnt);
-//    }
-//		switch(tmp)
-//		{
-//			case 18:      
-//				insert_18(boat_list, &text_out);
-////        boat_list[0].user_id  = msg_18.user_id;
-//				break;
-//			case 240:				
-//				insert_24A(boat_list,&text_out_24A);
-//				break;
-//			case 241:			
-//				insert_24B(boat_list,&text_out_type_of_ship);
-//				break;
-//			default:			
-//				break;
-//		}
-    
     switch(tmp)
     {
-   
+OSMutexPend(Refresher, 0, &myErr);   
        case 18:
-         insert_18(boat_list, &text_out);
-         break;
+            insert_18(&text_out);
+            break;
         case 240:
-         insert_24A(boat_list, &text_out_24A);
-
-//#if INFO_ENABLE
-//INFO("insert 24A");         
-//#endif
-         break;
+            insert_24A(&text_out_24A);
+            break;
         case 241:
-         insert_24B(boat_list, &text_out_type_of_ship);
+       
          break;
         default:
          break;
     }
-		OSMemPut(PartitionPt,s);
+OSMutexPost(Refresher);    
+//		OSMemPut(PartitionPt,s);
 
 
 		OSTimeDly(20); 
@@ -192,7 +174,6 @@ void Insert_Task(void *p_arg)  //等待接收采集到的数据
 }
 void Refresh_Task(void *p_arg)//任务Refresh_Task
 {
-
 	while(1)
 	{
 	
@@ -200,7 +181,14 @@ void Refresh_Task(void *p_arg)//任务Refresh_Task
 // 		if(boat_list_p) free(boat_list_p);
 // 		boat_list_p = (_boat**)malloc(sizeof(_boat*)*max_size);
 //printf("\r\nRefresh task and myCnt = %d",myCnt);		
-		updateTimeStamp(boat_list);
+//		updateTimeStamp(boat_list);
+INFO("Refresh Task");
+  OSMutexPend(Refresher, 0, &myErr);
+  OSMutexPend(Updater, 0, &myErr_2);
+  updateTimeStamp();
+  OSMutexPost(Updater);
+  OSMutexPost(Refresher);
+  
 		OSTimeDlyHMSM(0,0,3,0);
 	}
 }
@@ -229,64 +217,24 @@ void App_TaskStart(void)//初始化UCOS，初始化SysTick节拍，并创建三个任务
   int i  = 0;
 //	N_boat = 3;	
 
-	for(i=BOAT_LIST_SIZE_MAX;i>=0;i--)
-  {
-     boat_list[i].user_id  = 0;
-  }
+//	for(i=BOAT_LIST_SIZE_MAX;i>=0;i--)
+//  {
+//     boat_list[i].user_id  = 0;
+//  }
 
 //   mntSetting_init();
    
    
    mothership.latitude = 1927265;
-   mothership.longitude = 7128660;
+   mothership.longitude = 7128663;
    mothership.true_heading  = 0;
-//	msg_18.user_id  = 777777772;
-//  msg_18.SOG      = 6;
-//  msg_18.COG      = 2;
-//  msg_18.longitude = 72630000;
-//  msg_18.latitude  = 72630000;
-//  
-//  
-//	test[0].user_id = 11029;
-//	test[0].SOG = 5;
-//	test[0].COG = 5;
-//	test[0].isVisible = 1;
-//	test[0].true_heading = 180;
-//	test[0].longitude = 7305545;
-//	test[0].latitude = 1940726;
 
-//	
-//	test[1].user_id = 19283;
-//	test[0].SOG = 6;
-//	test[0].COG = 8;
-//	test[1].isVisible = 0;
-//	test[1].true_heading = 60;
-//	test[1].longitude = 7295545;
-//	test[1].latitude = 1949726;
-
-
-//	test[2].user_id = 19289;
-//	test[0].SOG = 9;
-//	test[0].COG = 23;
-//	test[2].isVisible = 1;
-//	test[2].true_heading = 270;
-//	test[2].longitude = 7299545;
-//	test[2].latitude = 1955726;
-
-//	
-//// 	test_p = (_boat**)malloc(sizeof(_boat*)*3);
-//	test_p[0] = &test[0];
-//	test_p[1] = &test[1];
-//	test_p[2] = &test[2];
-
-//	test_p[0] = &test[0];
-//	test_p[1] = &test[1];
-//	test_p[2] = &test[2];
-//  
   
   
 	OSInit();
 	SysTick_Init();/* 初始化SysTick定时器 */
+ Refresher  = OSMutexCreate(6,&myErr);
+ Updater    = OSMutexCreate(6,&myErr_2);
 	QSem = OSQCreate(&MsgQeueTb[0],MSG_QUEUE_TABNUM); //创建消息队列，10条消息
 	PartitionPt=OSMemCreate(Partition,MSG_QUEUE_TABNUM,100,&err);
 	

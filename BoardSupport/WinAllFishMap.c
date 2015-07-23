@@ -2,24 +2,23 @@
 
 #include "MainTask.h"
 
-//-Deleted by XiaoLu at 201/5/7
- /* 标示母船的位置 */
-  /*
-	 mapping mothership_location ={7305545,2030726,0,0};
-		*/
-//-Deleted end
 
-/* external variables */
+/*-------------------------- external variables ------------------------------*/
+
 extern WM_HWIN  menuWin;
 extern WM_HWIN  subWins[4];
-extern _boat boat_list[BOAT_LIST_SIZE_MAX];
-extern _boat* boat_list_p[BOAT_LIST_SIZE_MAX];
+extern WM_HWIN  etWin;
 extern boat mothership;
 extern short isAllBoatVisible;
 extern unsigned char * pStrBuf;
 
+extern SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
+extern BERTH * pHeader;
+/*--------------------- external variables ----------------------------------*/
 extern void Draw_ScaleRuler(int x0, int y0, long scaleVal);
 
+
+/*------------------------- local variables --------------------------------*/
 static WM_HTIMER reTimer;
 static unsigned int drawMapSwitch  = 1;
 unsigned int as[]  = {'1','2',176};
@@ -197,6 +196,9 @@ unsigned int getFishingAreaId(long longitude, long latitude )
 *    @outputs    :
 *    @return     :
 */
+
+
+
 void getWrapPara(long * halfDiff_lg, long * halfDiff_lt, scale_map* wrap_scale)
 {
   int i  = 0;
@@ -221,7 +223,7 @@ void getWrapPara(long * halfDiff_lg, long * halfDiff_lt, scale_map* wrap_scale)
   /// 找到第一个经纬度都不为 0 的 boat
   for(i=0;i<N_boat;i++)
   {
-     if( (boat_list_p[i]->latitude > 0)  &&  (boat_list_p[i]->longitude > 0) )
+     if( (SimpBerthes[i].latitude > 0)  &&  (SimpBerthes[i].longitude > 0) )
      {
         min_lg_index  = i;
         min_lt_index  = i;
@@ -234,16 +236,22 @@ void getWrapPara(long * halfDiff_lg, long * halfDiff_lt, scale_map* wrap_scale)
   ///分别查找最大最小经纬度的船的索引
   for(;i<N_boat;i++)
   {
-     if( (boat_list_p[i]->longitude < boat_list_p[min_lg_index]->longitude)  
-         &&  (boat_list_p[i]->longitude > 0)  &&  (boat_list_p[i])->latitude > 0 )
+     if( (SimpBerthes[i].longitude < SimpBerthes[min_lg_index].longitude)  
+         &&  (SimpBerthes[i].longitude > 0)  &&  (SimpBerthes[i].latitude > 0) )
        min_lg_index  = i;
-     else if(boat_list_p[i]->longitude > boat_list_p[max_lg_index]->longitude)
-       max_lg_index  = i;
+//     if( SimpBerthes[i].longitude < SimpBerthes[min_lg_index].longitude )
+//         min_lg_index  = i;
+//         
+     else if(SimpBerthes[i].longitude > SimpBerthes[max_lg_index].longitude)
+        max_lg_index  = i;
      
-     if( (boat_list_p[i]->latitude < boat_list_p[min_lt_index]->latitude)  
-         &&  (boat_list_p[i]->latitude >0)  &&  (boat_list_p[i]->longitude > 0) )
+     if( (SimpBerthes[i].latitude < SimpBerthes[min_lt_index].latitude)  
+         &&  (SimpBerthes[i].latitude >0)  &&  (SimpBerthes[i].longitude > 0) )
        min_lt_index  = i;
-     else if(boat_list_p[i]->latitude  > boat_list_p[max_lt_index]->latitude)
+//     if( SimpBerthes[i].latitude < SimpBerthes[min_lt_index].latitude )
+//         min_lt_index  = i;
+//         
+     else if(SimpBerthes[i].latitude  > SimpBerthes[max_lt_index].latitude)
        max_lt_index  = i;     
   }
   
@@ -255,44 +263,44 @@ void getWrapPara(long * halfDiff_lg, long * halfDiff_lt, scale_map* wrap_scale)
  ///   maxDiff_lg:表示适配区域的经度差（宽度）
  ///   maxDiff_lt:  ......      纬度差（高度） 
  ///   halfDiff_lg,halfDiff_lt: 适配区域中心点的经纬度坐标
-  if(mothership.longitude > boat_list_p[max_lg_index]->longitude)
+  if(mothership.longitude > SimpBerthes[max_lg_index].longitude)
   {
-     maxDiff_lg  = mothership.longitude - boat_list_p[min_lg_index]->longitude;  
-     *halfDiff_lg = mothership.longitude/2 + boat_list_p[min_lg_index]->longitude/2;
+     maxDiff_lg  = mothership.longitude - SimpBerthes[min_lg_index].longitude;  
+     *halfDiff_lg = mothership.longitude/2 + SimpBerthes[min_lg_index].longitude/2;
    
   }
-  else if(mothership.longitude < boat_list_p[min_lg_index]->longitude)
+  else if(mothership.longitude < SimpBerthes[min_lg_index].longitude)
   {
-     maxDiff_lg  = boat_list_p[max_lg_index]->longitude - mothership.longitude;
-     *halfDiff_lg = mothership.longitude/2 + boat_list_p[max_lg_index]->longitude/2;
+     maxDiff_lg  = SimpBerthes[max_lg_index].longitude - mothership.longitude;
+     *halfDiff_lg = mothership.longitude/2 + SimpBerthes[max_lg_index].longitude/2;
    
   }
   else  
   {
-     maxDiff_lg  = boat_list_p[max_lg_index]->longitude - boat_list_p[min_lg_index]->longitude;
-     *halfDiff_lg = boat_list_p[max_lg_index]->longitude/2 + boat_list_p[min_lg_index]->longitude/2;
+     maxDiff_lg  = SimpBerthes[max_lg_index].longitude - SimpBerthes[min_lg_index].longitude;
+     *halfDiff_lg = SimpBerthes[max_lg_index].longitude/2 + SimpBerthes[min_lg_index].longitude/2;
      
   }
      
      
-  if(mothership.latitude > boat_list_p[max_lt_index]->latitude)
+  if(mothership.latitude > SimpBerthes[max_lt_index].latitude)
   {
-     maxDiff_lt  = mothership.latitude - boat_list_p[min_lt_index]->latitude;
-     *halfDiff_lt = mothership.latitude/2 + boat_list_p[min_lt_index]->latitude/2;
+     maxDiff_lt  = mothership.latitude - SimpBerthes[min_lt_index].latitude;
+     *halfDiff_lt = mothership.latitude/2 + SimpBerthes[min_lt_index].latitude/2;
     
   }
      
-  else if(mothership.latitude < boat_list_p[min_lt_index]->latitude)
+  else if(mothership.latitude < SimpBerthes[min_lt_index].latitude)
   {
-     maxDiff_lt  = boat_list_p[max_lt_index]->latitude - mothership.latitude;
-     *halfDiff_lt = mothership.latitude/2 + boat_list_p[max_lt_index]->latitude/2;
+     maxDiff_lt  = SimpBerthes[max_lt_index].latitude - mothership.latitude;
+     *halfDiff_lt = mothership.latitude/2 + SimpBerthes[max_lt_index].latitude/2;
     
   }
      
   else
   {
-     maxDiff_lt  = boat_list_p[max_lt_index]->latitude  - boat_list_p[min_lt_index]->latitude;
-     *halfDiff_lt = boat_list_p[max_lt_index]->latitude/2 + boat_list_p[min_lt_index]->latitude/2;
+     maxDiff_lt  = SimpBerthes[max_lt_index].latitude  - SimpBerthes[min_lt_index].latitude;
+     *halfDiff_lt = SimpBerthes[max_lt_index].latitude/2 + SimpBerthes[min_lt_index].latitude/2;
     
   }
   
@@ -311,11 +319,13 @@ void getWrapPara(long * halfDiff_lg, long * halfDiff_lt, scale_map* wrap_scale)
   }
 }
 
+
 /**    SetWrapedView()
 *
 *   @Description:  得到适配渔区的参数后，以所得scale显示
 *
 */
+
 void setWrapedView()
 {
    ///若没有boat，则以母船为中心，用最小scale来显示
@@ -337,7 +347,7 @@ void setWrapedView()
 	 GUI_SetLineStyle(GUI_LS_SOLID);
 	 GUI_SetColor(GUI_BLUE);
    
-   disp_fish_boat(&wrapScale, lg, lt, MAP_LEFT/2+MAP_RIGHT/2, MAP_TOP/2+MAP_BOTTOM/2, boat_list_p, N_boat);
+   disp_fish_boat(&wrapScale, lg, lt, SimpBerthes, N_boat);
 }
 
 
@@ -507,9 +517,8 @@ void _CB_WM(WM_MESSAGE* pMsg)
 	 	GUI_SetFont (&GUI_Font24_ASCII);
 		GUI_ClearRectEx(&Rect);
 		GUI_DrawRectEx(&Rect);
-	  GUI_DispStringAt(test_p[i_cursor]->name, 8,2);
-			display_longitude_latitude(test_p[i_cursor]->longitude,8,26);
-			display_longitude_latitude(test_p[i_cursor]->latitude,10,50);
+
+
 		break;
 	default:
 		WM_DefaultProc(pMsg);
@@ -819,47 +828,7 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 								time_delay = 0;
 								WM_DeleteTimer(timer_cursor);
 								__cursor.speed = CURSOR_SPEED_SLOW;
-//								if(!WM_hwnd)
-//								{
-//								    for(i_cursor = 0;i_cursor<N_boat;i_cursor ++)
-//										{
-//											if(isAllBoatVisible || test_p[i_cursor]->isVisible)
-//											{
-//													if(  (test_p[i_cursor]->x  <= __cursor.x+__cursor.wide)
-//																&&(test_p[i_cursor]->x  >= __cursor.x-__cursor.wide)
-//																&&(test_p[i_cursor]->y  <= __cursor.y+__cursor.wide)
-//																&&(test_p[i_cursor]->y  >= __cursor.y-__cursor.wide)
-//																																										)
-//													{
 
-//														 updateTipLoc(__cursor.x, __cursor.y);
-//														 WM_hwnd  = WM_CreateWindow(tip_loc_x,tip_loc_y,tip_width,tip_height,WM_CF_SHOW,_CB_WM,0); 
-//						
-//														 InitText(pMsg,test_p[i_cursor]->user_id,test_p[i_cursor]->SOG,test_p[i_cursor]->COG,test_p[i_cursor]->true_heading,test_p[i_cursor]->longitude,test_p[i_cursor]->latitude,test_p[i_cursor]->name,test_p[i_cursor]->type_of_electronic_position_fixing_device);
-//														 break;
-//													}
-//											}
-//										}										
-//								}
-							 
-//							 else
-//							 {
-//										if(  (test_p[i_cursor]->x  <= __cursor.x+__cursor.wide)
-//											  &&(test_p[i_cursor]->x  >= __cursor.x-__cursor.wide)
-//										   &&(test_p[i_cursor]->y  <= __cursor.y+__cursor.wide)
-//										   &&(test_p[i_cursor]->y  >= __cursor.y-__cursor.wide)
-//										                                                        )
-//										{
-//										}
-//										else
-//										{
-//											  CleanText(pMsg);
-//													WM_DeleteWindow(WM_hwnd);
-//													WM_hwnd=0;
-//			// 									WM_Invalidate(WM_HBKWIN);
-//			// 									GUI_Exec();
-//								  }
-//							 }
 						}
 					}
 					break;					
@@ -899,43 +868,7 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 							#endif
 							
 							__cursor.speed = CURSOR_SPEED_SLOW;
-//							if(!WM_hwnd){
-//								for(i_cursor = 0;i_cursor<N_boat;i_cursor ++)
-//										{
-//											if(isAllBoatVisible || test_p[i_cursor]->isVisible)
-//											{
-//													if(  (test_p[i_cursor]->x  <= __cursor.x+__cursor.wide)
-//																&&(test_p[i_cursor]->x  >= __cursor.x-__cursor.wide)
-//																&&(test_p[i_cursor]->y  <= __cursor.y+__cursor.wide)
-//																&&(test_p[i_cursor]->y  >= __cursor.y-__cursor.wide)
-//																																										)
-//													{
-//														 updateTipLoc(__cursor.x, __cursor.y);
-//														 WM_hwnd  = WM_CreateWindow(tip_loc_x,tip_loc_y,tip_width,tip_height,WM_CF_SHOW,_CB_WM,0); 																
-//														 InitText(pMsg,test_p[i_cursor]->user_id,test_p[i_cursor]->SOG,test_p[i_cursor]->COG,test_p[i_cursor]->true_heading,test_p[i_cursor]->longitude,test_p[i_cursor]->latitude,test_p[i_cursor]->name,test_p[i_cursor]->type_of_electronic_position_fixing_device);
-//													   break;
-//													}
-//											}
-//										}			
-//							}
-//							else
-//							{
-//									if(  (test_p[i_cursor]->x <= __cursor.x+__cursor.wide)
-//												&&(test_p[i_cursor]->x >= __cursor.x-__cursor.wide)
-//												&&(test_p[i_cursor]->y <= __cursor.y+__cursor.wide)
-//												&&(test_p[i_cursor]->y >= __cursor.y-__cursor.wide)
-//																																																																)
-//									{
-//									}
-//									else
-//									{
-//										 CleanText(pMsg);
-//											WM_DeleteWindow(WM_hwnd);
-//											WM_hwnd=0;
-//	// 									WM_Invalidate(WM_HBKWIN);
-//	// 									GUI_Exec();
-//								 }
-//							}
+
 						}
 					}
 
@@ -976,38 +909,7 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 							#endif
 							
 							__cursor.speed = CURSOR_SPEED_SLOW;
-//							if(!WM_hwnd){
-//								for(i_cursor = 0;i_cursor<N_boat;i_cursor ++)
-//										{
-//											if(isAllBoatVisible || test_p[i_cursor]->isVisible)
-//											{
-//													if(  (test_p[i_cursor]->x  <= __cursor.x+__cursor.wide)
-//																&&(test_p[i_cursor]->x  >= __cursor.x-__cursor.wide)
-//																&&(test_p[i_cursor]->y  <= __cursor.y+__cursor.wide)
-//																&&(test_p[i_cursor]->y  >= __cursor.y-__cursor.wide)
-//																																										)
-//													{
-//														 updateTipLoc(__cursor.x, __cursor.y);
-//														 WM_hwnd  = WM_CreateWindow(tip_loc_x,tip_loc_y,tip_width,tip_height,WM_CF_SHOW,_CB_WM,0); 																
-//														 InitText(pMsg,test_p[i_cursor]->user_id,test_p[i_cursor]->SOG,test_p[i_cursor]->COG,test_p[i_cursor]->true_heading,test_p[i_cursor]->longitude,test_p[i_cursor]->latitude,test_p[i_cursor]->name,test_p[i_cursor]->type_of_electronic_position_fixing_device);
-//														 break;
-//													}
-//											}
-//										}			
-//							}
-//							else
-//							{
-//								if((test_p[i_cursor]->x<=__cursor.x+__cursor.wide)&&(test_p[i_cursor]->x>=__cursor.x-__cursor.wide)&&(test_p[i_cursor]->y<=__cursor.y+__cursor.wide)&&(test_p[i_cursor]->y>=__cursor.y-__cursor.wide)){
-//							 }
-//							else
-//							{
-//									 CleanText(pMsg);
-// 									WM_DeleteWindow(WM_hwnd);
-//								 	WM_hwnd=0;
-//// 									WM_Invalidate(WM_HBKWIN);
-//// 									GUI_Exec();
-//							}
-//							}
+
 						}
 					}
 					break;
@@ -1047,35 +949,7 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 							#endif
 							
 							__cursor.speed = CURSOR_SPEED_SLOW;
-//							if(!WM_hwnd){
-//								for(i_cursor = 0;i_cursor<N_boat;i_cursor ++)
-//										{
-//											if(isAllBoatVisible || test_p[i_cursor]->isVisible)
-//											{
-//													if(  (test_p[i_cursor]->x  <= __cursor.x+__cursor.wide)
-//																&&(test_p[i_cursor]->x  >= __cursor.x-__cursor.wide)
-//																&&(test_p[i_cursor]->y  <= __cursor.y+__cursor.wide)
-//																&&(test_p[i_cursor]->y  >= __cursor.y-__cursor.wide)
-//																																										)
-//													{
-//														 updateTipLoc(__cursor.x, __cursor.y);
-//														 WM_hwnd  = WM_CreateWindow(tip_loc_x,tip_loc_y,tip_width,tip_height,WM_CF_SHOW,_CB_WM,0); 																
-//														 InitText(pMsg,test_p[i_cursor]->user_id,test_p[i_cursor]->SOG,test_p[i_cursor]->COG,test_p[i_cursor]->true_heading,test_p[i_cursor]->longitude,test_p[i_cursor]->latitude,test_p[i_cursor]->name,test_p[i_cursor]->type_of_electronic_position_fixing_device);
-//														 break;
-//													}
-//											}
-//										}			
-//							}else{
-//								if((test_p[i_cursor]->x<=__cursor.x+__cursor.wide)&&(test_p[i_cursor]->x>=__cursor.x-__cursor.wide)&&(test_p[i_cursor]->y<=__cursor.y+__cursor.wide)&&(test_p[i_cursor]->y>=__cursor.y-__cursor.wide)){
-//								}else
-//								{
-//									 CleanText(pMsg);
-// 									WM_DeleteWindow(WM_hwnd);
-//									 WM_hwnd=0;
-//// 									WM_Invalidate(WM_HBKWIN);
-//// 									GUI_Exec();
-//								}
-//							}
+
 						}
 					}
 
@@ -1100,6 +974,7 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 					WM_BringToTop (menuWin);
 					WM_ShowWindow(subWins[0]);
           WM_ShowWindow(subWins[1]);
+          WM_ShowWindow(etWin);
           WM_ShowWindow(subWins[2]);
           WM_ShowWindow(subWins[3]);
           WM_SetFocus(menuWin);
@@ -1147,11 +1022,12 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 			
 			GUI_SetLineStyle(GUI_LS_SOLID);
 			GUI_SetColor(GUI_BLUE);
-			disp_fish_boat(&measuring_scale[scale_choose],center.lgtude,center.lttude,center.x,center.y,boat_list_p,N_boat);          
+//			disp_fish_boat(&measuring_scale[scale_choose],center.lgtude,center.lttude,center.x,center.y,boat_list_p,N_boat);     
+		//	disp_fish_boat(&measuring_scale[scale_choose],center.lgtude,center.lttude,boat_list_p,N_boat);      
      }
      else
      {
-        setWrapedView();
+       setWrapedView();
      }
 
       
@@ -1159,48 +1035,12 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 			GUI_SetFont (&GUI_Font16B_1);
 			GUI_PNG_Draw(&acCompass,sizeof(acCompass),350,40);
 			
-//-Add by XiaoLu at 2015/5/7
-		
-		/* 重绘AllFishMap时判断tip框是否为存在状态,若为存在状态将tip重绘 
-		   防止窗口切换后本来存在的tip框没有显示
-		 */
-		 if(WM_hwnd)
-			{
-				 WM_BringToTop(WM_hwnd);
-			}
-//-Add end		 
-//			PaintFrame();
-			//InitText (pMsg);
-		////////////
+
+
 			GUI_SetFont (&GUI_Font16_ASCII);
-//			GUI_MULTIBUF_End();
-//			v = GUI_ALLOC_GetNumFreeBytes();
-//			GUI_DispDecAt (v , 150, 5, 10);
-//			v = GUI_ALLOC_GetNumUsedBytes();
-//			GUI_DispDecAt (v, 250, 5, 10);
-//			Draw_ScaleRuler(MAP_RIGHT-200,MAP_BOTTOM-50,measuring_scale[scale_choose].scaleVal);
-		//////////////////
+
 		break;
-// 		case WM_NOTIFY_PARENT:
-// 			if (pMsg->Data.v == WM_NOTIFICATION_RELEASED) 
-// 			{
-// 				int Id = WM_GetId(pMsg->hWinSrc);
-// 				switch (Id) 
-// 				{
-// 					case GUI_ID_BUTTON0:
-// 						_Language = 0;
-// 						break;
-// 					case GUI_ID_BUTTON1:
-// 						_Language = 1;
-// 						break;
-// 				}
-// 				_hTitle = TEXT_CreateEx(0, 0, LCD_GetXSize(), 32, WM_HBKWIN, WM_CF_SHOW, 0, GUI_ID_TEXT0, _GetLang(TEXT_ID_GELDAUTOMAT));
-// 				TEXT_SetTextAlign(_hTitle, GUI_TA_HCENTER);
-// 				TEXT_SetFont(_hTitle, MAIN_FONT);
-// 				_DeleteFrame();
-// 				_CreateFrame(&_cbInsertCard);
-// 			}
-// 			break;
+
 		default:
 			WM_DefaultProc(pMsg);
 	}

@@ -51,29 +51,37 @@
 #define ID_EDIT_5 (GUI_ID_USER + 0x15)
 #define ID_EDIT_6 (GUI_ID_USER + 0x16)
 
+
+/*------------------- external variables ------------------------*/
+extern short N_monitedBoat;
+extern WM_HWIN subWins[4];
+extern unsigned char * pStrBuf;
+extern WM_HWIN confirmWin;
+
+/*------------------- external functions ------------------------*/
+
+
+/*------------------- local    variables -------------------------*/
 WM_HWIN etWin ;
 WM_HWIN hEts[7];
 
-extern short N_monitedBoat;
-
-
-extern WM_HWIN subWins[4];
-extern unsigned char * pStrBuf;
-
-
-extern WM_HWIN confirmWin;
-
 static int fdDist  = 0;
 static int zmDist  = 0;
-
 static void myEditListener(WM_MESSAGE* pMsg);
 static void myEditAddKeyEx(EDIT_Handle hObj, int key);
-// USER START (Optionally insert additional defines)
 
-
+MNT_SETTING mntSetting;
+/*------------------- local    functions -------------------------*/
 //void printMoniteSetting(void);
 //void printSetting(MNT_SETTING * p_setting);
 //extern void mntSetting_init(void);
+
+
+
+// USER START (Optionally insert additional defines)
+
+
+
 // USER END
 
 /*********************************************************************
@@ -142,7 +150,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     // Initialization of 'et_0'
     //
     hEts[0] = WM_GetDialogItem(pMsg->hWin, ID_EDIT_0);
-//    EDIT_SetText(hEts[0], mntSetting.DSP_Setting.isEnable>DISABLE?"Enable":"Disable");   
+    EDIT_SetText(hEts[0], mntSetting.DSP_Setting.isEnable>DISABLE?"Enable":"Disable");   
 	   WM_SetCallback(hEts[0],&myEditListener);
     EDIT_SetpfAddKeyEx(hEts[0],myEditAddKeyEx);
     
@@ -150,29 +158,29 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     // Initialization of 'et_1'
     //
     hEts[1] = WM_GetDialogItem(pMsg->hWin, ID_EDIT_1);
-//    EDIT_SetText(hEts[1], mntSetting.BGL_Setting.isEnable>DISABLE?"Enable":"Disable"); 
+    EDIT_SetText(hEts[1], mntSetting.BGL_Setting.isEnable>DISABLE?"Enable":"Disable"); 
 	   WM_SetCallback(hEts[1],&myEditListener);
     EDIT_SetpfAddKeyEx(hEts[1], myEditAddKeyEx);    
     //
     // Initialization of 'et_2'
     //
     hEts[2] = WM_GetDialogItem(pMsg->hWin, ID_EDIT_2);
-//	  	sprintf(pStrBuf, "%d",mntSetting.BGL_Setting.dist);
-//	  	EDIT_SetText(hEts[2], pStrBuf);  
+	  	sprintf(pStrBuf, "%d",mntSetting.BGL_Setting.Dist);
+	  	EDIT_SetText(hEts[2], pStrBuf);  
 	   WM_SetCallback(hEts[2],&myEditListener);	
     EDIT_SetpfAddKeyEx(hEts[2], myEditAddKeyEx);
     //
     // Initialization of 'et_3'
     //
     hEts[3] = WM_GetDialogItem(pMsg->hWin, ID_EDIT_3);
-//    EDIT_SetText(hEts[3], mntSetting.BGL_Setting.isSndEnable>DISABLE?"Enable":"Disable");
+    EDIT_SetText(hEts[3], mntSetting.BGL_Setting.isSndEnable>DISABLE?"Enable":"Disable");
 	   WM_SetCallback(hEts[3] ,&myEditListener);	
     EDIT_SetpfAddKeyEx(hEts[3], myEditAddKeyEx);    
     //
     // Initialization of 'et_4'
     //
     hEts[4]  = WM_GetDialogItem(pMsg->hWin, ID_EDIT_4);
-//    EDIT_SetText(hEts[4], mntSetting.DRG_Setting.isEnable>DISABLE?"Enable":"Disable");
+    EDIT_SetText(hEts[4], mntSetting.DRG_Setting.isEnable>DISABLE?"Enable":"Disable");
 	   WM_SetCallback(hEts[4],&myEditListener);
     EDIT_SetpfAddKeyEx(hEts[4], myEditAddKeyEx);    
    
@@ -180,14 +188,14 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     // Initialization of 'et_5'
     //
     hEts[5]  = WM_GetDialogItem(pMsg->hWin, ID_EDIT_5);   
-//    sprintf(pStrBuf, "%d",mntSetting.DRG_Setting.dist);
-//    EDIT_SetText(hEts[5], pStrBuf);     
+    sprintf(pStrBuf, "%d",mntSetting.DRG_Setting.Dist);
+    EDIT_SetText(hEts[5], pStrBuf);     
     WM_SetCallback(hEts[5],&myEditListener);
     EDIT_SetpfAddKeyEx(hEts[5], myEditAddKeyEx);
     
     
     hEts[6]  = WM_GetDialogItem(pMsg->hWin, ID_EDIT_6);
-//    EDIT_SetText(hEts[6], mntSetting.DRG_Setting.isSndEnable>DISABLE?"Enable":"Disable");
+    EDIT_SetText(hEts[6], mntSetting.DRG_Setting.isSndEnable>DISABLE?"Enable":"Disable");
     WM_SetCallback(hEts[6], &myEditListener);
     EDIT_SetpfAddKeyEx(hEts[6], myEditAddKeyEx);
     // USER START (Optionally insert additional code for further widget initialization)
@@ -343,7 +351,7 @@ static void myEditListener(WM_MESSAGE* pMsg)
 	WM_MESSAGE msg;
 	WM_HWIN thisEdit = pMsg->hWin;
 	
-	WM_HWIN focussedEdit  = WM_GetFocussedWindow();
+	WM_HWIN focussedEdit  = 0;
 	
 	int i  = 0;
 	int Step  = 0;
@@ -363,149 +371,111 @@ static void myEditListener(WM_MESSAGE* pMsg)
 				case GUI_KEY_DOWN:
 					GUI_StoreKeyMsg(GUI_KEY_TAB,1);
 					break;
-	
- /*
-				case GUI_KEY_RIGHT:
-
-					Step  = 2;
-			
-					//break;
-				case GUI_KEY_LEFT:
-					
-					Step  = (Step>1)?1:-1;
 		
-					while(focussedEdit != hEts[i])
-						i++;
-					
-					if(i<6)
-					{
-						//防盗报警距离设置
-						if(2 == i)
-						{
-							fdDist  += Step;
-							fdDist  = (fdDist+21)%21;
-							
-							sprintf(pStrBuf, "%d", fdDist);
-							EDIT_SetText(hEts[2], pStrBuf);
-						}
-						///走锚报警距离设置
-						else if(5 == i)
-						{
-							zmDist  += Step;
-							zmDist  = (zmDist+21)%21;
-
-							sprintf(pStrBuf, "%d", zmDist);
-              EDIT_SetText(hEts[5], pStrBuf);							
-						}
-						else
-						{
-							if( MoniteSetFlags & (0x1<<i) )
-							{
-								MoniteSetFlags  &= (~(0x1<<i));
-								EDIT_SetText(hEts[i],"Disable");
-							}
-							else
-							{
-								MoniteSetFlags  |= (0x1<<i);
-								EDIT_SetText(hEts[i],"Enable");
-							}
-						}
-					}
-					else 
-						printf("\r\nException occored!\r\n");
-				  break;
-*/		
     case GUI_KEY_RIGHT:
          Step  = 2;
     case GUI_KEY_LEFT:
          Step  = (Step>1)?1:-1;
-         
+         focussedEdit  = WM_GetFocussedWindow();
          while( (focussedEdit != hEts[i])  &&  (i<7) )
               i++;
-//         switch(i)
-//         {
-//            case 0:
-//                 if(mntSetting.DSP_Setting.isEnable)
-//                 {
-//                    mntSetting.DSP_Setting.isEnable  = DISABLE;
-//                    EDIT_SetText(hEts[0], "Disable");
-//                 }
-//                 else
-//                 {
-//                    mntSetting.DSP_Setting.isEnable  = ENABLE;
-//                    EDIT_SetText(hEts[0], "Enable");
-//                 }
-//                 break;
-//                 
-//            case 1:
-//                 if(mntSetting.BGL_Setting.isEnable)
-//                 {
-//                    mntSetting.BGL_Setting.isEnable  = DISABLE;
-//                    EDIT_SetText(hEts[1], "Disable");
-//                 }
-//                 else
-//                 {
-//                    mntSetting.BGL_Setting.isEnable  = ENABLE;
-//                    EDIT_SetText(hEts[1], "Enable");
-//                 }
-//                 break;
-//                 
-//            case 2:
-//                 mntSetting.BGL_Setting.dist  += Step;
-//                 mntSetting.BGL_Setting.dist  = (mntSetting.BGL_Setting.dist+21)%21;
-//                 
-//                 sprintf(pStrBuf, "%d", mntSetting.BGL_Setting.dist);
-//                 EDIT_SetText(hEts[2], pStrBuf);
-//                 break;
-//                 
-//            case 3:
-//                 if(mntSetting.BGL_Setting.isSndEnable) 
-//                 {                 
-//                    mntSetting.BGL_Setting.isSndEnable = DISABLE;
-//                    EDIT_SetText(hEts[3], "Disable");
-//                 } 
-//                 else
-//                 {                
-//                    mntSetting.BGL_Setting.isSndEnable  = ENABLE;
-//                    EDIT_SetText(hEts[3], "Enable");
-//                 }                   
-//                 break;  
-//            case 4:
-//                 if(mntSetting.DRG_Setting.isEnable)
-//                 { 
-//                    mntSetting.DRG_Setting.isEnable  = DISABLE;
-//                    EDIT_SetText(hEts[4], "Disable");
-//                 }
-//                 else
-//                 {
-//                    mntSetting.DRG_Setting.isEnable  = ENABLE;
-//                    EDIT_SetText(hEts[4], "Enable");
-//                 }
-//                 break;            
-//                 
-//            case 5:
-//                 mntSetting.DRG_Setting.dist  += Step;
-//                 mntSetting.DRG_Setting.dist  = (mntSetting.DRG_Setting.dist+21)%21;
-//                 
-//                 sprintf(pStrBuf, "%d", mntSetting.DRG_Setting.dist);
-//                 EDIT_SetText(hEts[5], pStrBuf);
-//                 break; 
-//            
-//            case 6:
-//                 if(mntSetting.DRG_Setting.isSndEnable)
-//                 {
-//                    mntSetting.DRG_Setting.isSndEnable  = DISABLE;
-//                    EDIT_SetText(hEts[6], "Disable");
-//                 }
-//                 else
-//                 {
-//                    mntSetting.DRG_Setting.isSndEnable  = ENABLE;
-//                    EDIT_SetText(hEts[6], "Enable");
-//                 }
-//                 break;            
-//                 
-//         }
-    break;
+//printf("\r\n"); 
+//printf("pMsg:     %ld",pMsg->hWin);
+//printf("\r\nfocussed:%ld",focussedEdit); 
+//printf("\r\nsubWin[1]:%ld",subWins[1]);
+//printf("\r\netWin  :%ld",etWin);           
+//printf("\r\nhEts[0]:%ld",hEts[0]);
+//printf("\r\nhEts[1]:%ld",hEts[1]);
+//printf("\r\nhEts[2]:%ld",hEts[2]);
+//printf("\r\nhEts[3]:%ld",hEts[3]);
+//printf("\r\nhEts[4]:%ld",hEts[4]);
+//printf("\r\nhEts[5]:%ld",hEts[5]);
+//printf("\r\nhEts[6]:%ld",hEts[6]);
+
+         switch(i)
+         {
+            case 0:
+                 if(mntSetting.DSP_Setting.isEnable)
+                 {
+                    mntSetting.DSP_Setting.isEnable  = DISABLE;
+                    EDIT_SetText(hEts[0], "Disable");
+                 }
+                 else
+                 {
+                    mntSetting.DSP_Setting.isEnable  = ENABLE;
+                    EDIT_SetText(hEts[0], "Enable");
+                 }
+                 break;
+                 
+            case 1:
+                 if(mntSetting.BGL_Setting.isEnable)
+                 {
+                    mntSetting.BGL_Setting.isEnable  = DISABLE;
+                    EDIT_SetText(hEts[1], "Disable");
+                 }
+                 else
+                 {
+                    mntSetting.BGL_Setting.isEnable  = ENABLE;
+                    EDIT_SetText(hEts[1], "Enable");
+                 }
+                 break;
+                 
+            case 2:
+                 mntSetting.BGL_Setting.Dist  += Step;
+                 mntSetting.BGL_Setting.Dist  = (mntSetting.BGL_Setting.Dist+21)%21;
+                 
+                 sprintf(pStrBuf, "%d", mntSetting.BGL_Setting.Dist);
+                 EDIT_SetText(hEts[2], pStrBuf);
+                 break;
+                 
+            case 3:
+                 if(mntSetting.BGL_Setting.isSndEnable) 
+                 {                 
+                    mntSetting.BGL_Setting.isSndEnable = DISABLE;
+                    EDIT_SetText(hEts[3], "Disable");
+                 } 
+                 else
+                 {                
+                    mntSetting.BGL_Setting.isSndEnable  = ENABLE;
+                    EDIT_SetText(hEts[3], "Enable");
+                 }                   
+                 break;  
+            case 4:
+                 if(mntSetting.DRG_Setting.isEnable)
+                 { 
+                    mntSetting.DRG_Setting.isEnable  = DISABLE;
+                    EDIT_SetText(hEts[4], "Disable");
+                 }
+                 else
+                 {
+                    mntSetting.DRG_Setting.isEnable  = ENABLE;
+                    EDIT_SetText(hEts[4], "Enable");
+                 }
+                 break;            
+                 
+            case 5:
+                 mntSetting.DRG_Setting.Dist  += Step;
+                 mntSetting.DRG_Setting.Dist  = (mntSetting.DRG_Setting.Dist+21)%21;
+                 
+                 sprintf(pStrBuf, "%d", mntSetting.DRG_Setting.Dist);
+                 EDIT_SetText(hEts[5], pStrBuf);
+                 break; 
+            
+            case 6:
+                 if(mntSetting.DRG_Setting.isSndEnable)
+                 {
+                    mntSetting.DRG_Setting.isSndEnable  = DISABLE;
+                    EDIT_SetText(hEts[6], "Disable");
+                 }
+                 else
+                 {
+                    mntSetting.DRG_Setting.isSndEnable  = ENABLE;
+                    EDIT_SetText(hEts[6], "Enable");
+                 }
+                 break;            
+                 
+         }
+         break;
     	
     case GUI_KEY_BACKSPACE:
     

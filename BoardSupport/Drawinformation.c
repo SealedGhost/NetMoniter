@@ -19,7 +19,7 @@ float getDistance(const long lt, const long lg)
 	
 }
 
-int strtoi(const char*str)
+long strtoi(const char*str)
 {
 	int val = 0;
 	short i = 0;
