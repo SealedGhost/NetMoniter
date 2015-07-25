@@ -82,7 +82,7 @@
 #define MNT_NUM_MAX         20
 
 
-#define TIMESTAMP          100
+#define TIMESTAMP          30
 
 #define MSG_QUEUE_TABNUM   20
 

@@ -8,7 +8,7 @@
 /* external variables */
 extern boat mothership;
 
-unsigned char strBuf[10];
+unsigned char strBuf[20];
 unsigned char* pStrBuf = strBuf;
 char du[5];
 char fen[6];
@@ -138,17 +138,34 @@ void lltostr(long l_o_l,char *str)
 	int minute_int  = 0;
 	int minute_dec  = 0;
 	char tmp[10];
+ if( l_o_l==0)
+ {
+    str[0]  = '?';
+    str[1]  = '?';
+    str[2]  = '?';
+    str[3]  = 176;
+    str[4]  = '?';
+    str[5]  = '?';
+    str[6]  = '.';
+    str[7]  = '?';
+    str[8]  = '?';
+    str[9]  = '?';
+    str[10] = '\0';
+ }
+ else
+ {
+    degree = l_o_l/(distance<<1);
+    minute_int = (l_o_l%(distance<<1))/mul_pow;
+    minute_dec = (l_o_l%(distance<<1))-minute_int*mul_pow;
+    
+   //	ttoi(degree,tmp);
+    sprintf(str,"%3d",degree);
+    str[3]  = 176;
+    sprintf(str+4,"%02d",minute_int);
+    str[6] = '.';
+    sprintf(str+7,"%03d",minute_dec); 
+ }
 
-	degree = l_o_l/(distance<<1);
-	minute_int = (l_o_l%(distance<<1))/mul_pow;
-	minute_dec = (l_o_l%(distance<<1))-minute_int*mul_pow;
-	
-//	ttoi(degree,tmp);
-	sprintf(str,"%03d",degree);
-	str[3]  = 176;
-	sprintf(str+4,"%02d",minute_int);
-	str[6] = '.';
-	sprintf(str+7,"%03d",minute_dec);
 }
 void PaintFrame() 
 {

@@ -33,7 +33,7 @@ void DMA_IRQHandler (void)
  
 		if(GPDMA_IntGetStatus(GPDMA_STAT_INTTC, 0))/* 检查DMA通道0终端计数请求状态，读取DMACIntTCStatus寄存器来判断中断是否因为传输的结束而产生（终端计数） */ 
 		{			
-			GPDMA_ClearIntPending (GPDMA_STATCLR_INTTC, 0);/* 清除DMA通道0终端计数中断请求 */				
+//			GPDMA_ClearIntPending (GPDMA_STATCLR_INTTC, 0);/* 清除DMA通道0终端计数中断请求 */				
      switch (DMADest_Buffer[0])
 			{
 			
@@ -120,11 +120,15 @@ void DMA_IRQHandler (void)
 														| GPDMA_DMACCxControl_DI \
 														| GPDMA_DMACCxControl_I;			
 		}
-		if (GPDMA_IntGetStatus(GPDMA_STAT_INTERR, 0))		/* 检查DMA通道0中断错误状态 */
+		if (GPDMA_IntGetStatus(GPDMA_STAT_INTERR, 0) )		/* 检查DMA通道0中断错误状态 */
 		{
+  printf(" \n\r\aDMA ERR!\n\r\a");
 			GPDMA_ClearIntPending (GPDMA_STATCLR_INTERR, 0);//Channel0_Err++;	/* 清除DMA通道0中断错误请求 */
-   //lpc1788_DMA_Init();
+   lpc1788_DMA_Init();
 		}
+  
+  
+  GPDMA_ClearIntPending (GPDMA_STATCLR_INTTC, 0);
 		GPDMA_ChannelCmd(0, ENABLE);
 	}
 ///////////////////////////////////////////////////////	
@@ -134,7 +138,7 @@ void DMA_IRQHandler (void)
      
     if(GPDMA_IntGetStatus(GPDMA_STAT_INTTC, 1))/* 检查DMA通道1终端计数请求状态，读取DMACIntTCStatus寄存器来判断中断是否因为传输的结束而产生（终端计数） */ 		
     {
-       GPDMA_ClearIntPending (GPDMA_STATCLR_INTTC, 1);
+//       GPDMA_ClearIntPending (GPDMA_STATCLR_INTTC, 1);
 //       pt=OSMemGet(PartitionPt,&err);
 //       pt0=pt;
 //        for(index=0;index<50;index++)	
@@ -153,19 +157,22 @@ void DMA_IRQHandler (void)
        OSQPost(QSem,(void *)Partition[myCnt]); 
        myCnt++;
        myCnt  = myCnt%(MSG_QUEUE_TABNUM);  
-printf("myCnt:%d",myCnt);       
+//printf("myCnt:%d",myCnt);       
       
        LPC_GPDMACH1->CControl = (LPC_GPDMACH1->CControl & 0xfffff000)|(sizeof(UART2_RX) &0x0fff);
        LPC_GPDMACH1->CDestAddr = (uint32_t) &UART2_RX;//ÖØÖÃÆðÊ¼µØÖ·		
-printf("\r\nDMA OK.");
-       if (GPDMA_IntGetStatus(GPDMA_STAT_INTERR, 1))		/* 检查DMA通道0中断错误状态 */
-       {
-printf("\r\nDMA Err!");
-        GPDMA_ClearIntPending (GPDMA_STATCLR_INTERR, 1);//Channel0_Err++;	/* 清除DMA通道0中断错误请求 */
-        DMA_Config(2);  //lpc1788_DMA_Init();
-       }
-       GPDMA_ChannelCmd(1, ENABLE);		
+//printf("\r\nDMA OK.\n\r");    
     }
+    
+    if (GPDMA_IntGetStatus(GPDMA_STAT_INTERR, 1)  )		/* 检查DMA通道0中断错误状态 */
+    {
+printf("\r\n\aDMA Err!\r\n");
+        GPDMA_ClearIntPending (GPDMA_STATCLR_INTERR, 1);//Channel0_Err++;	/* 清除DMA通道0中断错误请求 */
+        DMA_Config(1);  //lpc1788_DMA_Init();
+    }
+       
+    GPDMA_ClearIntPending (GPDMA_STATCLR_INTTC, 1);
+    GPDMA_ChannelCmd(1, ENABLE);		
  }
 }
 

@@ -35,6 +35,9 @@ extern BERTH * pHeader;
 extern SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
 extern MNT_BOAT MNT_Boats[MNT_NUM_MAX];
 
+
+extern WM_HWIN confirmWin;
+
 /*--- external functions ---*/
 //extern boat* boat_list_p[BOAT_LIST_SIZE_MAX];
 
@@ -97,7 +100,7 @@ static void myListViewListener(WM_MESSAGE* pMsg);
 static void updateListViewContent(WM_HWIN thisHandle);
 //static void showSelectedBoatInfo(WM_HWIN thisHandle);
 int getSelectedBoatIndex(WM_HWIN thisHandle, int col, int row);
-void disttostr(unsigned char * str, long num);
+void disttostr(unsigned char * str, int num);
 
 
 /*---------------- static variables ----------------------------*/
@@ -226,19 +229,22 @@ case WM_PAINT:
      GUI_SetTextMode(GUI_TM_TRANS);
 	  
      SelectedRow  = LISTVIEW_GetSel(WM_GetDialogItem(pMsg->hWin,ID_LISTVIEW_0)); 
+     
+     if(SelectedRow < 0)
+        break;
+     sprintf(pStrBuf,"%3d/%3d",SelectedRow+1,TotalRows);
 
-        sprintf(pStrBuf,"%3d/%3d",SelectedRow+1,TotalRows);
-        GUI_DispStringAt(pStrBuf,LV_AllList_WIDTH-200,LV_AllList_Y-40);
-       
-        GUI_DispStringAt(SimpBerthes[SelectedRow].pBoat->name,LV_AllList_WIDTH+50,80);       
-       
-        lltostr(SimpBerthes[SelectedRow].pBoat->latitude,pStrBuf);
-        GUI_DispStringExAt(pStrBuf,LV_AllList_WIDTH+20,120);	
-        
-        lltostr(SimpBerthes[SelectedRow].pBoat->longitude,pStrBuf);
-        GUI_DispStringExAt(pStrBuf,LV_AllList_WIDTH+20,160);
-        
-        GUI_DispDecAt(SimpBerthes[SelectedRow].pBoat->SOG,LV_AllList_WIDTH+80,200,3);    
+     GUI_DispStringAt(pStrBuf,LV_AllList_WIDTH-200,LV_AllList_Y-40);
+    
+     GUI_DispStringAt(SimpBerthes[SelectedRow].pBoat->name,LV_AllList_WIDTH+50,80);       
+    
+     lltostr(SimpBerthes[SelectedRow].pBoat->latitude,pStrBuf);    
+     GUI_DispStringExAt(pStrBuf,LV_AllList_WIDTH+20,120);
+     
+     lltostr(SimpBerthes[SelectedRow].pBoat->longitude,pStrBuf);  
+     GUI_DispStringExAt(pStrBuf,LV_AllList_WIDTH+20,160);
+     
+     GUI_DispDecAt(SimpBerthes[SelectedRow].pBoat->SOG,LV_AllList_WIDTH+80,200,3);    
 
 
 
@@ -309,6 +315,9 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 	const WM_KEY_INFO* pInfo;
 	WM_HWIN thisListView  = pMsg->hWin;
  
+ WM_MESSAGE myMsg;
+ int myMsgData  = 0;
+ 
  int selectedRow  = -1;
  int totalRows  = 0;
 	int i  = 0;
@@ -365,25 +374,36 @@ static void myListViewListener(WM_MESSAGE* pMsg)
          break;
     
 				case GUI_KEY_BACKSPACE:
-         for(i=0;i<N_boat;i++) 
-         {
-            if(MNTState_Choosen == SimpBerthes[i].pBoat->mntStates)
-            {
-INFO("insert name:%s",SimpBerthes[i].pBoat->name);            
-               insertNum  = MNT_insert(MNT_Boats,
-                             SimpBerthes[i].pBoat->user_id, 
-                             SimpBerthes[i].pBoat->name);
-               if( insertNum < 0 )
-               {
-INFO("MNT_insert failed!");  
-                  break;                              
-               }
-               else
-               {
-                  SimpBerthes[i].pBoat->mntStates  = MNTState_Monited;
-               }
-            }            
-         }       
+           myMsgData      = STORE_SETTING;
+           
+           myMsg.hWin     = confirmWin;
+           myMsg.hWinSrc  = thisListView;
+           myMsg.MsgId    = USER_MSG_CHOOSE;
+           myMsg.Data.p   = (void*)&myMsgData;
+           myMsg.Data.v   = myMsgData;
+           
+           WM_SendMessageNoPara(myMsg.hWin, myMsg.MsgId);
+//           WM_SendMessage(myMsg.hWin, &myMsg);
+//         for(i=0;i<N_boat;i++) 
+//         {
+//            if(MNTState_Choosen == SimpBerthes[i].pBoat->mntStates)
+//            {
+//INFO("insert name:%s",SimpBerthes[i].pBoat->name);            
+//               insertNum  = MNT_insert( MNT_Boats,
+//                                        SimpBerthes[i].pBoat,
+//                                        SimpBerthes[i].pBoat->user_id, 
+//                                        SimpBerthes[i].pBoat->name  );
+//               if( insertNum < 0 )
+//               {
+//INFO("MNT_insert failed!");  
+//                  break;                              
+//               }
+//               else
+//               {
+//                  SimpBerthes[i].pBoat->mntStates  = MNTState_Monited;
+//               }
+//            }            
+//         }       
          WM_SetFocus(menuWin);
          break;
  
@@ -416,6 +436,11 @@ INFO("MNT_insert failed!");
             SimpBerthes[i].pBoat->mntStates  = MNTState_None;
             LISTVIEW_SetItemText(thisListView, 3, selectedRow, "N");
          }
+         
+         else if(MNTState_Monited  == SimpBerthes[i].pBoat->mntStates)
+         {
+            
+         }
 //         OSMutexPost(Updater);
          break;
 
@@ -446,14 +471,11 @@ static void updateListViewContent(WM_HWIN thisHandle)
  int SelectedRow  = -1;
  long Id  = 0;
  
- BERTH * pTmp  = NULL;
-
    SelectedRow  = LISTVIEW_GetSel(thisListView);
  
    LISTVIEW_GetItemText(thisListView, 2, SelectedRow, pStrBuf, 10);
    Id  = strtoi(pStrBuf);
 
-   pTmp  = pHeader;
   
 	  NumOfRows  = LISTVIEW_GetNumRows(thisListView);
 	
@@ -471,6 +493,8 @@ static void updateListViewContent(WM_HWIN thisHandle)
           SelectedRow  = i;      
        }
 //      sprintf(pStrBuf, "%d", SimpBerthes[i].Dist);
+
+
       disttostr(pStrBuf, SimpBerthes[i].Dist);
       LISTVIEW_SetItemText(thisListView, 0, i, pStrBuf);
       
@@ -487,8 +511,9 @@ static void updateListViewContent(WM_HWIN thisHandle)
       }
    }
 	
-	// LISTVIEW 行数大于要显示的船的数量，删除行
-	while(NumOfRows > i+1)
+	// LISTVIEW 行数大于要显示的船的数量，删除行 
+ /// Warning: Delete first row error!
+	while(NumOfRows > N_boat)
 	{
 	 	LISTVIEW_DeleteRow(thisListView, NumOfRows-1);
 	 	NumOfRows  = LISTVIEW_GetNumRows(thisListView);
@@ -534,13 +559,13 @@ int getSelectedBoatIndex(WM_HWIN thisHandle,int col,int row)
 ////	}
 //}
 
-void disttostr(unsigned char * str, long num)
+void disttostr(unsigned char * str, int num)
 {
 
    if(num > 99999)
-      sprintf(str, "%d.%0d",num/100000,(num%100000)/100);
+      sprintf(str, "%s", "????");
    else if(num > 9999)
-      sprintf(str, "%d.%02d",num/10000, (num%10000)/10);
+      sprintf(str, "%2d.%02d",num/1000, (num%1000)/10);
    else 
       sprintf(str, "%0d.%03d", num/1000, (num%1000));
    

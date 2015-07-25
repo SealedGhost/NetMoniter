@@ -47,7 +47,7 @@
 
 
 // USER START (Optionally insert additional defines)
-
+extern  void  UpdateListViewContent(WM_HWIN thisHandle);
 // USER END
 
 /*********************************************************************
@@ -328,6 +328,7 @@ static void myButtonListener(WM_MESSAGE * pMsg)
 	{		
 		
     i  = 1;		
+  UpdateListViewContent(WM_GetDialogItem(subWins[1],GUI_ID_USER + 0x01));
 		WM_BringToTop(subWins[1]);
 		WM_BringToTop(etWin);
 	}
@@ -364,17 +365,18 @@ static void myButtonListener(WM_MESSAGE * pMsg)
 					break;
 				
 				case GUI_KEY_RIGHT:
+         if(i!=3)
           WM_SetFocus(subWins[i]);
 				  break;
 				case GUI_KEY_MENU:       
-				 WM_BringToTop(hDlg_FishMap);
+		    		 WM_BringToTop(hDlg_FishMap);
          WM_BringToBottom(menuWin);
          WM_HideWindow(subWins[0]);
          WM_HideWindow(subWins[1]);
          WM_HideWindow(subWins[2]);
          WM_HideWindow(subWins[3]);
          WM_HideWindow(etWin);
-				 WM_SetFocus(hDlg_FishMap);
+		    		 WM_SetFocus(hDlg_FishMap);
 					break;
 				
 				default:

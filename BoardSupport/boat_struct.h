@@ -4,12 +4,16 @@
 #include <stdlib.h>
 #include "GUI.h"
 #include "map_draw.h"
-#include "Setting.h"
+
 
 #define choose_4 4
 #define choose_3 40
 #define choose_2 500
 #define choose_1 1888
+
+typedef enum _MNT_States MNT_States;
+enum _MNT_States  {MNTState_None=0, MNTState_Choosen,MNTState_Default,MNTState_Monited};
+
 
 typedef struct _boat _boat;
 //typedef struct _ll_choose _ll_choose;

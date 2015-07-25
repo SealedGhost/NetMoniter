@@ -83,7 +83,7 @@ void USER_Init(void)
 {	
 	GPDMA_Init();
 	lpc1788_Uart_Init(0);/* 初始化串口Uart0 使用DMA通道0*/	
-	lpc1788_DMA_Init();  
+lpc1788_DMA_Init();  
 //	printf("uart0 init success!\n\r\r");	
 	UART_Send((UART_ID_Type)0, Buffer0,sizeof(Buffer0),BLOCKING);
 	

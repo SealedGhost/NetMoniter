@@ -1,8 +1,10 @@
 #ifndef _SETTING_H
 #define _SETTING_H
 
-typedef enum _MNT_States MNT_States;
-enum _MNT_States  {MNTState_None=0, MNTState_Choosen,MNTState_Default,MNTState_Monited};
+
+#include "boat_struct.h"
+
+
 
 typedef struct _DSP_SETTING DSP_SETTING;
 struct _DSP_SETTING
@@ -38,6 +40,7 @@ typedef struct _MNT_BOAT MNT_BOAT;
 struct _MNT_BOAT
 {
    long mmsi;
+   boat * pBoat;
    char name[20];
    MNT_States  mntState;
    MNT_SETTING mntSetting;
@@ -45,7 +48,7 @@ struct _MNT_BOAT
 };
 
 
-int MNT_insert(MNT_BOAT * pMNT_Boat, long mmsi, char * name);
+int MNT_insert(MNT_BOAT * pMNT_Boat, boat * pBoat, long mmsi, char * name);
 
 
 #endif

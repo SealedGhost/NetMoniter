@@ -15,6 +15,12 @@
 #include "string.h"
 #include "Config.h"
 
+#define USER_MSG_CHOOSE (WM_USER+0x01)
+#define STORE_SETTING   1
+#define CANCLE_MONITED  2
+
+
+
 extern WM_HWIN hDlg_FishMap;
 extern WM_HWIN hDlg_MonitorMap;
 extern WM_HWIN hDlg_AllList;

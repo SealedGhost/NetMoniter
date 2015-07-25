@@ -61,7 +61,7 @@ extern int getSelectedBoatIndex(WM_HWIN thisHandle, int col, int row);
 
 /*------------------ local functions -----------------------------*/
 static void myListViewListener(WM_MESSAGE* pMsg);
-static void UpdateListViewContent(WM_HWIN thisHandle);
+void UpdateListViewContent(WM_HWIN thisHandle);
 
 
 
@@ -302,7 +302,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 /* 更新监控设置的 LISTVIEW 条目
 *
 */
-static void UpdateListViewContent(WM_HWIN thisHandle)
+void UpdateListViewContent(WM_HWIN thisHandle)
 {
 	WM_HWIN thisListView  = thisHandle;
 	
@@ -318,7 +318,7 @@ static void UpdateListViewContent(WM_HWIN thisHandle)
        LISTVIEW_AddRow(thisListView, NULL);
        NumOfRows  = LISTVIEW_GetNumRows(thisListView);
     }
-INFO("\r\nmnt name:%s",MNT_Boats[i].name);    
+    
     sprintf(pStrBuf, "%s", MNT_Boats[i].name);
     LISTVIEW_SetItemText(thisListView, 0, i, pStrBuf);
     

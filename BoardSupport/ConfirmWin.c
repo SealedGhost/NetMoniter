@@ -25,6 +25,7 @@
 #include "MainTask.h"
 
 #include "Config.h"
+#include "Setting.h"
 
 /*********************************************************************
 *
@@ -112,6 +113,9 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
   // USER END
 
   switch (pMsg->MsgId) {
+  case USER_MSG_CHOOSE:
+     INFO("Case choose");
+      break;
   case WM_INIT_DIALOG:
     //
     // Initialization of 'Frm_Confirm'
@@ -201,7 +205,7 @@ printf("\r\n");
             }
          }
 //         
-
+         
 //         mntSetting_init();
          printMoniteSetting();
            
@@ -239,6 +243,7 @@ printf("\r\n");
     }
     break;
   // USER START (Optionally insert additional message handling)
+
   // USER END
   default:
     WM_DefaultProc(pMsg);

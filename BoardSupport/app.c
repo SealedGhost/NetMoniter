@@ -7,12 +7,14 @@
 #include "lpc177x_8x_timer.h"
 #include "Config.h"
 #include "Setting.h"
-
+#include "DMA.h"
 
 //#ifndef test_test
 //	#define test_test
 //#endif
 
+
+/*-------------------- Macro defines ---------------------*/
 /* 定义任务优先级 */
 #define UI_Task_PRIO             11
 #define Insert_Task_PRIO         8
@@ -23,6 +25,8 @@
 #define TOUCH_TASK_STACK_SIZE 256
 #define KEY_TASK_STACK_SIZE 128
 #define Task_Stack_Use_STACK_SIZE 128
+
+/*------------------- static ----------------------------*/
 /* 定义任务堆栈 */
 static	OS_STK	UI_Task_Stack[USER_TASK_STACK_SIZE];
 
@@ -36,12 +40,15 @@ static  OS_STK  Task_Stack_Use_Stack[Task_Stack_Use_STACK_SIZE];
 //static  OS_STK_DATA Insert_Task_Stack_Use;
 //static  OS_STK_DATA Refresh_Task_Stack_Use;
 
+
+
+/*----------------- external variables ------------------*/
 extern volatile int myCnt ;
 static volatile int msgCnt  = 0;
-void SysTick_Init(void);
-
 
 extern boat mothership;
+/*----------------- external function -------------------*/
+
 extern void MainTask(void);
 extern int insert_18(struct message_18 * p_msg);
 extern int insert_24A(struct message_24_partA * p_msg);
@@ -49,6 +56,7 @@ extern void updateTimeStamp(void);
 extern void myPrint(void);
 void mntSetting_init(void);
 
+/*----------------- Global   variables --------------------*/
 ///Insert , Refresh互斥信号量
 OS_EVENT * Refresher;
 OS_EVENT * Updater;
@@ -92,6 +100,19 @@ _boat_m24B *boat_lisp_p24B[BOAT_LIST_SIZE_MAX];
 
 MNT_BOAT MNT_Boats[MNT_NUM_MAX];
 
+struct message_18 msg_18;
+
+short N_boat = 0;
+
+/*----------------- local   function  --------------------*/
+
+
+void SysTick_Init(void);
+
+
+
+
+
 
 ///* ADDRESS: 0xAC000000  SIZE: 0x400000  */
 
@@ -115,9 +136,7 @@ MNT_BOAT MNT_Boats[MNT_NUM_MAX];
 //_boat_m24B *boat_start24B = boat_list_24B;
 //_boat_m24B *boat_end24B = boat_list_24B;
 
-struct message_18 msg_18;
 
-short N_boat = 0;
 
 
 void UI_Task(void *p_arg)/*描述(Description):	任务UI_Task*/
@@ -158,7 +177,7 @@ OSMutexPend(Refresher, 0, &myErr);
         case 240:
             insert_24A(&text_out_24A);
             break;
-        case 241:
+//        case 241:
        
          break;
         default:
@@ -184,12 +203,12 @@ void Refresh_Task(void *p_arg)//任务Refresh_Task
 //		updateTimeStamp(boat_list);
 INFO("Refresh Task");
   OSMutexPend(Refresher, 0, &myErr);
-  OSMutexPend(Updater, 0, &myErr_2);
+//  OSMutexPend(Updater, 0, &myErr_2);
   updateTimeStamp();
-  OSMutexPost(Updater);
+//  OSMutexPost(Updater);
   OSMutexPost(Refresher);
   
-		OSTimeDlyHMSM(0,0,3,0);
+		OSTimeDlyHMSM(0,0,10,0);
 	}
 }
 void Task_Stack_Use(void *p_arg)
@@ -242,7 +261,8 @@ void App_TaskStart(void)//初始化UCOS，初始化SysTick节拍，并创建三个任务
 	OSTaskCreateExt(Insert_Task,(void *)0,(OS_STK *)&Insert_Task_Stack[TOUCH_TASK_STACK_SIZE-1],Insert_Task_PRIO,Insert_Task_PRIO,(OS_STK *)&Insert_Task_Stack[0],TOUCH_TASK_STACK_SIZE,(void*)0,OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR );/* 创建任务 Insert_Task */
 	OSTaskCreateExt(Refresh_Task,  (void *)0,(OS_STK *)&Refresh_Task_Stack[KEY_TASK_STACK_SIZE-1],    Refresh_Task_PRIO,  Refresh_Task_PRIO  ,(OS_STK *)&Refresh_Task_Stack[0],  KEY_TASK_STACK_SIZE,(void*)0,  OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR);/* 创建任务 Refresh_Task */
 //	OSTaskCreate(Task_Stack_Use,(void *)0,(OS_STK *)&Task_Stack_Use_Stack[Task_Stack_Use_STACK_SIZE-1],  Task_Stack_Use_PRIO);/* 创建任务 Refresh_Task */
-
+//lpc1788_DMA_Init();  
+//	DMA_Config(1);
 	OSStart();
 }
 

@@ -33,8 +33,8 @@ const unsigned int  R_KM  = 6371;
 const unsigned int  R_NM  = (unsigned int)(0.54*R_KM);
 const float         LLTOA = PI/60000/180;
 
-BERTH * pHeader;
-
+BERTH * pHeader  = NULL;
+BERTH * pTail    = NULL;
 /*----------------------- local functions --------------------------*/
 int insert_18(struct message_18 * p_msg);
 int update_18(BERTH * pBerth, struct message_18 * p_msg);
@@ -56,26 +56,28 @@ int insert_18(struct message_18 * p_msg)
 {
    int i  = 0;
    
-   for(i=0;i<BOAT_LIST_SIZE_MAX;i++)
-   {
-      if(p_msg->user_id == 0)
-         return 0;
-   }
+   /// Give up berthes out of range .
    if( (p_msg->longitude < mothership.longitude-30000)  ||  (p_msg->longitude > mothership.longitude+30000) ) 
         return 0;
    if( (p_msg->latitude < mothership.latitude-30000)  ||  (p_msg->latitude > mothership.latitude+30000) )
         return 0;
    
+   /// Update existent berth
    for(i=0;i<BOAT_LIST_SIZE_MAX;i++)
    {
       if(Berthes[i].Boat.user_id == p_msg->user_id)
       {
+         /// We regard little offset as non-move ,just for optimizaton
           if(   NOT_ALMOST(p_msg->longitude,Berthes[i].Boat.longitude)  
              || NOT_ALMOST(p_msg->latitude,Berthes[i].Boat.latitude)    ) 
           {
                
                if(update_18(&(Berthes[i]), p_msg))
-                  return 1;
+               {
+//printf("Header:%p,Tail:%p\n\r",pHeader,pTail);
+                  return 1;               
+               }
+
                else
                   return -1;
           }
@@ -86,9 +88,12 @@ int insert_18(struct message_18 * p_msg)
       }
    }
    
+   /// Add non-existent berth
    if(add_18(p_msg))
+   {
+//printf("Header:%p,Tail:%p\n\r",pHeader,pTail);
       return 1;
-    
+   }
    return -1;
 }
 
@@ -104,10 +109,14 @@ int insert_24A(struct message_24_partA * p_msg)
    /// This Id exist
    for(i=0;i<BOAT_LIST_SIZE_MAX;i++)
    {
+      /// Update existent berth and add nonexistent one
       if(Berthes[i].Boat.user_id == p_msg->user_id)
       {
          if(update_24A(&(Berthes[i]), p_msg))
+         {
+//printf("Header:%p,Tail:%p\n\r",pHeader,pTail);         
             return  1;
+         }
           else
           {
              return -1;
@@ -116,8 +125,10 @@ int insert_24A(struct message_24_partA * p_msg)
    }
    
    if(add_24A(p_msg))
+   {
+//printf("Header:%p,Tail:%p\n\r",pHeader,pTail);   
       return 1;
-   
+   }
    return -1;
 }
 
@@ -131,48 +142,65 @@ int update_18(BERTH * pBerth, struct message_18 * p_msg)
  
    BERTH * tmp  = NULL;   
    lastDist  = pBerth->Boat.dist;
-printf("\r\nupdate 18");   
+printf("update 18\n\r");
+
+
+   /// Update struct elements  
    pBerth->Boat.SOG    = p_msg->SOG;
    pBerth->Boat.COG    = p_msg->COG;
-//   pBerth->Boat.true_heading  = p_msg->true_heading;
+   pBerth->Boat.true_heading  = p_msg->true_heading;
    pBerth->Boat.longitude     = p_msg->longitude;
    pBerth->Boat.latitude      = p_msg->latitude;
    
    Dist = getSphereDist(p_msg->latitude,p_msg->longitude,
                         mothership.latitude,mothership.longitude);  
    pBerth->Boat.dist  = Dist;
+   
    pBerth->Boat.time_cnt  = TIMESTAMP;
 
    tmp  = pBerth;
 
-   /// Distance did not change  
-   if(lastDist == Dist)   
+   /// Distance did not change ,we need do nothing. 
+   if(lastDist == Dist)
+   {
+ 
       return 1;
-      
+   }   
    /// Distance decrease
    if(Dist < lastDist)
    {
       /// pBerth do not need to change location
       if(pBerth->pLast == NULL)
-         return 1;
-         
+      {
+         return 1; 
+      }         
       if(Dist >= pBerth->pLast->Boat.dist)
+      {     
          return 1;
-      
+      }
       /// pBerth need to change location 
       while(tmp)
       {
          tmp  = tmp->pLast;
          
 
-         /// pBerth->dist is smallest,move it to head
-         if(tmp->pLast == NULL)
-         {
-      
+        /// pBerth->dist is smallest,move it to header
+        
+ /*        _________________________
+  *       /                         \
+  *      @here    NODE     NODE    |NODE|    NODE   NODE
+  *               tmp                
+  */
+//         if(tmp->pLast == NULL)
+         if(tmp == pHeader)
+         {  
             pBerth->pLast->pNext  = pBerth->pNext;
-            if(pBerth->pNext)
+//            if(pBerth->pNext)
+            if(pBerth != pTail)
                pBerth->pNext->pLast  = pBerth->pLast;
-             
+            else  
+               pTail  = pBerth->pLast;
+               
             tmp->pLast  = pBerth;
             pBerth->pNext  = tmp;
             pBerth->pLast  = NULL;
@@ -180,14 +208,22 @@ printf("\r\nupdate 18");
             return 1;
          }
          
-         /// Find the correct location and fix pBerth
+         /// Find the correct location and fix pBerth location
+         
+ /*                _______________________
+  *               /                       \
+  *      NODE   @here    NODE    NODE   |NODE|    NODE
+  *                      tmp
+  */
          if(Dist >= tmp->pLast->Boat.dist)
-         {
-        
+         {        
             pBerth->pLast->pNext  = pBerth->pNext;
-            if(pBerth->pNext)
+//            if(pBerth->pNext)
+            if(pBerth != pTail)
                pBerth->pNext->pLast  = pBerth->pLast;
-            
+            else
+               pTail  = pBerth->pLast;
+             
             pBerth->pLast  = tmp->pLast;
             pBerth->pNext  = tmp;
             tmp->pLast->pNext  = pBerth;
@@ -203,16 +239,13 @@ INFO("Err!");
    else 
    {
       if(pBerth->pNext == NULL)
+      {
          return 1;
-      
+      }
       if(Dist <= pBerth->pNext->Boat.dist)
+      {     
          return 1;
-       
-      /// pBerth will move right so update pHeader       
-//      if(pBerth->pLast == NULL)
-//      {
-//         pHeader  = pBerth->pNext;
-//      }
+      }
       
       while(tmp)
       {
@@ -220,27 +253,41 @@ INFO("Err!");
       
          tmp  = tmp->pNext;
          
-         /// pBerth is biggest
-         if(tmp->pNext == NULL)
-         {
-       
-            if(pBerth->pLast)
+         /// pBerth is biggest, move it to tail
+ /*                ____________________________
+  *               /                            \
+  *       NODE  |NODE|  NODE   NODE   NODE    @here
+  *                                    tmp
+  */       
+         if(tmp == pTail)
+         { 
+            if(pBerth != pHeader)
                pBerth->pLast->pNext  = pBerth->pNext;
+            else
+               pHeader  = pBerth->pNext;
             pBerth->pNext->pLast  = pBerth->pLast;
             
             tmp->pNext  = pBerth;
             pBerth->pLast  = tmp;
             pBerth->pNext  = NULL;
+            
+            pTail  = pBerth;
             return 1;
          }
          
+         
+         /// pBerth in middle of link list
+ /*              ____________________________
+  *             /                            \ 
+  *   NODE   |NODE|   NODE   NODE   NODE   @here   NODE   NODE
+  *                                                 tmp
+  */  
          if(Dist <= tmp->pNext->Boat.dist)
-         {
-        
-            if(pBerth->pLast)
+         {       
+            if(pBerth != pHeader)
                pBerth->pLast->pNext  = pBerth->pNext;
              else
-               pHeader  = tmp;
+               pHeader  = pBerth->pNext;
              pBerth->pNext->pLast  = pBerth->pLast;
              
              pBerth->pLast  = tmp;
@@ -256,13 +303,13 @@ INFO("Err!");
 }
 
 
-int add_18(struct message_18 * p_msg)
+int add_18(struct message_18 * p_msg)   
 {
    BERTH * buf  = NULL;
    BERTH * tmp  = NULL;
    
    int Dist  = 0;
-printf("\r\nAdd 18");
+printf("Add 18 \n\r");
    buf  = allocOneBerth();
    if(buf == NULL) 
    {
@@ -273,47 +320,68 @@ INFO("alloc berth failed!");
    buf->Boat.user_id  = p_msg->user_id;
    buf->Boat.SOG      = p_msg->SOG;
    buf->Boat.COG      = p_msg->COG;
-//   buf->Boat.true_heading    = p_msg->true_heading;
+   buf->Boat.true_heading    = p_msg->true_heading;
    buf->Boat.longitude       = p_msg->longitude;
    buf->Boat.latitude        = p_msg->latitude;
    Dist  = getSphereDist(p_msg->latitude, p_msg->longitude,
                          mothership.latitude, mothership.longitude);
    buf->Boat.dist  = Dist;
    buf->Boat.time_cnt  = TIMESTAMP;
+   
    if(pHeader == NULL)
    {
       pHeader = buf;
+      pTail   = buf;      
       return 1;
    }
    
-   /// Insert at header
+ /// Insert at header
+ /**   |
+  *    V
+  *  @here    NODE     NODE     NODE     NODE
+  *          header   
+  */  
    if(Dist <= pHeader->Boat.dist)
    {
       buf->pNext  = pHeader;
       pHeader->pLast  = buf;
-      pHeader  = buf;
+      pHeader  = buf;     
       return 1;
    }
    
    tmp  = pHeader;
    while(tmp)
    {
-      /// Insert at tail
-      if(tmp->pNext == NULL)
-      {
+ /// Insert at tail
+ /**                                    |
+  *                            tail     V
+  *   NODE    NODE    NODE    NODE    @here
+  *                            tmp     
+  */      
+      if(tmp == pTail)
+      {    
          tmp->pNext  = buf;
          buf->pLast  = tmp;
          buf->pNext  = NULL;
+         
+         pTail  = buf;
+        
          return 3;
       }
       
-      /// Insert at middle
+ /// Insert at middle  
+ /**                           |
+  *                            V
+  *   NODE    NODE    NODE   @here    NODE   NODE
+  *                    tmp                   
+  */  
       if(Dist <= tmp->pNext->Boat.dist)
-      {
+      {       
          buf->pNext  = tmp->pNext;
          buf->pLast  = tmp;
          tmp->pNext->pLast  = buf;
          tmp->pNext  = buf;
+       
          return 2;
       }
       
@@ -328,7 +396,7 @@ INFO("alloc berth failed!");
 int update_24A(BERTH * pBerth, struct message_24_partA * p_msg)
 {
    int i  = 0; 
-printf("\r\nupdate 24A");
+printf("update 24A \n\r");
    pBerth->Boat.time_cnt  = TIMESTAMP; 
    if(pBerth->Boat.name[0] == 0)
    {
@@ -355,9 +423,10 @@ int add_24A(struct message_24_partA * p_msg)
 {
    BERTH * buf  = NULL;
    BERTH * tmp  = NULL;
+
    int i  = 0;
    
-printf("\r\nadd 24An");   
+printf("add 24A \n\r");   
    buf  = allocOneBerth();
    
    if(buf == NULL)
@@ -365,9 +434,13 @@ printf("\r\nadd 24An");
 INFO("alloc berth failed!");   
       return -1;
    }
+//   buf->pLast  = NULL;
+//   buf->pNext  = NULL;
    
    buf->Boat.user_id  = p_msg->user_id;
+   buf->Boat.dist  = 999999;
    buf->Boat.time_cnt  = TIMESTAMP;
+   
    for(i=0;i<20;i++)
    {
       buf->Boat.name[i]  = p_msg->name[i];
@@ -381,14 +454,22 @@ INFO("alloc berth failed!");
    if(pHeader == NULL)
    {
       pHeader  = buf;
+      pTail    = buf;
       return 1;
    }
+  
+  /***     Add at tail  
+   *                                   |
+   *                                   V
+   *  NODE    NODE    NODE    NODE   @here
+   *                           tail
+   */                       
+   pTail->pNext  = buf;
+   buf->pLast    = pTail;
    
-   buf->pNext  = pHeader;
-   buf->pLast  = NULL;
-   pHeader->pLast  = buf;
-   
-   pHeader  = buf;
+   buf->pNext  = NULL;
+   pTail  = buf;
+
    return 1;
 }
 
@@ -401,20 +482,79 @@ void updateTimeStamp()
 {
 
    BERTH * tmp  = NULL;
+   BERTH * tmpTail  = pTail;
+   
+   BERTH * pCur  = NULL;
    int i  = 0;  
    int k  = 0;
-   tmp  = pHeader;   
-   while(tmp)
+   pCur  = pHeader; 
+   
+   while(pCur)
    {
-//      boat_list_p[i]  = &(tmp->Boat);
-      SimpBerthes[i].latitude   = tmp->Boat.latitude;
-      SimpBerthes[i].longitude  = tmp->Boat.longitude;
-      SimpBerthes[i].Dist       = tmp->Boat.dist;
-      SimpBerthes[i].pBoat      = &(tmp->Boat);
-      tmp  = tmp->pNext;
-      i++;
-   } 
-    N_boat  = i;    
+if( (pCur->pNext==NULL) && (pCur != tmpTail) )  
+INFO("ou ou"); 
+//if(pCur == pTail)      
+//      boat_list_p[i]  = &(pCur->Boat);
+      if(pCur->Boat.time_cnt > 0)
+      {
+         SimpBerthes[i].latitude   = pCur->Boat.latitude;
+         SimpBerthes[i].longitude  = pCur->Boat.longitude;
+         SimpBerthes[i].Dist       = pCur->Boat.dist;
+         SimpBerthes[i].pBoat      = &(pCur->Boat);
+         
+         pCur->Boat.time_cnt--;                   
+         pCur  = pCur->pNext;
+         i++;
+      }
+      else
+      {
+printf("Delete\n\r");      
+         /// Delete at header
+         if(pCur == pHeader)
+         {
+            pHeader  = pCur->pNext;
+            if(pCur->pNext)
+               pCur->pNext->pLast  = NULL;          
+         }
+         ///  Delete at middle
+         else if(pCur->pNext)
+         {
+            pCur->pLast->pNext  = pCur->pNext;
+            pCur->pNext->pLast  = pCur->pLast;
+         }
+         /// Delete at tail
+         else
+         {
+
+            pCur->pLast->pNext  = NULL;
+            pTail  = pCur->pLast;
+         }
+         tmp  = pCur->pNext;
+         
+         memset((void*)pCur, 0, sizeof(BERTH));
+         
+         pCur  = tmp;
+        
+      }
+
+   }
+
+   
+   printf("\n\r");
+    N_boat  = i; 
+INFO("N_boat:%d",N_boat);    
+
+
+   for(i=0;i<BOAT_LIST_SIZE_MAX;i++)
+   {
+      if(Berthes[i].Boat.user_id != 0)
+      {
+         k++;
+      }
+   }
+INFO("true N_boat:%d",k);  
+if(N_boat != k)
+printf("\a\n\rErr\n\r\a");
 }
 
 
@@ -438,6 +578,10 @@ static int getSphereDist(long lt_1,long lg_1, long lt_2, long lg_2)
 // printf("\r\ntmp:%f",tmp);
 // 
 // 
+ if( (lt_1 == 0) || (lg_1 == 0) )
+ {
+    return 999999;
+ }
 
 	dist = 6371 / 1.852 * acos(cos((f_1 - f_2)*PI / 180) / 2
 		- cos((f_1 + f_2)*PI / 180) / 2
@@ -461,11 +605,13 @@ static BERTH * allocOneBerth()
    {
       if(Berthes[i].Boat.user_id == 0)
       {         
-         return &Berthes[i];
+         return &(Berthes[i]);
       }
    }  
    return NULL;
 }
+
+
 
 
 void myPrint()
