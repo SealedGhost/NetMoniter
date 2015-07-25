@@ -12,6 +12,15 @@
 #include <ucos_ii.h>
 // #include "exfuns.h"
 
+
+
+////////
+///////
+//////
+////
+///
+//
+//
 extern volatile int TimeMS;  // Defined in GUI_X.c
 
 void SysTick_Handler (void);
@@ -40,8 +49,8 @@ int main(void)
 	CLKPWR_ConfigPPWR(CLKPWR_PCONP_PCGPIO, ENABLE);/* 打开GPIO外设电源，上电后GPIO电源默认是打开的，此行可去掉 */
 
 
-
-	USER_Init();//初始化UART0 ，UART2，打开Timer2
+//初始化UART0 ，UART2，打开Timer2
+	USER_Init();
 	lpc1788_Lcd_Init();	  /* 初始化LCD */	
 	LCD_test();
   //fs_test();

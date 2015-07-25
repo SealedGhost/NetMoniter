@@ -111,7 +111,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
   int i  = 0;
   // USER START (Optionally insert additional variables)
   // USER END
-
+INFO("confirm window case msg:%ld",pMsg->MsgId);
   switch (pMsg->MsgId) {
   case USER_MSG_CHOOSE:
      INFO("Case choose");

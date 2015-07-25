@@ -376,14 +376,15 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 				case GUI_KEY_BACKSPACE:
            myMsgData      = STORE_SETTING;
            
-           myMsg.hWin     = confirmWin;
+           myMsg.hWin     = WM_GetId(confirmWin);
            myMsg.hWinSrc  = thisListView;
            myMsg.MsgId    = USER_MSG_CHOOSE;
            myMsg.Data.p   = (void*)&myMsgData;
            myMsg.Data.v   = myMsgData;
-           
-           WM_SendMessageNoPara(myMsg.hWin, myMsg.MsgId);
-//           WM_SendMessage(myMsg.hWin, &myMsg);
+           WM_BringToTop(confirmWin);
+           WM_SetFocus(confirmWin);
+//           WM_SendMessageNoPara(myMsg.hWin, myMsg.MsgId);
+           WM_SendMessage(myMsg.hWin, &myMsg);
 //         for(i=0;i<N_boat;i++) 
 //         {
 //            if(MNTState_Choosen == SimpBerthes[i].pBoat->mntStates)
@@ -404,7 +405,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 //               }
 //            }            
 //         }       
-         WM_SetFocus(menuWin);
+//         WM_SetFocus(menuWin);
          break;
  
     case GUI_KEY_ENTER:
