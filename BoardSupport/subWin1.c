@@ -306,10 +306,9 @@ INFO("case backspace");
          } 
          else
          {
-INFO("No boat selected");  
-//            WM_BringToBottom(hDlg_FishMap) ;
+INFO("No boat selected"); 
+ 
             WM_SetFocus(menuWin); 
-//            WM_SetFocus(pMsg->hWin); 
             break;           
          } 
          
