@@ -3,7 +3,7 @@
 
 
 #include "boat_struct.h"
-
+#include "lpc_types.h"
 
 
 typedef struct _DSP_SETTING DSP_SETTING;
@@ -47,9 +47,25 @@ struct _MNT_BOAT
    
 };
 
+typedef struct _MNT_BERTH MNT_BERTH;
+struct _MNT_BERTH
+{
+  MNT_BOAT mntBoat;
+  MNT_BERTH * pNext;
+};
+
+
 
 int MNT_insert(MNT_BOAT * pMNT_Boat, boat * pBoat, long mmsi, char * name);
+int MNT_makeSettingUp(MNT_BOAT *pMNT_Boat,  int N, MNT_SETTING * pMNT_Setting);
+int MNT_deleteByIndex(MNT_BOAT * pMNT_Boat,int index, long id);
+int MNT_deleteById(MNT_BOAT * pMNT_Boat, long id);
+void MNT_init(MNT_SETTING * pMntSetting);
+void printMoniteSetting(MNT_BOAT * pMNT_Boat);
+void printSetting(MNT_SETTING * p_setting);
 
+
+int MNT_add(boat * pBoat, long mmsi, char * name);
 
 #endif
 

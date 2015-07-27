@@ -29,6 +29,7 @@ extern SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
 
 
 /*----------------------- local variables -------------------------*/
+static int mymyCnt  = 0;
 const unsigned int  R_KM  = 6371;
 const unsigned int  R_NM  = (unsigned int)(0.54*R_KM);
 const float         LLTOA = PI/60000/180;
@@ -142,7 +143,7 @@ int update_18(BERTH * pBerth, struct message_18 * p_msg)
  
    BERTH * tmp  = NULL;   
    lastDist  = pBerth->Boat.dist;
-printf("update 18\n\r");
+
 
 
    /// Update struct elements  
@@ -309,7 +310,7 @@ int add_18(struct message_18 * p_msg)
    BERTH * tmp  = NULL;
    
    int Dist  = 0;
-printf("Add 18 \n\r");
+
    buf  = allocOneBerth();
    if(buf == NULL) 
    {
@@ -396,7 +397,7 @@ INFO("alloc berth failed!");
 int update_24A(BERTH * pBerth, struct message_24_partA * p_msg)
 {
    int i  = 0; 
-printf("update 24A \n\r");
+
    pBerth->Boat.time_cnt  = TIMESTAMP; 
    if(pBerth->Boat.name[0] == 0)
    {
@@ -426,7 +427,7 @@ int add_24A(struct message_24_partA * p_msg)
 
    int i  = 0;
    
-printf("add 24A \n\r");   
+ 
    buf  = allocOneBerth();
    
    if(buf == NULL)
@@ -507,8 +508,7 @@ INFO("ou ou");
          i++;
       }
       else
-      {
-printf("Delete\n\r");      
+      {     
          /// Delete at header
          if(pCur == pHeader)
          {
@@ -540,9 +540,8 @@ printf("Delete\n\r");
    }
 
    
-   printf("\n\r");
-    N_boat  = i; 
-INFO("N_boat:%d",N_boat);    
+
+    N_boat  = i;    
 
 
    for(i=0;i<BOAT_LIST_SIZE_MAX;i++)
@@ -551,10 +550,12 @@ INFO("N_boat:%d",N_boat);
       {
          k++;
       }
-   }
-INFO("true N_boat:%d",k);  
-if(N_boat != k)
-printf("\a\n\rErr\n\r\a");
+   } 
+  if(N_boat != k)
+  {
+     mymyCnt++;
+     INFO("N_boat:%d < true N_Boat:%d %d err happend",N_boat,k,mymyCnt);
+  }
 }
 
 

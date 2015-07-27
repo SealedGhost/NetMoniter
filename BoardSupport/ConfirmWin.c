@@ -33,10 +33,10 @@
 *
 **********************************************************************
 */
-#define ID_FRAMEWIN_0 (GUI_ID_USER + 0x00)
-#define ID_BUTTON_0 (GUI_ID_USER + 0x01)
-#define ID_BUTTON_1 (GUI_ID_USER + 0x02)
-#define ID_TEXT_0 (GUI_ID_USER + 0x03)
+#define ID_WINDOW_0      (GUI_ID_USER + 0x00)
+#define ID_BUTTON_OK     (GUI_ID_USER + 0x01)
+#define ID_BUTTON_CANCEL (GUI_ID_USER + 0x02)
+#define ID_TEXT_CONTENT  (GUI_ID_USER + 0x03)
 
 
 /*------------------------- external variables -------------------------*/
@@ -47,20 +47,27 @@ extern WM_HWIN confirmWin;
 extern MNT_BOAT MNT_Boats[MNT_NUM_MAX];
 extern MNT_SETTING mntSetting;
 
-/*------------------------- external functions -------------------------*/
+extern SIMP_BERTH Simp_Berthes[BOAT_LIST_SIZE_MAX];
 
+/*------------------------- external functions -------------------------*/
+//extern int MNT_deleteByIndex(MNT_BOAT * pMNT_Boat,int index, long id);
+extern int MNT_deleteById(MNT_BOAT * pMNT_Boat, long id);
 
 
 
 /*------------------------- local variables ----------------------------*/
-
-
-
-
+static WM_HWIN dlgFrame;
+static WM_HWIN dlgTextContent;
+static WM_HWIN dlgBtOk;
+static WM_HWIN dlgBtCancel;
+static int userMsgChoose  = 0;
+static WM_HWIN myHWinSrc;
+static long ReceivedDatas[3] = {0};
+static int Option  = 0;
+static WM_MESSAGE myMsg;
 
 /*------------------------- local functions -----------------------------*/
-void printMoniteSetting(void);
-void printSetting(MNT_SETTING * p_setting);
+void mySB(WM_MESSAGE * pMsg);
 //extern void mntSetting_init(void);
 // USER START (Optionally insert additional defines)
 // USER END
@@ -80,10 +87,10 @@ void printSetting(MNT_SETTING * p_setting);
 *       _aDialogCreate
 */
 static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
-  { FRAMEWIN_CreateIndirect, "Frm_Confirm", ID_FRAMEWIN_0, 200, 120, 400, 240, 0, 0x64, 0 },
-  { BUTTON_CreateIndirect, "OK", GUI_ID_OK, 40, 100, 80, 40, 0, 0x0, 0 },
-  { BUTTON_CreateIndirect, "Cancel", GUI_ID_CANCEL, 280, 100, 80, 40, 0, 0x0, 0 },
-  { TEXT_CreateIndirect, "Text", ID_TEXT_0, 40, 20, 319, 45, 0, 0x64, 0 },
+  { WINDOW_CreateIndirect, "Win_Confirm", ID_WINDOW_0, 200, 120, 400, 240, 0, 0x64, 0 },
+  { BUTTON_CreateIndirect, "OK", ID_BUTTON_OK, 40, 100, 80, 40, 0, 0x0, 0 },
+  { BUTTON_CreateIndirect, "Cancel", ID_BUTTON_CANCEL, 280, 100, 80, 40, 0, 0x0, 0 },
+  { TEXT_CreateIndirect, "Text", ID_TEXT_CONTENT, 40, 20, 319, 45, 0, 0x64, 0 },
   // USER START (Optionally insert additional widgets)
   // USER END
 };
@@ -105,46 +112,44 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
 static void _cbDialog(WM_MESSAGE * pMsg) {
 	
 	const WM_KEY_INFO* pInfo;
-  WM_HWIN hItem;
+  WM_HWIN thisFrame  = pMsg->hWin;
+
   int     NCode;
   int     Id;
   int i  = 0;
   // USER START (Optionally insert additional variables)
   // USER END
-INFO("confirm window case msg:%ld",pMsg->MsgId);
   switch (pMsg->MsgId) {
-  case USER_MSG_CHOOSE:
-     INFO("Case choose");
-      break;
   case WM_INIT_DIALOG:
     //
     // Initialization of 'Frm_Confirm'
     //
-    hItem = pMsg->hWin;
-    FRAMEWIN_SetText(hItem, " Confirm?");
-    FRAMEWIN_SetTitleHeight(hItem, 20);
+//    
+//    FRAMEWIN_SetText(thisFrame, " Confirm?");
+//    FRAMEWIN_SetTitleHeight(thisFrame, 20);
     //
     // Initialization of 'bt_OK'
     //
-    hItem = WM_GetDialogItem(pMsg->hWin, GUI_ID_OK);
-    BUTTON_SetText(hItem, "OK");
-	  BUTTON_SetFont(hItem, GUI_FONT_16_1);
+    dlgBtOk = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_OK);
+//    WM_SetCallback(dlgBtOk, &mySB);
+    BUTTON_SetText(dlgBtOk, "OK");
+	   BUTTON_SetFont(dlgBtOk, GUI_FONT_16_1);
     //
     // Initialization of 'bt_Cancle'
     //
-    hItem = WM_GetDialogItem(pMsg->hWin, GUI_ID_CANCEL);
-    BUTTON_SetText(hItem, "Cancle");
-	  BUTTON_SetFont(hItem, GUI_FONT_16_1);
+    dlgBtCancel = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_CANCEL);
+    BUTTON_SetText(dlgBtCancel, "Cancle");
+	   BUTTON_SetFont(dlgBtCancel, GUI_FONT_16_1);
     //
     // Initialization of 'Text'
     //
-    hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_0);
-    TEXT_SetText(hItem, "Confirm the changes?");
-    TEXT_SetFont(hItem, GUI_FONT_16_1);
+    dlgTextContent = WM_GetDialogItem(pMsg->hWin, ID_TEXT_CONTENT);
+    TEXT_SetText(dlgTextContent, "Confirm the changes?");
+    TEXT_SetFont(dlgTextContent, GUI_FONT_16_1);
     // USER START (Optionally insert additional code for further widget initialization)
     // USER END
     break;
-		
+	
 	case WM_KEY:
 		pInfo  = (WM_KEY_INFO*)pMsg->Data.p;
 	
@@ -154,7 +159,9 @@ INFO("confirm window case msg:%ld",pMsg->MsgId);
 			case GUI_KEY_RIGHT:
 				GUI_StoreKeyMsg(GUI_KEY_TAB,1);
 			break;
-
+//   case GUI_KEY_ENTER:
+//INFO("case enter");   
+//        break;
 			
 			default:
 				break;
@@ -162,88 +169,93 @@ INFO("confirm window case msg:%ld",pMsg->MsgId);
 		break;
 		
   case WM_NOTIFY_PARENT:
-    Id    = WM_GetId(pMsg->hWinSrc);
-    NCode = pMsg->Data.v;
-    switch(Id) {
-    case GUI_ID_OK: // Notifications sent by 'bt_OK'
-      switch(NCode) {
-      case WM_NOTIFICATION_CLICKED:
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      case WM_NOTIFICATION_RELEASED:
-
-        // USER START (Optionally insert code for reacting on notification message)
-printf("\r\n");
-
-         for(i=0;i<N_monitedBoat;i++)
-         {
-            if(   (MNT_Boats[i].mntState == MNTState_Choosen)
-                ||(MNT_Boats[i].mntState == MNTState_Default)   )
-            {
-//               if(mntBoats[i].MNTState == MNTState_Choosen)
-               MNT_Boats[i].mntState  = MNTState_Monited;
-               MNT_Boats[i].mntSetting.DSP_Setting  = mntSetting.DSP_Setting;
-
-               MNT_Boats[i].mntSetting.BGL_Setting.isEnable  = 
-                           mntSetting.BGL_Setting.isEnable;
-               MNT_Boats[i].mntSetting.BGL_Setting.isSndEnable  = 
-                           mntSetting.BGL_Setting.isSndEnable;
-               MNT_Boats[i].mntSetting.BGL_Setting.Dist  = 
-                           mntSetting.BGL_Setting.Dist;   
-               
-               MNT_Boats[i].mntSetting.DRG_Setting.isEnable  = 
-                           mntSetting.DRG_Setting.isEnable;
-               MNT_Boats[i].mntSetting.DRG_Setting.isSndEnable  = 
-                           mntSetting.DRG_Setting.isSndEnable;
-               MNT_Boats[i].mntSetting.DRG_Setting.Dist  = 
-                           mntSetting.DRG_Setting.Dist;                 
-            }
-            else if(MNT_Boats[i].mntState == MNTState_None)
-            {
-               MNT_Boats[i].mntState  = MNTState_Default;
-            }
-         }
-//         
-         
-//         mntSetting_init();
-         printMoniteSetting();
-           
-					WM_BringToBottom(pMsg->hWin);
-					WM_SetFocus(menuWin);
-
-
-        // USER END
-        break;
-      // USER START (Optionally insert additional code for further notification handling)
-      // USER END
+    Id    = WM_GetId(pMsg->hWinSrc);    // Id of widget
+    NCode = pMsg->Data.v;               // Notification code
+    switch (NCode) {
+    
+    case WM_NOTIFICATION_RELEASED:      // React only if released
+      switch (Id) {
+      case ID_BUTTON_OK:
+//           switch(Option)
+//           {
+//              case CANCEL_MONITED:
+//INFO("reach");              
+//                   i  = MNT_deleteById(MNT_Boats, ReceivedDatas[2]);
+//INFO("index:%d",i);                   
+//                   MNT_Boats[i].pBoat->mntStates  = MNTState_None;
+//                   WM_BringToBottom(pMsg->hWin);
+//                   WM_SetFocus(menuWin);
+//                   break;
+//              
+//              case STORE_SETTING:
+//                   
+//                   break;
+//           }
+INFO("case BUTTON_OK");
+           myMsg.hWin     = myMsg.hWinSrc;
+           myMsg.hWinSrc  = pMsg->hWin;
+           myMsg.MsgId    = USER_MSG_ID_REPLY;
+           myMsg.Data.v   = REPLY_OK;
+           WM_SendMessage(myMsg.hWin, &myMsg);
+           break;
+      case ID_BUTTON_CANCEL:
+           WM_SetFocusOnPrevChild(confirmWin);
+//           switch(Option)
+//           {
+//              case CANCEL_MONITED:
+//                   WM_BringToBottom(pMsg->hWin);
+//                   WM_SetFocus(subWins[2]);
+//                   break;
+//           }
+INFO("case BUTTON_CANCEL");
+           myMsg.hWin     = myMsg.hWinSrc;
+           myMsg.hWinSrc  = pMsg->hWin;
+           myMsg.MsgId    = USER_MSG_ID_REPLY;
+           myMsg.Data.v   = REPLY_CANCEL;
+           WM_SendMessage(myMsg.hWin, &myMsg);
+           break;
       }
+      WM_BringToBottom(pMsg->hWin);
       break;
-    case GUI_ID_CANCEL: // Notifications sent by 'bt_Cancle'
-      switch(NCode) {
-      case WM_NOTIFICATION_CLICKED:
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      case WM_NOTIFICATION_RELEASED:
-        // USER START (Optionally insert code for reacting on notification message)
-	
-					WM_BringToBottom(pMsg->hWin);
-					WM_SetFocus(subWins[1]);
-					/// Action cancel
-
-        // USER END
-        break;
-      // USER START (Optionally insert additional code for further notification handling)
-      // USER END
-      }
-      break;
-    // USER START (Optionally insert additional code for further Ids)
-    // USER END
     }
     break;
   // USER START (Optionally insert additional message handling)
-
+  case USER_MSG_ID_CHOOSE:
+INFO("case user_msg_id_choose");  
+      Option  = pMsg->Data.v;
+      
+      myMsg.hWinSrc  = pMsg->hWinSrc;
+      myMsg.Data.v   = Option;
+      
+//      ReceivedDatas[2]  = ((long*)pMsg->Data.p)[2];
+INFO("Option:%d",Option);      
+//      myHWinSrc  = pMsg->hWinSrc;      
+      switch(Option)   
+      {
+         case CANCEL_MONITED:
+INFO("case cancel_monited");         
+              TEXT_SetText(dlgTextContent, "Confirm cancel monited state?");
+              userMsgChoose  = CANCEL_MONITED;
+              break;
+          
+         case STORE_SETTING:
+INFO("case store_setting");         
+              userMsgChoose  = STORE_SETTING;
+              TEXT_SetText(dlgTextContent, "Confirm changes?");         
+              break;
+              
+         default:
+INFO("Somethiing error!");         
+              break;
+      }
+      break;
+//      
+//      WM_BringToTop(confirmWin);
+//      WM_SetFocus(confirmWin);
+      break;
+//   case USER_MSG_ID_CHOOSE:
+//        
+//        break;
   // USER END
   default:
     WM_DefaultProc(pMsg);
@@ -264,8 +276,8 @@ printf("\r\n");
 WM_HWIN confirmWinCreate(void);
 WM_HWIN confirmWinCreate(void) {
   WM_HWIN hWin;
-
   hWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, WM_HBKWIN, 0, 0);
+//  res = GUI_ExecDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, WM_HBKWIN, 0, 0);
   return hWin;
 }
 
@@ -301,38 +313,4 @@ WM_HWIN confirmWinCreate(void) {
 
 /*************************** End of file ****************************/
 
-void printMoniteSetting()
-{
-   int i  = 0;
-   int cnt  = 0;
-   for(i=0;i<N_monitedBoat;i++)
-   {
-      if(MNT_Boats[i].mntState == MNTState_None)
-         cnt++;
-      printf("\r\n");
-      printf("%d-mmsi %ld\r\n",i,MNT_Boats[i].mmsi);
-      printf("%d-name %s\r\n", i,MNT_Boats[i].name);
-//      printf("   DSP     %s\r\n",mntBoats[i].MNTSetting.DSP_Setting.isEnable>DISABLE?"Enable":"Disable");
-//      printf("   BGL     %s\r\n",mntBoats[i].MNTSetting.BGL_Setting.isEnable>DISABLE?"Enable":"Disable");
-//      printf("       snd %s\r\n",mntBoats[i].MNTSetting.BGL_Setting.isSndEnable>DISABLE?"Enable":"Disable");
-//      printf("      dist %d\r\n",mntBoats[i].MNTSetting.BGL_Setting.dist);
-//      printf("   DRG     %s\r\n",mntBoats[i].MNTSetting.DRG_Setting.isEnable>DISABLE?"Enable":"Disable");
-//      printf("       snd %s\r\n",mntBoats[i].MNTSetting.DRG_Setting.isSndEnable>DISABLE?"Enable":"Disable");
-//      printf("      dist %d\r\n",mntBoats[i].MNTSetting.DRG_Setting.dist);
-      printSetting(&(MNT_Boats[i].mntSetting));
-      printf("/r/nState:%d",MNT_Boats[i].mntState);
-      printf("still hava %d is default\r\n",cnt);
-   } 
-}
-
-void printSetting(MNT_SETTING * p_setting)
-{
-      printf("   DSP     %s\r\n",p_setting->DSP_Setting.isEnable>DISABLE?"Enable":"Disable");
-      printf("   BGL     %s\r\n",p_setting->BGL_Setting.isEnable>DISABLE?"Enable":"Disable");
-      printf("       snd %s\r\n",p_setting->BGL_Setting.isSndEnable>DISABLE?"Enable":"Disable");
-      printf("      dist %d\r\n",p_setting->BGL_Setting.Dist);
-      printf("   DRG     %s\r\n",p_setting->DRG_Setting.isEnable>DISABLE?"Enable":"Disable");
-      printf("       snd %s\r\n",p_setting->DRG_Setting.isSndEnable>DISABLE?"Enable":"Disable");
-      printf("      dist %d\r\n",p_setting->DRG_Setting.Dist);
-}
 

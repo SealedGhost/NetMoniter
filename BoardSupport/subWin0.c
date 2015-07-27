@@ -129,12 +129,13 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
 static void _cbDialog(WM_MESSAGE * pMsg) {
   WM_HWIN hItem;
   int     NCode;
-  int     Id;
+  long  Id;
   int  SelectedRow  = -1;
+  int i  = 0;
   // USER START (Optionally insert additional variables)
   // USER END
 
-  switch (pMsg->MsgId) {
+  switch (pMsg->MsgId) { 
   case WM_INIT_DIALOG:	
     //
     // Initialization of 'Window'
@@ -170,7 +171,8 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     break;
 		
 	case WM_PAINT:
-	
+     updateListViewContent(WM_GetDialogItem(pMsg->hWin,ID_LISTVIEW_0));
+
      GUI_SetFont(&GUI_Font24_1);
      GUI_SetColor(GUI_YELLOW);
      GUI_SetTextMode(GUI_TM_TRANS);
@@ -178,24 +180,33 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
      SelectedRow  = LISTVIEW_GetSel(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0));
      if(SelectedRow < 0)
         break;
-     GUI_DispStringAt(MNT_Boats[SelectedRow].name, LV_MoniteList_WIDTH+50,80);
+     LISTVIEW_GetItemText(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0), 1, SelectedRow, pStrBuf, 10);
+     Id  = strtoi(pStrBuf);
+   
+     for(i=0;i<MNT_NUM_MAX;i++)
+     {
+        if(MNT_Boats[i].mmsi == Id)
+        break;
+     }
+
+     GUI_DispStringAt(MNT_Boats[i].name, LV_MoniteList_WIDTH+50,80);
      
-     lltostr(MNT_Boats[SelectedRow].pBoat->latitude, pStrBuf);
+     lltostr(MNT_Boats[i].pBoat->latitude, pStrBuf);
      GUI_DispStringExAt(pStrBuf, LV_MoniteList_WIDTH+20,120);
      
-     lltostr(MNT_Boats[SelectedRow].pBoat->longitude, pStrBuf);
+     lltostr(MNT_Boats[i].pBoat->longitude, pStrBuf);
      GUI_DispStringExAt(pStrBuf, LV_MoniteList_WIDTH+20,160);
      
-     GUI_DispDecAt(MNT_Boats[SelectedRow].pBoat->SOG,LV_MoniteList_WIDTH+80,200,3); 
+     GUI_DispDecAt(MNT_Boats[i].pBoat->SOG,LV_MoniteList_WIDTH+80,200,3); 
     
-     if(MNT_Boats[SelectedRow].mntSetting.DSP_Setting.isEnable == DISABLE)
+     if(MNT_Boats[i].mntSetting.DSP_Setting.isEnable == DISABLE)
         GUI_DispStringAt("Disable", LV_MoniteList_WIDTH+60,240);
      else
         GUI_DispStringAt("Enable",  LV_MoniteList_WIDTH+60,240);
         
-     GUI_DispDecAt(MNT_Boats[SelectedRow].mntSetting.BGL_Setting.Dist,
+     GUI_DispDecAt(MNT_Boats[i].mntSetting.BGL_Setting.Dist,
                    LV_MoniteList_WIDTH+60,280,3);
-     GUI_DispDecAt(MNT_Boats[SelectedRow].mntSetting.DRG_Setting.Dist,
+     GUI_DispDecAt(MNT_Boats[i].mntSetting.DRG_Setting.Dist,
                    LV_MoniteList_WIDTH+60,320,3);            
      break;
 
@@ -282,6 +293,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
          LISTVIEW_SetSel(pMsg->hWin, 0);
       updateListViewContent(thisListView);
       LISTVIEW_Callback(pMsg);
+      WM_InvalidateRect(subWins[0], &infoRect);
       break;
 		case WM_KEY:
 			pInfo  = (WM_KEY_INFO*)pMsg->Data.p;
@@ -325,26 +337,29 @@ static void updateListViewContent(WM_HWIN thisHandle)
 	int i  = 0;
 	int Cnt  = 0;
   int NumOfRows  = 0;
-	
+
 	NumOfRows  = LISTVIEW_GetNumRows(thisListView);
   
-	for(i=0;i<N_monitedBoat;i++)
+	for(i=0;i<MNT_NUM_MAX;i++)
 	{		
-    if(i+1 > NumOfRows)
+    if(MNT_Boats[i].mmsi > 0)
     {
-       LISTVIEW_AddRow(thisListView, NULL);
-       NumOfRows  = LISTVIEW_GetNumRows(thisListView);
+       Cnt++;
+       if(Cnt > NumOfRows)
+       {
+          LISTVIEW_AddRow(thisListView, NULL);
+          NumOfRows  = LISTVIEW_GetNumRows(thisListView);
+       }
+       
+       disttostr(pStrBuf, MNT_Boats[i].pBoat->dist);
+       LISTVIEW_SetItemText(thisListView, 0, Cnt-1, pStrBuf);
+       
+       sprintf(pStrBuf, "%09ld", MNT_Boats[i].mmsi);
+       LISTVIEW_SetItemText(thisListView, 1, Cnt-1, pStrBuf);
     }
-    
-    disttostr(pStrBuf, MNT_Boats[i].pBoat->dist);
-    LISTVIEW_SetItemText(thisListView, 0, i, pStrBuf);
-    
-    sprintf(pStrBuf, "%09ld", MNT_Boats[i].mmsi);
-    LISTVIEW_SetItemText(thisListView, 1, i, pStrBuf);
-    
 	}
 
-	while(NumOfRows > N_monitedBoat)
+	while(NumOfRows > Cnt)
 	{
 		LISTVIEW_DeleteRow(thisListView, NumOfRows-1);
 		NumOfRows  = LISTVIEW_GetNumRows(thisListView);

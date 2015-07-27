@@ -323,6 +323,7 @@ static void myButtonListener(WM_MESSAGE * pMsg)
 		
 		i  = 0;
     WM_BringToTop(subWins[0]);	
+    
 	}
 	else if(handle == hButtons[1])
 	{		

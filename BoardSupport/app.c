@@ -81,6 +81,7 @@ SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
 _boat_m24A boat_list_24A[BOAT_LIST_SIZE_MAX];
 _boat_m24A *boat_list_p24A[BOAT_LIST_SIZE_MAX];
 BERTH Berthes[BOAT_LIST_SIZE_MAX];
+
 #pragma arm section rwdata
 
 //_boat boat_list[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1C00000)));
@@ -201,7 +202,6 @@ void Refresh_Task(void *p_arg)//»ŒŒÒRefresh_Task
 // 		boat_list_p = (_boat**)malloc(sizeof(_boat*)*max_size);
 //printf("\r\nRefresh task and myCnt = %d",myCnt);		
 //		updateTimeStamp(boat_list);
-INFO("Refresh Task");
   OSMutexPend(Refresher, 0, &myErr);
 //  OSMutexPend(Updater, 0, &myErr_2);
   updateTimeStamp();

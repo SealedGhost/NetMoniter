@@ -15,9 +15,12 @@
 #include "string.h"
 #include "Config.h"
 
-#define USER_MSG_CHOOSE (WM_USER+0x01)
+#define USER_MSG_ID_CHOOSE (WM_USER+0x01)
+#define USER_MSG_ID_REPLY  (WM_USER+0x02)
 #define STORE_SETTING   1
-#define CANCLE_MONITED  2
+#define CANCEL_MONITED  2
+#define REPLY_OK        3
+#define REPLY_CANCEL    4
 
 
 

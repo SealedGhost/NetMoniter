@@ -54,10 +54,14 @@
 
 
 /*------------------- external variables ------------------------*/
-extern short N_monitedBoat;
-extern WM_HWIN subWins[4];
 extern unsigned char * pStrBuf;
+
+extern WM_HWIN subWins[4];
 extern WM_HWIN confirmWin;
+extern WM_HWIN menuWin;
+
+extern MNT_BOAT MNT_Boats[BOAT_LIST_SIZE_MAX];
+extern short N_monitedBoat;
 
 /*------------------- external functions ------------------------*/
 
@@ -349,7 +353,7 @@ etWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDial
 static void myEditListener(WM_MESSAGE* pMsg)
 {
 	const WM_KEY_INFO* pInfo;
-	WM_MESSAGE msg;
+	WM_MESSAGE myMsg;
 	WM_HWIN thisEdit = pMsg->hWin;
 	
 	WM_HWIN focussedEdit  = 0;
@@ -479,16 +483,44 @@ static void myEditListener(WM_MESSAGE* pMsg)
          break;
     	
     case GUI_KEY_BACKSPACE:
-    
+         myMsg.hWin  = WM_GetClientWindow(confirmWin);
+//         myMsg.hWin  = confirmWin;
+         myMsg.hWinSrc  = pMsg->hWin;
+         myMsg.MsgId  = USER_MSG_ID_CHOOSE;
+         myMsg.Data.v = STORE_SETTING;
+         WM_SendMessage(myMsg.hWin, &myMsg);
+         
          WM_BringToTop(confirmWin);
          WM_SetFocus(confirmWin);
-         break;
-     
+    break; 
+         
 				default:
 					EDIT_Callback(pMsg);
 				break;
 			}
+   break;
 			
+   case USER_MSG_ID_REPLY:
+       switch(pMsg->Data.v)
+       {
+          case REPLY_OK:
+INFO("case REPLY_OK");  \
+               MNT_makeSettingUp(MNT_Boats, N_monitedBoat, &mntSetting);  
+               printMoniteSetting(MNT_Boats);              
+               WM_SetFocus(menuWin);
+               break;
+          case REPLY_CANCEL:
+INFO("case REPLY_CANCEL");          
+               WM_SetFocus(subWins[1]);
+               break;
+               
+           default:
+INFO("Something err!");           
+           break;
+       }
+ 
+   break;
+       
 				default:
 					EDIT_Callback(pMsg);
 				break;

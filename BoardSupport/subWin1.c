@@ -48,7 +48,10 @@ extern short N_boat;
 extern short N_monitedBoat;
 extern MNT_BOAT MNT_Boats[MNT_NUM_MAX];
 extern unsigned char* pStrBuf;
+extern MNT_SETTING mntSetting;           // Struct contains etWin  content.
 
+extern MNT_BERTH MNT_Berthes[MNT_NUM_MAX];
+extern MNT_BERTH * pMntHeader;
 //extern MNT_BOAT mntBoats[MNT_BOAT_NUM_MAX];
 
 /*----------------- external functions --------------------------*/
@@ -212,7 +215,10 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 {
 	 const WM_KEY_INFO * pInfo;
 	 WM_HWIN thisListView  = pMsg->hWin; 
-	
+	 WM_MESSAGE myMsg;
+ 
+ 
+ 
 	 int selectedRow  = -1;
   int index  = -1;
 	
@@ -275,10 +281,38 @@ static void myListViewListener(WM_MESSAGE* pMsg)
          }   
 			    		break;
 					
-				case GUI_KEY_BACKSPACE:   
-					WM_BringToTop(confirmWin);
-				  WM_SetFocus(confirmWin);
-          break;					
+				case GUI_KEY_BACKSPACE: 
+INFO("case backspace");  
+
+         while( (MNT_Boats[index].mntState==MNTState_Monited) ||  (MNT_Boats[index].mmsi==0) )
+         {
+            index++;
+            if(index >= MNT_NUM_MAX)
+               break;
+         }
+         if(index<MNT_NUM_MAX)
+         {
+         
+            myMsg.hWin  = WM_GetClientWindow(confirmWin);
+   //         myMsg.hWin  = confirmWin;
+            myMsg.hWinSrc  = thisListView;
+            myMsg.MsgId  = USER_MSG_ID_CHOOSE;
+            myMsg.Data.v = STORE_SETTING;
+            WM_SendMessage(myMsg.hWin, &myMsg);
+                  
+            WM_BringToTop(confirmWin);
+            WM_SetFocus(confirmWin);
+            break;	
+         } 
+         else
+         {
+INFO("No boat selected");  
+//            WM_BringToBottom(hDlg_FishMap) ;
+            WM_SetFocus(menuWin); 
+//            WM_SetFocus(pMsg->hWin); 
+            break;           
+         } 
+         
 				
 				case GUI_KEY_MENU:
 					WM_BringToTop(hDlg_FishMap);
@@ -291,6 +325,28 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 			}
 			break;
 		
+  case USER_MSG_ID_REPLY:
+//INFO("case user_msg_id_reply,%d",pMsg->Data.v);    
+//       WM_BringToBottom(confirmWin);   
+//       WM_SetFocus(pMsg->hWin);
+       switch(pMsg->Data.v)
+       {
+          case REPLY_OK:
+INFO("case REPLY_OK");  \
+               MNT_makeSettingUp(MNT_Boats, N_monitedBoat, &mntSetting);        
+               WM_SetFocus(menuWin);
+               break;
+          case REPLY_CANCEL:
+INFO("case REPLY_CANCEL");          
+               WM_SetFocus(pMsg->hWin);
+               break;
+               
+           default:
+INFO("Something err!");           
+           break;
+       }
+  break;
+  
 		default:
 			LISTVIEW_Callback(pMsg);
 			break;
@@ -307,34 +363,45 @@ void UpdateListViewContent(WM_HWIN thisHandle)
 	WM_HWIN thisListView  = thisHandle;
 	
 	int i  = 0;
+ int Cnt = 0;
 	int NumOfRows  = 0;
+// MNT_BERTH * pIterator  = pMntHeader;
 
 	NumOfRows  = LISTVIEW_GetNumRows(thisListView);
  
- for(i=0;i<N_monitedBoat;i++)
+// while(pIterator)
+// {
+//    i++;
+//    if()
+// }
+ for(i=0;i<MNT_NUM_MAX;i++)
  {
-    if(i+1 > NumOfRows)
+    if(MNT_Boats[i].mmsi > 0)
     {
-       LISTVIEW_AddRow(thisListView, NULL);
-       NumOfRows  = LISTVIEW_GetNumRows(thisListView);
-    }
-    
-    sprintf(pStrBuf, "%s", MNT_Boats[i].name);
-    LISTVIEW_SetItemText(thisListView, 0, i, pStrBuf);
-    
-    sprintf(pStrBuf, "%09ld", MNT_Boats[i].mmsi);
-    LISTVIEW_SetItemText(thisListView, 1, i, pStrBuf);
-    
-    if(MNTState_Default == MNT_Boats[i].mntState)
-    {
-       LISTVIEW_SetItemText(thisListView, 2, i, "Y");
-    }
-    else
-    {
-       LISTVIEW_SetItemText(thisListView, 2, i, "N");
+       Cnt++;
+       if(Cnt > NumOfRows)
+       {
+          LISTVIEW_AddRow(thisListView, NULL);
+          NumOfRows  = LISTVIEW_GetNumRows(thisListView);
+       }
+       
+       sprintf(pStrBuf, "%s", MNT_Boats[i].name);
+       LISTVIEW_SetItemText(thisListView, 0, Cnt-1, pStrBuf);
+       
+       sprintf(pStrBuf, "%09ld", MNT_Boats[i].mmsi);
+       LISTVIEW_SetItemText(thisListView, 1, Cnt-1, pStrBuf);
+       
+       if(MNTState_Default == MNT_Boats[i].mntState)
+       {
+          LISTVIEW_SetItemText(thisListView, 2, Cnt-1, "Y");
+       }
+       else
+       {
+          LISTVIEW_SetItemText(thisListView, 2, Cnt-1, "N");
+       }
     }
  }
-	while(NumOfRows > N_monitedBoat)
+	while(NumOfRows > Cnt)
 	{
 		LISTVIEW_DeleteRow(thisListView, NumOfRows-1);
 		NumOfRows  = LISTVIEW_GetNumRows(thisListView);
@@ -343,5 +410,7 @@ void UpdateListViewContent(WM_HWIN thisHandle)
 
 
 //int getSelectedBoatIndex(WM_HWIN thisHandle, int col, int row)
+
+
 
 /*************************** End of file ****************************/

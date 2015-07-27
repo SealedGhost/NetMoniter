@@ -33,19 +33,21 @@
 /*--- external variables ---*/
 extern BERTH * pHeader;
 extern SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
-extern MNT_BOAT MNT_Boats[MNT_NUM_MAX];
-
 
 extern WM_HWIN confirmWin;
+
+extern MNT_BOAT MNT_Boats[MNT_NUM_MAX];
+extern MNT_SETTING mntSetting;
 
 /*--- external functions ---*/
 //extern boat* boat_list_p[BOAT_LIST_SIZE_MAX];
 
 /*--- local variables ---*/
+static long MMSI  = 0;
 
 /*--- local functions ---*/
 static void updateListViewContent(WM_HWIN thisHandle);
-
+int confirmWinExec(void);
 
 
 
@@ -101,11 +103,10 @@ static void updateListViewContent(WM_HWIN thisHandle);
 //static void showSelectedBoatInfo(WM_HWIN thisHandle);
 int getSelectedBoatIndex(WM_HWIN thisHandle, int col, int row);
 void disttostr(unsigned char * str, int num);
-
+int getSelectedIndex(WM_HWIN thisListView,  int col);
 
 /*---------------- static variables ----------------------------*/
 static int Index  = -1; //模块变量
-static int SelRow  = 0;
 static int TotalRows  = 0;
 static WM_HTIMER allListRefshTimer;
 
@@ -316,7 +317,6 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 	WM_HWIN thisListView  = pMsg->hWin;
  
  WM_MESSAGE myMsg;
- int myMsgData  = 0;
  
  int selectedRow  = -1;
  int totalRows  = 0;
@@ -373,39 +373,29 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 //         showSelectedBoatInfo(thisListView);
          break;
     
-				case GUI_KEY_BACKSPACE:
-           myMsgData      = STORE_SETTING;
-           
-           myMsg.hWin     = WM_GetId(confirmWin);
-           myMsg.hWinSrc  = thisListView;
-           myMsg.MsgId    = USER_MSG_CHOOSE;
-           myMsg.Data.p   = (void*)&myMsgData;
-           myMsg.Data.v   = myMsgData;
-           WM_BringToTop(confirmWin);
-           WM_SetFocus(confirmWin);
-//           WM_SendMessageNoPara(myMsg.hWin, myMsg.MsgId);
-           WM_SendMessage(myMsg.hWin, &myMsg);
-//         for(i=0;i<N_boat;i++) 
-//         {
-//            if(MNTState_Choosen == SimpBerthes[i].pBoat->mntStates)
-//            {
-//INFO("insert name:%s",SimpBerthes[i].pBoat->name);            
-//               insertNum  = MNT_insert( MNT_Boats,
-//                                        SimpBerthes[i].pBoat,
-//                                        SimpBerthes[i].pBoat->user_id, 
-//                                        SimpBerthes[i].pBoat->name  );
-//               if( insertNum < 0 )
-//               {
-//INFO("MNT_insert failed!");  
-//                  break;                              
-//               }
-//               else
-//               {
-//                  SimpBerthes[i].pBoat->mntStates  = MNTState_Monited;
-//               }
-//            }            
-//         }       
-//         WM_SetFocus(menuWin);
+				case GUI_KEY_BACKSPACE:    
+         
+         for(i=0;i<N_boat;i++) 
+         {
+            if(MNTState_Choosen == SimpBerthes[i].pBoat->mntStates)
+            {
+INFO("insert name:%s",SimpBerthes[i].pBoat->name);            
+               insertNum  = MNT_insert( MNT_Boats,   
+                                        SimpBerthes[i].pBoat,
+                                        SimpBerthes[i].pBoat->user_id, 
+                                        SimpBerthes[i].pBoat->name  );
+               if( insertNum < 0 )
+               {
+INFO("MNT_insert failed!");  
+                  break;                              
+               }
+               else
+               {
+                  SimpBerthes[i].pBoat->mntStates  = MNTState_Monited;
+               }
+            }            
+         }       
+         WM_SetFocus(menuWin);
          break;
  
     case GUI_KEY_ENTER:
@@ -439,8 +429,15 @@ static void myListViewListener(WM_MESSAGE* pMsg)
          }
          
          else if(MNTState_Monited  == SimpBerthes[i].pBoat->mntStates)
-         {
-            
+         {  
+            MMSI  = SimpBerthes[i].pBoat->user_id;
+            myMsg.hWin     = WM_GetClientWindow(confirmWin);
+            myMsg.hWinSrc  = thisListView;
+            myMsg.MsgId    = USER_MSG_ID_CHOOSE;
+            myMsg.Data.v   = CANCEL_MONITED;
+            WM_SendMessage(myMsg.hWin, &myMsg); 
+           	WM_BringToTop(confirmWin);
+				        WM_SetFocus(confirmWin);  
          }
 //         OSMutexPost(Updater);
          break;
@@ -452,6 +449,30 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 			}
 			break;
 			
+   case USER_MSG_ID_REPLY:
+       switch(pMsg->Data.v)
+       {
+          case REPLY_OK:
+INFO("case REPLY_OK");  \
+               if(MNT_deleteById(MNT_Boats, MMSI) >= 0) 
+               { 
+                  printMoniteSetting(MNT_Boats);               
+                  WM_SetFocus(menuWin);
+               }
+               else 
+INFO("Error!");                 
+               break;
+          case REPLY_CANCEL:
+INFO("case REPLY_CANCEL");          
+               WM_SetFocus(pMsg->hWin);
+               break;
+               
+           default:
+INFO("Something err!");           
+           break;
+       }
+  break;
+
 				default:
 					LISTVIEW_Callback(pMsg);
 					break;
@@ -609,6 +630,22 @@ void disttostr(unsigned char * str, int num)
 }
 
 
+int getSelectedIndex(WM_HWIN thisListView,  int col)
+{
+   int i  = -1;
+   long Id  = 0;
+   i  = LISTVIEW_GetSel(thisListView);
+   LISTVIEW_GetItemText(thisListView, col, i, pStrBuf, 10);
+   i  = strtoi(pStrBuf);
+   for(Index=0;Index<N_boat;Index++)
+   {
+      if(SimpBerthes[i].pBoat->user_id == Id)
+      {
+         return i;      
+      }
+   }
+   return -1;
+}
 
 
 
