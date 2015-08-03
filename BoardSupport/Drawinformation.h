@@ -5,6 +5,7 @@
 #include "GUI.h"
 #include "DIALOG.h"
 #include "DROPDOWN.h"
+#include "map_draw.h"
 
 void Createbutton(WM_MESSAGE* pMsg);
 void PaintFrame(void);
@@ -13,8 +14,10 @@ void InitText (WM_MESSAGE* pMsg,long user_id,short SOG,short COG,short true_head
 void showShipName(WM_MESSAGE* pMsg,char*);
 long strtoi(const char*str);
 void lltostr(long l_o_l,char *str);
-void GUI_DispStringExAt(const unsigned char *str,const int x, const int y);
+//void GUI_DispStringAt(const unsigned char *str,const int x, const int y);
 void TEXT_SetTextEx(TEXT_Handle hObj, const unsigned char* s);
+
+void Draw_ScaleRuler(scale_map scale);
 
 #define SIZE_X   590
 #define SIZE_X1  630

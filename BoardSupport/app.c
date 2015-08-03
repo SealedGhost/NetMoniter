@@ -8,6 +8,9 @@
 #include "Config.h"
 #include "Setting.h"
 #include "DMA.h"
+#include "Check.h"
+#include "SystemConfig.h"
+
 
 //#ifndef test_test
 //	#define test_test
@@ -47,6 +50,10 @@ extern volatile int myCnt ;
 static volatile int msgCnt  = 0;
 
 extern boat mothership;
+
+extern int N_monitedBoat;
+
+extern MNT_BERTH * pMntHeader;
 /*----------------- external function -------------------*/
 
 extern void MainTask(void);
@@ -58,6 +65,9 @@ void mntSetting_init(void);
 
 /*----------------- Global   variables --------------------*/
 ///Insert , Refresh互斥信号量
+
+int ReleasedDectSwitch  = 0;
+
 OS_EVENT * Refresher;
 OS_EVENT * Updater;
 
@@ -103,7 +113,7 @@ MNT_BOAT MNT_Boats[MNT_NUM_MAX];
 
 struct message_18 msg_18;
 
-short N_boat = 0;
+int N_boat = 0;
 
 /*----------------- local   function  --------------------*/
 
@@ -167,8 +177,7 @@ void Insert_Task(void *p_arg)  //等待接收采集到的数据
 
 		s = OSQPend(QSem,0,&err);
     
-    tmp  = translate_(s,&text_out,&text_out_24A,&text_out_type_of_ship);
-
+    tmp  = translate_(s,&text_out,&text_out_24A,&text_out_type_of_ship);   
     switch(tmp)
     {
 OSMutexPend(Refresher, 0, &myErr);   
@@ -194,8 +203,18 @@ OSMutexPost(Refresher);
 }
 void Refresh_Task(void *p_arg)//任务Refresh_Task
 {
+ static int CurMntBoatIndex;
+ int i  = 0;
+ int cnt  = 0;
+
+#ifdef CODE_CHECK 
+ MNT_BERTH  * vernier  = NULL;
+#endif 
+ 
 	while(1)
 	{
+  cnt  = 0;
+  
 	
 //		  OSTimeDly(30000); 		/* 延时8000ms */
 // 		if(boat_list_p) free(boat_list_p);
@@ -206,9 +225,28 @@ void Refresh_Task(void *p_arg)//任务Refresh_Task
 //  OSMutexPend(Updater, 0, &myErr_2);
   updateTimeStamp();
 //  OSMutexPost(Updater);
+    
   OSMutexPost(Refresher);
+#ifdef CODE_CHECK
+INFO(" DSP check");  
+  if(vernier == NULL)
+  {
+     vernier  = pMntHeader;
+  }
   
-		OSTimeDlyHMSM(0,0,10,0);
+  if(vernier)
+  {
+    check((MNT_BOAT*)(vernier));
+    vernier  = vernier->pNext;
+  }
+  
+#endif 
+ 
+//  CurMntBoatIndex++;
+//  CurMntBoatIndex  = CurMntBoatIndex%N_monitedBoat;
+  
+  
+		OSTimeDlyHMSM(0,0,5,0);
 	}
 }
 void Task_Stack_Use(void *p_arg)
@@ -248,7 +286,7 @@ void App_TaskStart(void)//初始化UCOS，初始化SysTick节拍，并创建三个任务
    mothership.longitude = 7128663;
    mothership.true_heading  = 0;
 
-  
+  sysInit();
   
 	OSInit();
 	SysTick_Init();/* 初始化SysTick定时器 */

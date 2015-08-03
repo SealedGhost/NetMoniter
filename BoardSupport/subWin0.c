@@ -26,6 +26,7 @@
 #include "MainTask.h"
 #include "Drawinformation.h"
 #include "Setting.h"
+#include "SystemConfig.h"
 
 /*********************************************************************
 *
@@ -47,13 +48,13 @@
 
 
 /*----------------- external variables ---------------------*/
-extern unsigned char * pStrBuf;
+extern char * pStrBuf;
 extern WM_HWIN hDlg_FishMap;
 extern WM_HWIN menuWin;
 extern WM_HWIN subWins[4];
 extern int N_monitedBoat;
 extern MNT_BOAT MNT_Boats[MNT_NUM_MAX];
-
+extern MNT_BERTH * pMntHeader;
 /*----------------- externa   function ---------------------*/
 extern void disttostr(unsigned char * str, int num);
 
@@ -95,12 +96,12 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
   { WINDOW_CreateIndirect, "Window", ID_WINDOW_0, SubWin_X, SubWin_Y, SubWin_WIDTH, SubWin_HEIGHT, 0, 0x0, 0 },
   { LISTVIEW_CreateIndirect, "Listview", ID_LISTVIEW_0, LV_MoniteList_X, LV_MoniteList_Y, LV_MoniteList_WIDTH, LV_MoniteList_HEIGHT, 0, 0x0, 0 },
 	
-	{ TEXT_CreateIndirect, "Monite List",        ID_TEXT_0, LV_MoniteList_X,     LV_MoniteList_Y-30,  200, 30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "Monite boats info",  ID_TEXT_1, LV_MoniteList_WIDTH, LV_MoniteList_Y-40,  200, 30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "Name:",              ID_TEXT_2, LV_MoniteList_WIDTH, LV_MoniteList_Y+40,  200, 30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "N:",                 ID_TEXT_3, LV_MoniteList_WIDTH, LV_MoniteList_Y+80,  200, 30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "E:",                 ID_TEXT_4, LV_MoniteList_WIDTH, LV_MoniteList_Y+120, 200, 30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "SOG:",               ID_TEXT_5, LV_MoniteList_WIDTH, LV_MoniteList_Y+160, 200, 30, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "监控列表",        ID_TEXT_0, LV_MoniteList_X,     LV_MoniteList_Y-30,  200, 30, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "监控船舶信息",  ID_TEXT_1, LV_MoniteList_WIDTH, LV_MoniteList_Y-40,  200, 30, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "船名:",              ID_TEXT_2, LV_MoniteList_WIDTH, LV_MoniteList_Y+40,  200, 30, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "北纬:",                 ID_TEXT_3, LV_MoniteList_WIDTH, LV_MoniteList_Y+80,  200, 30, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "东经:",                 ID_TEXT_4, LV_MoniteList_WIDTH, LV_MoniteList_Y+120, 200, 30, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "航速:",               ID_TEXT_5, LV_MoniteList_WIDTH, LV_MoniteList_Y+160, 200, 30, 0, 0x0, 0},
 	{ TEXT_CreateIndirect, "XSAlarm:",           ID_TEXT_6, LV_MoniteList_WIDTH, LV_MoniteList_Y+200, 200, 30, 0, 0x0, 0},
 	{ TEXT_CreateIndirect, "FDAlarm:",           ID_TEXT_7, LV_MoniteList_WIDTH, LV_MoniteList_Y+240, 200, 30, 0, 0x0, 0},
 	{ TEXT_CreateIndirect, "ZMAlarm:",           ID_TEXT_8, LV_MoniteList_WIDTH, LV_MoniteList_Y+280, 200, 30, 0, 0x0, 0}
@@ -108,9 +109,13 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
   // USER END
 };
 
+LVWin_COLOR lvWinSkins[2]  = {
+///                              bkColor          winLabel  lv_header_bk   lvHeaderText lv_unsel      lv_sel          lv_text_unsel   lv_text_sel lv_grid         lv_string
+                               { GUI_BLACK,      GUI_GRAY,  GUI_DARKGRAY,  GUI_GRAY,   GUI_DARKGRAY,  GUI_DARKGRAY,   GUI_LIGHTGRAY,  GUI_BLACK,  GUI_LIGHTCYAN, GUI_DARKYELLOW },
+                               { GUI_WHITE,  GUI_DARKGRAY,  GUI_LIGHTGRAY, GUI_GRAY,   GUI_LIGHTGRAY, GUI_LIGHTGRAY , GUI_DARKGRAY,   GUI_WHITE,  GUI_CYAN,      GUI_DARKMAGENTA}
+                              };
 
-
-
+LVWin_COLOR * pLVSkin  = lvWinSkins;
 
 /*********************************************************************
 *
@@ -132,10 +137,53 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
   long  Id;
   int  SelectedRow  = -1;
   int i  = 0;
+  
+  MNT_BERTH * pIterator  = NULL;
+  
   // USER START (Optionally insert additional variables)
   // USER END
 
   switch (pMsg->MsgId) { 
+  case USER_MSG_BRING:
+       updateListViewContent(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0));
+       break;
+  
+  case USER_MSG_SKIN:
+       pLVSkin  = &(lvWinSkins[pMsg->Data.v]);
+       
+       WINDOW_SetBkColor(pMsg->hWin,pLVSkin->BackGround);
+       
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_0);
+       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_1);
+       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_2);
+       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_3);
+       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_4);
+       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_5);
+       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);       
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_6);
+       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_7);
+       TEXT_SetTextColor(hItem, pLVSkin->Win_Label); 
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_8);
+       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);       
+       
+       
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0);
+       LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_UNSEL, pLVSkin->LV_Unsel);
+       LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SEL,   pLVSkin->LV_Sel);
+       LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_UNSEL, pLVSkin->LV_Text_Unsel);
+       LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_SEL,   pLVSkin->LV_Text_Sel);
+       
+       hItem  = LISTVIEW_GetHeader(hItem);
+       HEADER_SetBkColor(hItem,pLVSkin->LV_Header_Bk);
+       HEADER_SetTextColor(hItem,pLVSkin->LV_Header_Text);
+       break;
+  
   case WM_INIT_DIALOG:	
     //
     // Initialization of 'Window'
@@ -148,66 +196,90 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     hItem = WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0);
 	   WM_SetCallback(hItem, &myListViewListener);
 	  
-	   LISTVIEW_SetFont(hItem, &GUI_Font28);
-    LISTVIEW_AddColumn(hItem, LV_MoniteList_Col_0_WIDTH, "Dis", GUI_TA_HCENTER | GUI_TA_VCENTER);
+    LISTVIEW_AddColumn(hItem, LV_MoniteList_Col_0_WIDTH, "距离", GUI_TA_HCENTER | GUI_TA_VCENTER);
     LISTVIEW_AddColumn(hItem, LV_MoniteList_Col_1_WIDTH, "MMSI", GUI_TA_HCENTER | GUI_TA_VCENTER);
-    LISTVIEW_AddColumn(hItem, LV_MoniteList_Col_2_WIDTH, "Ang", GUI_TA_HCENTER | GUI_TA_VCENTER);
+    LISTVIEW_AddColumn(hItem, LV_MoniteList_Col_2_WIDTH, "方位", GUI_TA_HCENTER | GUI_TA_VCENTER);
     LISTVIEW_AddRow(hItem, NULL);
     LISTVIEW_SetGridVis(hItem, 1);
 	   LISTVIEW_SetHeaderHeight(hItem,LV_MoniteList_Header_HEIGHT);
 	   LISTVIEW_SetRowHeight(hItem,LV_MoniteList_Row_HEIGHT);
 	  
-	   LISTVIEW_SetFont(hItem, &GUI_Font24B_1);	  
+	   LISTVIEW_SetFont(hItem, &GUI_Font24_1);	  
 	   LISTVIEW_SetTextColor(hItem, LISTVIEW_CI_UNSEL,GUI_WHITE);
 	   LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_UNSEL,DEEPBLUE);
-	  	LISTVIEW_SetTextColor(hItem, LISTVIEW_CI_SELFOCUS,GUI_BLACK);
-	  	LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SELFOCUS, GUI_WHITE);
-	  	LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SEL, DEEPBLUE);
+	   LISTVIEW_SetTextColor(hItem, LISTVIEW_CI_SELFOCUS,GUI_BLACK);
+	   LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SELFOCUS, GUI_WHITE);
+	   LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SEL, DEEPBLUE);
 		
-		updateListViewContent(hItem);
+	  	updateListViewContent(hItem);
 
     // USER START (Optionally insert additional code for further widget initialization)
     // USER END
     break;
 		
 	case WM_PAINT:
-     updateListViewContent(WM_GetDialogItem(pMsg->hWin,ID_LISTVIEW_0));
+//     updateListViewContent(WM_GetDialogItem(pMsg->hWin,ID_LISTVIEW_0));
 
      GUI_SetFont(&GUI_Font24_1);
-     GUI_SetColor(GUI_YELLOW);
+     GUI_SetColor(pLVSkin->String);
      GUI_SetTextMode(GUI_TM_TRANS);
 	  
      SelectedRow  = LISTVIEW_GetSel(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0));
      if(SelectedRow < 0)
         break;
-     LISTVIEW_GetItemText(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0), 1, SelectedRow, pStrBuf, 10);
-     Id  = strtoi(pStrBuf);
-   
-     for(i=0;i<MNT_NUM_MAX;i++)
+     pIterator  = pMntHeader;
+     for(i=0;i<SelectedRow;i++)
      {
-        if(MNT_Boats[i].mmsi == Id)
-        break;
-     }
+        pIterator  = pIterator->pNext;
+     }  
+//     LISTVIEW_GetItemText(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0), 1, SelectedRow, pStrBuf, 10);
+//     Id  = strtoi(pStrBuf);
+   
+//     for(i=0;i<MNT_NUM_MAX;i++)
+//     {
+//        if(MNT_Boats[i].mmsi == Id)
+//        break;
+//     }
 
-     GUI_DispStringAt(MNT_Boats[i].name, LV_MoniteList_WIDTH+50,80);
+//     GUI_DispStringAt(MNT_Boats[i].name, LV_MoniteList_WIDTH+50,80);
+//     
+//     lltostr(MNT_Boats[i].pBoat->latitude, pStrBuf);
+//     GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH+20,120);
+//     
+//     lltostr(MNT_Boats[i].pBoat->longitude, pStrBuf);
+//     GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH+20,160);
+//     
+//     GUI_DispDecAt(MNT_Boats[i].pBoat->SOG,LV_MoniteList_WIDTH+80,200,3); 
+//    
+//     if(MNT_Boats[i].mntSetting.DSP_Setting.isEnable == DISABLE)
+//        GUI_DispStringAt("Disable", LV_MoniteList_WIDTH+60,240);
+//     else
+//        GUI_DispStringAt("Enable",  LV_MoniteList_WIDTH+60,240);
+//        
+//     GUI_DispDecAt(MNT_Boats[i].mntSetting.BGL_Setting.Dist,
+//                   LV_MoniteList_WIDTH+60,280,3);
+//     GUI_DispDecAt(MNT_Boats[i].mntSetting.DRG_Setting.Dist,
+//                   LV_MoniteList_WIDTH+60,320,3);   
+     GUI_DispStringAt(pIterator->mntBoat.name, LV_MoniteList_WIDTH+50, 80);         
      
-     lltostr(MNT_Boats[i].pBoat->latitude, pStrBuf);
-     GUI_DispStringExAt(pStrBuf, LV_MoniteList_WIDTH+20,120);
+     lltostr(pIterator->mntBoat.pBoat->latitude, pStrBuf);
+     GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH+100, 120);
      
-     lltostr(MNT_Boats[i].pBoat->longitude, pStrBuf);
-     GUI_DispStringExAt(pStrBuf, LV_MoniteList_WIDTH+20,160);
+     lltostr(pIterator->mntBoat.pBoat->longitude, pStrBuf);
+     GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH+100, 160);
      
-     GUI_DispDecAt(MNT_Boats[i].pBoat->SOG,LV_MoniteList_WIDTH+80,200,3); 
-    
-     if(MNT_Boats[i].mntSetting.DSP_Setting.isEnable == DISABLE)
-        GUI_DispStringAt("Disable", LV_MoniteList_WIDTH+60,240);
+     GUI_DispDecAt(pIterator->mntBoat.pBoat->SOG, LV_MoniteList_WIDTH+80, 200, 3);
+     GUI_DispDecAt(pIterator->mntBoat.pBoat->COG, LV_MoniteList_WIDTH+300, 200, 3);
+     
+     if(pIterator->mntBoat.mntSetting.DSP_Setting.isEnable == DISABLE)
+        GUI_DispStringAt("关闭", LV_MoniteList_WIDTH+60,240);
      else
-        GUI_DispStringAt("Enable",  LV_MoniteList_WIDTH+60,240);
+        GUI_DispStringAt("开启",  LV_MoniteList_WIDTH+60,240);
         
-     GUI_DispDecAt(MNT_Boats[i].mntSetting.BGL_Setting.Dist,
-                   LV_MoniteList_WIDTH+60,280,3);
-     GUI_DispDecAt(MNT_Boats[i].mntSetting.DRG_Setting.Dist,
-                   LV_MoniteList_WIDTH+60,320,3);            
+     GUI_DispDecAt(pIterator->mntBoat.mntSetting.BGL_Setting.Dist,
+               LV_MoniteList_WIDTH+60,280,3);
+     GUI_DispDecAt(pIterator->mntBoat.mntSetting.DRG_Setting.Dist,
+                 LV_MoniteList_WIDTH+60,320,3);   
      break;
 
   case WM_NOTIFY_PARENT:
@@ -289,9 +361,9 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 //	  	break;
 		case WM_SET_FOCUS:
 
-      if(LISTVIEW_GetNumRows(pMsg->hWin) && (LISTVIEW_GetSel(pMsg->hWin)<0))
+      if(LISTVIEW_GetNumRows(pMsg->hWin))
          LISTVIEW_SetSel(pMsg->hWin, 0);
-      updateListViewContent(thisListView);
+//      updateListViewContent(thisListView);
       LISTVIEW_Callback(pMsg);
       WM_InvalidateRect(subWins[0], &infoRect);
       break;
@@ -336,28 +408,49 @@ static void updateListViewContent(WM_HWIN thisHandle)
 	WM_HWIN  thisListView  = thisHandle;
 	int i  = 0;
 	int Cnt  = 0;
-  int NumOfRows  = 0;
-
+ int NumOfRows  = 0;
+ MNT_BERTH * pIterator  = NULL;
+ 
 	NumOfRows  = LISTVIEW_GetNumRows(thisListView);
   
-	for(i=0;i<MNT_NUM_MAX;i++)
-	{		
-    if(MNT_Boats[i].mmsi > 0)
+//	for(i=0;i<MNT_NUM_MAX;i++)
+//	{		
+//    if(MNT_Boats[i].mmsi > 0)
+//    {
+//       Cnt++;
+//       if(Cnt > NumOfRows)
+//       {
+//          LISTVIEW_AddRow(thisListView, NULL);
+//          NumOfRows  = LISTVIEW_GetNumRows(thisListView);
+//       }
+//       
+//       disttostr(pStrBuf, MNT_Boats[i].pBoat->dist);
+//       LISTVIEW_SetItemText(thisListView, 0, Cnt-1, pStrBuf);
+//       
+//       sprintf(pStrBuf, "%09ld", MNT_Boats[i].mmsi);
+//       LISTVIEW_SetItemText(thisListView, 1, Cnt-1, pStrBuf);
+//    }
+//	}
+
+ pIterator  = pMntHeader;
+ while(pIterator)
+ {
+INFO("here"); 
+    Cnt++;
+    if(Cnt > NumOfRows)
     {
-       Cnt++;
-       if(Cnt > NumOfRows)
-       {
-          LISTVIEW_AddRow(thisListView, NULL);
-          NumOfRows  = LISTVIEW_GetNumRows(thisListView);
-       }
-       
-       disttostr(pStrBuf, MNT_Boats[i].pBoat->dist);
-       LISTVIEW_SetItemText(thisListView, 0, Cnt-1, pStrBuf);
-       
-       sprintf(pStrBuf, "%09ld", MNT_Boats[i].mmsi);
-       LISTVIEW_SetItemText(thisListView, 1, Cnt-1, pStrBuf);
+       LISTVIEW_AddRow(thisListView, NULL);
+       NumOfRows  = LISTVIEW_GetNumRows(thisListView);
     }
-	}
+    
+    disttostr(pStrBuf, pIterator->mntBoat.pBoat->dist);
+    LISTVIEW_SetItemText(thisListView, 0, Cnt-1, pStrBuf);
+    
+    sprintf(pStrBuf, "%09ld", pIterator->mntBoat.mmsi);
+    LISTVIEW_SetItemText(thisListView, 1, Cnt-1, pStrBuf);
+    
+    pIterator  = pIterator->pNext;
+ }
 
 	while(NumOfRows > Cnt)
 	{

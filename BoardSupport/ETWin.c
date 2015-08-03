@@ -25,6 +25,7 @@
 #include "MainTask.h"
 #include "Config.h"
 #include "Setting.h"
+#include "SystemConfig.h"
 
 
 /*********************************************************************
@@ -43,6 +44,8 @@
 #define ID_TEXT_5 (GUI_ID_USER + 0x06)
 #define ID_TEXT_6 (GUI_ID_USER + 0x07)
 #define ID_TEXT_7 (GUI_ID_USER + 0x08)
+#define ID_TEXT_8 (GUI_ID_USER + 0x09)
+#define ID_TEXT_9 (GUI_ID_USER + 0x0a)
 
 #define ID_EDIT_0 (GUI_ID_USER + 0x10)
 #define ID_EDIT_1 (GUI_ID_USER + 0x11)
@@ -54,7 +57,7 @@
 
 
 /*------------------- external variables ------------------------*/
-extern unsigned char * pStrBuf;
+extern char * pStrBuf;
 
 extern WM_HWIN subWins[4];
 extern WM_HWIN confirmWin;
@@ -62,6 +65,10 @@ extern WM_HWIN menuWin;
 
 extern MNT_BOAT MNT_Boats[BOAT_LIST_SIZE_MAX];
 extern short N_monitedBoat;
+
+extern CONF_SYS  SysConf;
+
+
 
 /*------------------- external functions ------------------------*/
 
@@ -106,15 +113,18 @@ MNT_SETTING mntSetting;
 static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
   { WINDOW_CreateIndirect, "ETWin", ID_WINDOW_0, ETWin_X, SubWin_Y, ETWin_WIDHT, ETWin_HEIGHT, 0, 0x0, 0 },
 	
-	{ TEXT_CreateIndirect, "Set info",  ID_TEXT_0, 0,   0,                  ETWin_WIDHT,30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "1.xsAlarm", ID_TEXT_1, 0,   LV_MoniteSet_Y,     120,        40, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "2.fdAlarm", ID_TEXT_2, 0,   LV_MoniteSet_Y+40,  180,        40, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "Dist:",     ID_TEXT_3, 160, LV_MoniteSet_Y+80,  60,        40, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "Sound",     ID_TEXT_4, 40,  LV_MoniteSet_Y+160, 60,       40, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "3.zmAlarm", ID_TEXT_5, 0,   LV_MoniteSet_Y+200, 180,       40, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "Dist:",     ID_TEXT_6, 160, LV_MoniteSet_Y+240, 60,       40, 0, 0x0, 0},
- { TEXT_CreateIndirect, "Sound",     ID_TEXT_7, 40,  LV_MoniteSet_Y+280, 60,       40, 0, 0x0, 0},
-	
+	{ TEXT_CreateIndirect, "监控设置项:",       ID_TEXT_0, 0,   0,                  ETWin_WIDHT,30, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "1.消失报警:",       ID_TEXT_1, 0,   LV_MoniteSet_Y,     160,        40, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "2.防盗报警功能:",   ID_TEXT_2, 0,   LV_MoniteSet_Y+40,  195,        40, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "距离:",             ID_TEXT_3, 130, LV_MoniteSet_Y+80,  70,         40, 0, 0x0, 0},
+ { TEXT_CreateIndirect, "nm",                ID_TEXT_8, 230, LV_MoniteSet_Y+80,   70,         40, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "声音",              ID_TEXT_4, 40,  LV_MoniteSet_Y+160, 80,          40, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "3.走锚报警功能:",  ID_TEXT_5, 0,   LV_MoniteSet_Y+200, 195,         40, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "距离:",             ID_TEXT_6, 130, LV_MoniteSet_Y+240, 70,          40,  0, 0x0, 0},
+ { TEXT_CreateIndirect, "nm",                ID_TEXT_9, 230, LV_MoniteSet_Y+240, 70,          40,  0, 0x0,0},
+ { TEXT_CreateIndirect, "声音:",             ID_TEXT_7, 40,  LV_MoniteSet_Y+280, 80,         40,  0, 0x0, 0},
+
+ 
  { EDIT_CreateIndirect, "et_0", ID_EDIT_0, 200, LV_MoniteSet_Y,     80, 40, 0, 0xa,  0 },
  { EDIT_CreateIndirect, "et_1", ID_EDIT_1, 200, LV_MoniteSet_Y+40,  80, 40, 0, 0x64, 0 },
  { EDIT_CreateIndirect, "et_2", ID_EDIT_2, 200, LV_MoniteSet_Y+80,  80, 40, 0, 0x64, 0 },
@@ -150,12 +160,23 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
   // USER END
 
   switch (pMsg->MsgId) {
+  
+  case USER_MSG_SKIN:
+INFO(" etWin case user_msg_skin");  
+       if(pMsg->Data.v == SKIN_Night)    
+          WINDOW_SetBkColor(pMsg->hWin, GUI_DARKGRAY); 
+       else
+          WINDOW_SetBkColor(pMsg->hWin, GUI_WHITE);
+       break;
   case WM_INIT_DIALOG:
+  
+//    TEXT_SetFont(WM_GetDialogItem(pMsg->hWin, ID_TEXT_0), &GUI_Font24);
+  
     //
     // Initialization of 'et_0'
     //
     hEts[0] = WM_GetDialogItem(pMsg->hWin, ID_EDIT_0);
-    EDIT_SetText(hEts[0], mntSetting.DSP_Setting.isEnable>DISABLE?"Enable":"Disable");   
+    EDIT_SetText(hEts[0], mntSetting.DSP_Setting.isEnable>DISABLE?"开启":"关闭");   
 	   WM_SetCallback(hEts[0],&myEditListener);
     EDIT_SetpfAddKeyEx(hEts[0],myEditAddKeyEx);
     
@@ -163,7 +184,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     // Initialization of 'et_1'
     //
     hEts[1] = WM_GetDialogItem(pMsg->hWin, ID_EDIT_1);
-    EDIT_SetText(hEts[1], mntSetting.BGL_Setting.isEnable>DISABLE?"Enable":"Disable"); 
+    EDIT_SetText(hEts[1], mntSetting.BGL_Setting.isEnable>DISABLE?"开启":"关闭"); 
 	   WM_SetCallback(hEts[1],&myEditListener);
     EDIT_SetpfAddKeyEx(hEts[1], myEditAddKeyEx);    
     //
@@ -178,14 +199,14 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     // Initialization of 'et_3'
     //
     hEts[3] = WM_GetDialogItem(pMsg->hWin, ID_EDIT_3);
-    EDIT_SetText(hEts[3], mntSetting.BGL_Setting.isSndEnable>DISABLE?"Enable":"Disable");
+    EDIT_SetText(hEts[3], mntSetting.BGL_Setting.isSndEnable>DISABLE?"开启":"关闭");
 	   WM_SetCallback(hEts[3] ,&myEditListener);	
     EDIT_SetpfAddKeyEx(hEts[3], myEditAddKeyEx);    
     //
     // Initialization of 'et_4'
     //
     hEts[4]  = WM_GetDialogItem(pMsg->hWin, ID_EDIT_4);
-    EDIT_SetText(hEts[4], mntSetting.DRG_Setting.isEnable>DISABLE?"Enable":"Disable");
+    EDIT_SetText(hEts[4], mntSetting.DRG_Setting.isEnable>DISABLE?"开启":"关闭");
 	   WM_SetCallback(hEts[4],&myEditListener);
     EDIT_SetpfAddKeyEx(hEts[4], myEditAddKeyEx);    
    
@@ -200,29 +221,42 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     
     
     hEts[6]  = WM_GetDialogItem(pMsg->hWin, ID_EDIT_6);
-    EDIT_SetText(hEts[6], mntSetting.DRG_Setting.isSndEnable>DISABLE?"Enable":"Disable");
+    EDIT_SetText(hEts[6], mntSetting.DRG_Setting.isSndEnable>DISABLE?"开启":"关闭");
     WM_SetCallback(hEts[6], &myEditListener);
     EDIT_SetpfAddKeyEx(hEts[6], myEditAddKeyEx);
     // USER START (Optionally insert additional code for further widget initialization)
     // USER END
     break;
-	case WM_KEY:
-		pInfo  = (WM_KEY_INFO*)pMsg->Data.p;
-	
-	  switch(pInfo->Key)
-		{
-			case GUI_KEY_LEFT:
-				GUI_StoreKeyMsg(GUI_KEY_BACKTAB,1);
-			break;
-			case GUI_KEY_RIGHT:
-				GUI_StoreKeyMsg(GUI_KEY_TAB,1);
-			break;
+// case WM_PAINT:
+//      if(SysConf.Unit == UNIT_nm)
+//      {
+//         TEXT_SetText(WM_GetDialogItem(pMsg->hWin, ID_TEXT_8),"nm");
+//         TEXT_SetText(WM_GetDialogItem(pMsg->hWin, ID_TEXT_9), "nm");
+//      }
+//      else if(SysConf.Unit == UNIT_km)
+//      {
+//         TEXT_SetText(WM_GetDialogItem(pMsg->hWin, ID_TEXT_8),"km");
+//         TEXT_SetText(WM_GetDialogItem(pMsg->hWin, ID_TEXT_9),"km");         
+//      }
 
-			
-			default:
-				break;
-		}
-		break;
+//      break;
+//	case WM_KEY:
+//		pInfo  = (WM_KEY_INFO*)pMsg->Data.p;
+//	
+//	  switch(pInfo->Key)
+//		{
+//			case GUI_KEY_LEFT:
+//				GUI_StoreKeyMsg(GUI_KEY_BACKTAB,1);
+//			break;
+//			case GUI_KEY_RIGHT:
+//				GUI_StoreKeyMsg(GUI_KEY_TAB,1);
+//			break;
+
+//			
+//			default:
+//				break;
+//		}
+//		break;
 	
   case WM_NOTIFY_PARENT:
     Id    = WM_GetId(pMsg->hWinSrc);
@@ -378,9 +412,9 @@ static void myEditListener(WM_MESSAGE* pMsg)
 					break;
 		
     case GUI_KEY_RIGHT:
-         Step  = 2;
+         Step  = 10;
     case GUI_KEY_LEFT:
-         Step  = (Step>1)?1:-1;
+         Step  = (Step>5)?5:-5;
          focussedEdit  = WM_GetFocussedWindow();
          while( (focussedEdit != hEts[i])  &&  (i<7) )
               i++;
@@ -403,12 +437,12 @@ static void myEditListener(WM_MESSAGE* pMsg)
                  if(mntSetting.DSP_Setting.isEnable)
                  {
                     mntSetting.DSP_Setting.isEnable  = DISABLE;
-                    EDIT_SetText(hEts[0], "Disable");
+                    EDIT_SetText(hEts[0], "关闭");
                  }
                  else
                  {
                     mntSetting.DSP_Setting.isEnable  = ENABLE;
-                    EDIT_SetText(hEts[0], "Enable");
+                    EDIT_SetText(hEts[0], "开启");
                  }
                  break;
                  
@@ -416,20 +450,20 @@ static void myEditListener(WM_MESSAGE* pMsg)
                  if(mntSetting.BGL_Setting.isEnable)
                  {
                     mntSetting.BGL_Setting.isEnable  = DISABLE;
-                    EDIT_SetText(hEts[1], "Disable");
+                    EDIT_SetText(hEts[1], "关闭");
                  }
                  else
                  {
                     mntSetting.BGL_Setting.isEnable  = ENABLE;
-                    EDIT_SetText(hEts[1], "Enable");
+                    EDIT_SetText(hEts[1], "开启");
                  }
                  break;
                  
             case 2:
                  mntSetting.BGL_Setting.Dist  += Step;
-                 mntSetting.BGL_Setting.Dist  = (mntSetting.BGL_Setting.Dist+21)%21;
+                 mntSetting.BGL_Setting.Dist  = (mntSetting.BGL_Setting.Dist+105)%105;
                  
-                 sprintf(pStrBuf, "%d", mntSetting.BGL_Setting.Dist);
+                 sprintf(pStrBuf, "%d.%02d", mntSetting.BGL_Setting.Dist/100, mntSetting.BGL_Setting.Dist%100);
                  EDIT_SetText(hEts[2], pStrBuf);
                  break;
                  
@@ -437,32 +471,32 @@ static void myEditListener(WM_MESSAGE* pMsg)
                  if(mntSetting.BGL_Setting.isSndEnable) 
                  {                 
                     mntSetting.BGL_Setting.isSndEnable = DISABLE;
-                    EDIT_SetText(hEts[3], "Disable");
+                    EDIT_SetText(hEts[3], "关闭");
                  } 
                  else
                  {                
                     mntSetting.BGL_Setting.isSndEnable  = ENABLE;
-                    EDIT_SetText(hEts[3], "Enable");
+                    EDIT_SetText(hEts[3], "开启");
                  }                   
                  break;  
             case 4:
                  if(mntSetting.DRG_Setting.isEnable)
                  { 
                     mntSetting.DRG_Setting.isEnable  = DISABLE;
-                    EDIT_SetText(hEts[4], "Disable");
+                    EDIT_SetText(hEts[4], "关闭");
                  }
                  else
                  {
                     mntSetting.DRG_Setting.isEnable  = ENABLE;
-                    EDIT_SetText(hEts[4], "Enable");
+                    EDIT_SetText(hEts[4], "开启");
                  }
                  break;            
                  
             case 5:
                  mntSetting.DRG_Setting.Dist  += Step;
-                 mntSetting.DRG_Setting.Dist  = (mntSetting.DRG_Setting.Dist+21)%21;
+                 mntSetting.DRG_Setting.Dist  = (mntSetting.DRG_Setting.Dist+105)%105;
                  
-                 sprintf(pStrBuf, "%d", mntSetting.DRG_Setting.Dist);
+                 sprintf(pStrBuf, "%d.%02d", mntSetting.DRG_Setting.Dist/100, mntSetting.DRG_Setting.Dist%100);
                  EDIT_SetText(hEts[5], pStrBuf);
                  break; 
             
@@ -470,12 +504,12 @@ static void myEditListener(WM_MESSAGE* pMsg)
                  if(mntSetting.DRG_Setting.isSndEnable)
                  {
                     mntSetting.DRG_Setting.isSndEnable  = DISABLE;
-                    EDIT_SetText(hEts[6], "Disable");
+                    EDIT_SetText(hEts[6], "关闭");
                  }
                  else
                  {
                     mntSetting.DRG_Setting.isSndEnable  = ENABLE;
-                    EDIT_SetText(hEts[6], "Enable");
+                    EDIT_SetText(hEts[6], "开启");
                  }
                  break;            
                  
@@ -505,7 +539,8 @@ static void myEditListener(WM_MESSAGE* pMsg)
        {
           case REPLY_OK:
 INFO("case REPLY_OK");  \
-               MNT_makeSettingUp(MNT_Boats, N_monitedBoat, &mntSetting);  
+               MNT_makeSettingUp(&mntSetting);  
+               MNT_init(&mntSetting);
                printMoniteSetting(MNT_Boats);              
                WM_SetFocus(menuWin);
                break;

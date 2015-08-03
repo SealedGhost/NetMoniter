@@ -26,6 +26,7 @@
 
 #include "Config.h"
 #include "Setting.h"
+#include "SystemConfig.h"
 
 /*********************************************************************
 *
@@ -90,7 +91,7 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
   { WINDOW_CreateIndirect, "Win_Confirm", ID_WINDOW_0, 200, 120, 400, 240, 0, 0x64, 0 },
   { BUTTON_CreateIndirect, "OK", ID_BUTTON_OK, 40, 100, 80, 40, 0, 0x0, 0 },
   { BUTTON_CreateIndirect, "Cancel", ID_BUTTON_CANCEL, 280, 100, 80, 40, 0, 0x0, 0 },
-  { TEXT_CreateIndirect, "Text", ID_TEXT_CONTENT, 40, 20, 319, 45, 0, 0x64, 0 },
+  { TEXT_CreateIndirect, "Text", ID_TEXT_CONTENT, 40, 20, 319, 45, 0, 0, 0 }
   // USER START (Optionally insert additional widgets)
   // USER END
 };
@@ -119,7 +120,23 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
   int i  = 0;
   // USER START (Optionally insert additional variables)
   // USER END
+//INFO("MsgId:%d",pMsg->MsgId);  
   switch (pMsg->MsgId) {
+  case USER_MSG_SKIN:
+       if(pMsg->Data.v == SKIN_Night)    
+          WINDOW_SetBkColor(pMsg->hWin, GUI_DARKGRAY); 
+       else
+          WINDOW_SetBkColor(pMsg->hWin, GUI_WHITE);
+       break;  
+	
+//	case WM_PAINT:
+//				//GUI_SetBkColor (GUI_LIGHTBLUE);
+//				GUI_Clear();
+//				GUI_SetTextMode(GUI_TEXTMODE_TRANS);
+//				GUI_SetColor (GUI_BLACK);
+//				GUI_SetFont (&GUI_Font28);
+//				GUI_DispStringAt ("开始添加网位仪监控列表？",35,20);
+//		break;
   case WM_INIT_DIALOG:
     //
     // Initialization of 'Frm_Confirm'
@@ -132,20 +149,20 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     //
     dlgBtOk = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_OK);
 //    WM_SetCallback(dlgBtOk, &mySB);
-    BUTTON_SetText(dlgBtOk, "OK");
-	   BUTTON_SetFont(dlgBtOk, GUI_FONT_16_1);
+    BUTTON_SetText(dlgBtOk, "确定");
+	   BUTTON_SetFont(dlgBtOk, &GUI_Font28);
     //
     // Initialization of 'bt_Cancle'
     //
     dlgBtCancel = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_CANCEL);
-    BUTTON_SetText(dlgBtCancel, "Cancle");
-	   BUTTON_SetFont(dlgBtCancel, GUI_FONT_16_1);
+    BUTTON_SetText(dlgBtCancel, "取消");
+	   BUTTON_SetFont(dlgBtCancel, &GUI_Font28);
     //
     // Initialization of 'Text'
     //
-    dlgTextContent = WM_GetDialogItem(pMsg->hWin, ID_TEXT_CONTENT);
-    TEXT_SetText(dlgTextContent, "Confirm the changes?");
-    TEXT_SetFont(dlgTextContent, GUI_FONT_16_1);
+     dlgTextContent = WM_GetDialogItem(pMsg->hWin, ID_TEXT_CONTENT);
+     //TEXT_SetText(dlgTextContent, "");
+     TEXT_SetFont(dlgTextContent, &GUI_Font28);
     // USER START (Optionally insert additional code for further widget initialization)
     // USER END
     break;
@@ -172,7 +189,9 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     Id    = WM_GetId(pMsg->hWinSrc);    // Id of widget
     NCode = pMsg->Data.v;               // Notification code
     switch (NCode) {
-    
+    case GUI_KEY_BACKSPACE:
+INFO("case backspace");    
+         break;
     case WM_NOTIFICATION_RELEASED:      // React only if released
       switch (Id) {
       case ID_BUTTON_OK:
@@ -234,18 +253,25 @@ INFO("Option:%d",Option);
       {
          case CANCEL_MONITED:
 INFO("case cancel_monited");         
-              TEXT_SetText(dlgTextContent, "Confirm cancel monited state?");
-              userMsgChoose  = CANCEL_MONITED;
+              TEXT_SetText(dlgTextContent, "确认取消监控该船舶？");
+//              userMsgChoose  = CANCEL_MONITED;
               break;
           
          case STORE_SETTING:
 INFO("case store_setting");         
-              userMsgChoose  = STORE_SETTING;
-              TEXT_SetText(dlgTextContent, "Confirm changes?");         
+//              userMsgChoose  = STORE_SETTING;
+              TEXT_SetText(dlgTextContent, "确认保存监控设置项？");         
               break;
-              
+         case ADD_MONITED:
+INFO("case add_monited");              
+              TEXT_SetText(dlgTextContent, "确认网位仪监控列表？");
+              break;
+         case SYS_SETTING:
+              TEXT_SetText(dlgTextContent, "确认保存设置内容？");
+         break;
+         
          default:
-INFO("Somethiing error!");         
+INFO("Something error!");         
               break;
       }
       break;

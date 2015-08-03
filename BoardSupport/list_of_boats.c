@@ -16,9 +16,10 @@
 
 
 /*----------------------- external variables ---------------------*/
+extern int N_boat;
 extern int list_endIndex;
 extern int myCnt;
-extern unsigned char * pStrBuf;
+extern char * pStrBuf;
 extern _boat* boat_list_p[BOAT_LIST_SIZE_MAX];
 extern boat mothership;
 extern BERTH Berthes[BOAT_LIST_SIZE_MAX];
@@ -492,10 +493,6 @@ void updateTimeStamp()
    
    while(pCur)
    {
-if( (pCur->pNext==NULL) && (pCur != tmpTail) )  
-INFO("ou ou"); 
-//if(pCur == pTail)      
-//      boat_list_p[i]  = &(pCur->Boat);
       if(pCur->Boat.time_cnt > 0)
       {
          SimpBerthes[i].latitude   = pCur->Boat.latitude;
@@ -508,7 +505,8 @@ INFO("ou ou");
          i++;
       }
       else
-      {     
+      { 
+printf("Delete\n\r");      
          /// Delete at header
          if(pCur == pHeader)
          {
@@ -584,7 +582,7 @@ static int getSphereDist(long lt_1,long lg_1, long lt_2, long lg_2)
     return 999999;
  }
 
-	dist = 6371 / 1.852 * acos(cos((f_1 - f_2)*PI / 180) / 2
+	dist = 6371 *0.54 * acos(cos((f_1 - f_2)*PI / 180) / 2
 		- cos((f_1 + f_2)*PI / 180) / 2
 		+ cos((diff + f_1 + f_2)*PI / 180) / 4
 		+ cos((diff + f_1 - f_2)*PI / 180) / 4

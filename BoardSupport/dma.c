@@ -10,8 +10,7 @@
 
 #define DMA_SIZE		3
 
-char Doubleclick;
-
+extern int ReleasedDectSwitch;
 uint8_t DMADest_Buffer[DMA_SIZE]; 
 GPDMA_Channel_CFG_Type GPDMACfg;
 extern volatile const void *GPDMA_LUTPerAddr[];
@@ -46,10 +45,10 @@ void DMA_IRQHandler (void)
 										        {printf("a");GUI_StoreKeyMsg(GUI_KEY_LARGE ,1);}    else printf("error 0x4E 0x61 but not 0x81");break;
 									case 0x62://归中
 									          if(DMADest_Buffer[2]==0x80)
-										        {printf("b");/*GUI_StoreKeyMsg(GUI_KEY_LARGE ,1);*/}else printf("error 0x4E 0x62 but not 0x80");break;										
+										        {printf("b");/*GUI_StoreKeyMsg(GUI_KEY_LARGE ,1);*/}else printf("error 0x4E 0x62 but not 0x80");break;
 									case 0x63://缩小
 										       if(DMADest_Buffer[2]==0x7F)
-										       {printf("c");GUI_StoreKeyMsg(GUI_KEY_REDUCE,1);}     else printf("error 0x4E 0x63 but not 0x7F");break;										
+										       {printf("c");GUI_StoreKeyMsg(GUI_KEY_REDUCE,1);}     else printf("error 0x4E 0x63 but not 0x7F");break;	
 									case 0x65://PWM++
                            if(DMADest_Buffer[2]==0x7D)
                            {printf("e");/*BACK_PWM--;if(BACK_PWM==-1)BACK_PWM=0;PWM_SET(BACK_PWM);*/}else printf("error 0x4E 0x65 but not 0x7D");break;													 
@@ -61,7 +60,8 @@ void DMA_IRQHandler (void)
                            {printf("g");/*BACK_PWM--;if(BACK_PWM==-1)BACK_PWM=0;PWM_SET(BACK_PWM);*/}else printf("error 0x4E 0x67 but not 0x7B");break;													 
 									case 0x68://航迹开
                            if(DMADest_Buffer[2]==0x7A)
-                           {printf("h");/*BACK_PWM++;if(BACK_PWM==11)BACK_PWM=10;PWM_SET(BACK_PWM);*/}else printf("error 0x4E 0x68 but not 0x7A");break;
+                           //{printf("h");/*BACK_PWM++;if(BACK_PWM==11)BACK_PWM=10;PWM_SET(BACK_PWM);*/}else printf("error 0x4E 0x68 but not 0x7A");break;
+													 {printf("n");GUI_StoreKeyMsg(GUI_KEY_ENTER ,1); }else printf("error 0x4E 0x6E but not 0x74");break;
 									case 0x69://监控关
 										       if(DMADest_Buffer[2]==0x79)
 										       {printf("i");GUI_StoreKeyMsg(GUI_KEY_CANCEL,1);}    else printf("error 0x4E 0x69 but not 0x79");break;													 
@@ -99,13 +99,13 @@ void DMA_IRQHandler (void)
 								}break;
 								
 				case 0x43: //松开
-					Doubleclick  = 1;
+					if(ReleasedDectSwitch)
 								switch (DMADest_Buffer[1])
 								{
-										case 0x6C:if(DMADest_Buffer[2]==0x76){printf("5");if (Doubleclick == 0)GUI_StoreKeyMsg(GUI_KEY_UP    ,0);}else printf("error 0x43 0x6C but not 0x76");break;
-										case 0x6B:if(DMADest_Buffer[2]==0x77){printf("7");if (Doubleclick == 0)GUI_StoreKeyMsg(GUI_KEY_LEFT  ,0);}else printf("error 0x43 0x6B but not 0x77");break;
-										case 0x6F:if(DMADest_Buffer[2]==0x73){printf("9");if (Doubleclick == 0)GUI_StoreKeyMsg(GUI_KEY_RIGHT ,0);}else printf("error 0x43 0x6F but not 0x73");break;
-										case 0x6D:if(DMADest_Buffer[2]==0x75){printf("0");if (Doubleclick == 0)GUI_StoreKeyMsg(GUI_KEY_DOWN  ,0);}else printf("error 0x43 0x6D but not 0x75");break;
+										case 0x6C:if(DMADest_Buffer[2]==0x76){printf("5");GUI_StoreKeyMsg(GUI_KEY_UP    ,0);}else printf("error 0x43 0x6C but not 0x76");break;
+										case 0x6B:if(DMADest_Buffer[2]==0x77){printf("7");GUI_StoreKeyMsg(GUI_KEY_LEFT  ,0);}else printf("error 0x43 0x6B but not 0x77");break;
+										case 0x6F:if(DMADest_Buffer[2]==0x73){printf("9");GUI_StoreKeyMsg(GUI_KEY_RIGHT ,0);}else printf("error 0x43 0x6F but not 0x73");break;
+										case 0x6D:if(DMADest_Buffer[2]==0x75){printf("0");GUI_StoreKeyMsg(GUI_KEY_DOWN  ,0);}else printf("error 0x43 0x6D but not 0x75");break;
 										
 									default:printf("ERROR DEFAULT 0x43");break;
 								}break;

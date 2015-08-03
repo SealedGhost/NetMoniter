@@ -6,6 +6,7 @@
 #include "lpc_types.h"
 
 
+
 typedef struct _DSP_SETTING DSP_SETTING;
 struct _DSP_SETTING
 {
@@ -40,7 +41,10 @@ typedef struct _MNT_BOAT MNT_BOAT;
 struct _MNT_BOAT
 {
    long mmsi;
+   long lg;
+   long lt;
    boat * pBoat;
+   
    char name[20];
    MNT_States  mntState;
    MNT_SETTING mntSetting;
@@ -55,17 +59,29 @@ struct _MNT_BERTH
 };
 
 
+//static MNT_BERTH * pMntHeader  = NULL;
+//static MNT_BERTH * Next  = NULL;
+
+
+
 
 int MNT_insert(MNT_BOAT * pMNT_Boat, boat * pBoat, long mmsi, char * name);
-int MNT_makeSettingUp(MNT_BOAT *pMNT_Boat,  int N, MNT_SETTING * pMNT_Setting);
+void MNT_makeSettingUp(MNT_SETTING * pMNT_Setting);
 int MNT_deleteByIndex(MNT_BOAT * pMNT_Boat,int index, long id);
 int MNT_deleteById(MNT_BOAT * pMNT_Boat, long id);
 void MNT_init(MNT_SETTING * pMntSetting);
 void printMoniteSetting(MNT_BOAT * pMNT_Boat);
 void printSetting(MNT_SETTING * p_setting);
+void MNT_printSetting(void);
+Bool MNT_add(boat * pBoat);
+Bool MNT_removeById(long Id);
+void MNT_testReset(void);
+//void MNT_resetIterator(void);
+MNT_BERTH * MNT_getNext(void);
 
-
-int MNT_add(boat * pBoat, long mmsi, char * name);
-
+//__inline void MNT_resetIterator()
+//{
+//   Next  = pMntHeader;
+//}
 #endif
 

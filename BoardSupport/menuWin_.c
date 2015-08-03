@@ -25,7 +25,6 @@
 #include "DIALOG.h"
 #include "Config.h"
 #include "WM.h"
-#include "SystemConfig.h"
 
 /*********************************************************************
 *
@@ -67,11 +66,7 @@ static void myButtonListener(WM_MESSAGE * pMsg);
 *       _aDialogCreate
 */
 static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
-//  {TEXT_CreateAsChild(0, 0, 200, 40,  pMsg->hWin,  WM_CF_SHOW, TEXT_CF_LEFT,  GUI_ID_USER+0x20),
   { WINDOW_CreateIndirect, "Window", ID_WINDOW_0, 0, 0, Win_Main_WIDTH, Win_Main_HEIGHT, 0, 0x0, 0 },
-  
-  { TEXT_CreateIndirect,   "MainMenu", ID_TEXT_0, 0, 0, MenuLabel_WIDTH, 40, 0, 0, 0},
-  
   { BUTTON_CreateIndirect, "bt_0", ID_BUTTON_0, MenuLabel_X, MenuLabel_Y,                    MenuButton_WIDTH, MenuButton_HEIGHT, 0, 0x0, 0 },
   { BUTTON_CreateIndirect, "bt_1", ID_BUTTON_1, MenuLabel_X, MenuLabel_Y+MenuButton_HEIGHT,  MenuButton_WIDTH, MenuButton_HEIGHT, 0, 0x0, 0 },
   { BUTTON_CreateIndirect, "bt_2", ID_BUTTON_2, MenuLabel_X, MenuLabel_Y+MenuButton_HEIGHT*2,MenuButton_WIDTH, MenuButton_HEIGHT, 0, 0x0, 0 },
@@ -80,13 +75,6 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
   // USER END
 };
 
-static MenuWin_COLOR menuWinSkins[2]  = {
-///                                         bkColor     menu_label  bt_Pressed  bt_Unpressed   bt_text    bt_Focus
-                                          { GUI_BLACK, GUI_WHITE,  GUI_GRAY,    GUI_DARKGRAY, GUI_WHITE, GUI_GRAY },
-///                                        
-                                          { GUI_WHITE, GUI_BLACK,  GUI_GRAY,    GUI_LIGHTGRAY,GUI_BLACK, GUI_DARKGRAY }                                          
-                                        };
-static MenuWin_COLOR * pMenuSkin  = menuWinSkins;
 
 WM_HWIN subWins[4];
 WM_HWIN hButtons[4];
@@ -128,28 +116,14 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
   // USER END
 
   switch (pMsg->MsgId) {
-    case USER_MSG_SKIN: 
-         pMenuSkin  = &(menuWinSkins[pMsg->Data.v]);
-         
-         WINDOW_SetBkColor(pMsg->hWin,pMenuSkin->BackGround);         
-         
-         for(i=0;i<4;i++)
-         {
-            BUTTON_SetBkColor(hButtons[i],  BUTTON_CI_PRESSED,  pMenuSkin->Bt_PRESSED);
-            BUTTON_SetBkColor(hButtons[i]  ,BUTTON_CI_UNPRESSED,pMenuSkin->Bt_UNPRESSED);
-            BUTTON_SetTextColor(hButtons[i],BUTTON_CI_UNPRESSED,pMenuSkin->Bt_Text);         
-         }
-         break;
-         
-//			case WM_PAINT:
-//				GUI_SetBkColor (GUI_LIGHTBLUE);
-//				GUI_Clear();
-//				GUI_SetTextMode(GUI_TEXTMODE_TRANS);
-//				GUI_SetColor (GUI_WHITE);
-//				GUI_SetFont (&GUI_Font28);
-//				GUI_DispStringAt ("主菜单",15,10);
-//    
-//			break;
+			case WM_PAINT:
+				GUI_SetBkColor (GUI_LIGHTBLUE);
+				GUI_Clear();
+				GUI_SetTextMode(GUI_TEXTMODE_TRANS);
+				GUI_SetColor (GUI_WHITE);
+				GUI_SetFont (&GUI_Font28);
+				GUI_DispStringAt ("主菜单",15,10);
+			break;
 //		case WM_KEY:
 //			pInfo  = (WM_KEY_INFO*)pMsg->Data.p;
 //			switch(pInfo->Key)
@@ -161,13 +135,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 //			}
 //			break;
   case WM_INIT_DIALOG:
-		 
-    //
-    // Initialization of 'text'
-    //
-    TEXT_SetText(WM_GetDialogItem(pMsg->hWin, ID_TEXT_0), "主菜单");
-    
-   
+		
     //
     // Initialization of 'bt_0'
     //
@@ -191,11 +159,8 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 		
 		for (i = 0; i < 4; i++)
 		{		
-   WIDGET_SetEffect(hButtons[i],&WIDGET_Effect_Simple);
-			BUTTON_SetBkColor(hButtons[i],BUTTON_CI_PRESSED,GUI_WHITE);
-			BUTTON_SetBkColor(hButtons[i],BUTTON_CI_UNPRESSED,DEEPBLUE);	
-			BUTTON_SetTextColor(hButtons[i],BUTTON_CI_PRESSED,GUI_BLACK);
-			BUTTON_SetTextColor(hButtons[i],BUTTON_CI_UNPRESSED,GUI_WHITE);
+			BUTTON_SetBkColor(hButtons[i],GUI_LIGHTRED,BUTTON_CI_DISABLED);
+			BUTTON_SetBkColor(hButtons[i],GUI_LIGHTBLUE,BUTTON_CI_UNPRESSED);	
 			WM_SetCallback(hButtons[i],&myButtonListener);
 		}
 		//
@@ -204,7 +169,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 		
 	  	subWins[0]  = sub0WinCreate();
 		 	subWins[1]  = sub1WinCreate();				
-	 		subWins[2]  = sub2WinCreate();
+			subWins[2]  = sub2WinCreate();
 	  	subWins[3]  = sub3WinCreate();
 
     // USER START (Optionally insert additional code for further widget initialization)
@@ -357,64 +322,63 @@ static void myButtonListener(WM_MESSAGE * pMsg)
 	///判断当前焦点落在哪个button 上
 	handle  = WM_GetFocussedWindow();
 	
-	BUTTON_SetPressed(hButtons[0],0);
-	BUTTON_SetPressed(hButtons[1],0);
-	BUTTON_SetPressed(hButtons[2],0);
-	BUTTON_SetPressed(hButtons[3],0);
 	if(handle  == hButtons[0])
 	{
 		
-	  	i  = 0;
+		i  = 0;
     WM_BringToTop(subWins[0]);	
-    BUTTON_SetPressed(hButtons[0],1);
+    
 	}
 	else if(handle == hButtons[1])
 	{		
 		
     i  = 1;		
-//  UpdateListViewContent(WM_GetDialogItem(subWins[1],GUI_ID_USER + 0x01));
+  UpdateListViewContent(WM_GetDialogItem(subWins[1],GUI_ID_USER + 0x01));
 		WM_BringToTop(subWins[1]);
 		WM_BringToTop(etWin);
-		BUTTON_SetPressed(hButtons[1],1);
-		
 	}
 	else if(handle == hButtons[2])
 	{
 		
 		i  = 2;
-		WM_BringToTop(subWins[2]);
-		BUTTON_SetPressed(hButtons[2],1);
+		WM_BringToTop(subWins[2]);		
 	}
 	else if(handle == hButtons[3])
 	{
 		
-    i  = 3;
-    WM_BringToTop(subWins[3]);
-    BUTTON_SetPressed(hButtons[3],1);
+		i  = 3;
+	  WM_BringToTop(subWins[3]);
 	}
 	else 
 	{
-    BUTTON_SetPressed(hButtons[0],0);
-    BUTTON_SetPressed(hButtons[1],0);
-    BUTTON_SetPressed(hButtons[2],0);
-    BUTTON_SetPressed(hButtons[3],0);  
+     ;
 	}
 	
- if(i<2)
- {
-    WM_SendMessageNoPara(subWins[i], USER_MSG_BRING);
- }
- 
 	
 	switch(pMsg->MsgId)
 	{
-
 		case WM_KEY:
 			pInfo  = (WM_KEY_INFO*)pMsg->Data.p;
 		  switch(pInfo->Key)
 			{
 				case GUI_KEY_DOWN:
          GUI_StoreKeyMsg(GUI_KEY_TAB,1);		
+					if (i == 0)
+					{
+						WM_EnableWindow(hButtons[3]);
+					}
+					else if (i == 1)
+					{
+						WM_EnableWindow(hButtons[0]);
+					}
+					else if (i == 2)
+					{
+						WM_EnableWindow(hButtons[1]);
+					}
+					else if (i == 3)
+					{
+						WM_EnableWindow(hButtons[2]);
+					}
 				
 					break;
 				
@@ -423,27 +387,23 @@ static void myButtonListener(WM_MESSAGE * pMsg)
 					break;
 				
 				case GUI_KEY_RIGHT:
-//         if(i!=3)
+         if(i!=3)
           WM_SetFocus(subWins[i]);
-//				 else 
-//				 {	
-//        WM_SetFocus (WM_GetDialogItem(subWins[i], GUI_ID_EDIT0));
-//        WM_EnableWindow(WM_GetFocussedWindow());
-//        editindex = 0;
-//				 }
+				 else 
+				 {						WM_SetFocus (WM_GetDialogItem(subWins[i], GUI_ID_EDIT0));
+						WM_EnableWindow(WM_GetFocussedWindow());
+						editindex = 0;
+					}
 				  break;
 				case GUI_KEY_MENU:       
-
-							WM_BringToBottom(menuWin);
-							WM_HideWindow(subWins[0]);
-							WM_HideWindow(subWins[1]);
-							WM_HideWindow(subWins[2]);
-							WM_HideWindow(subWins[3]);
-							WM_HideWindow(etWin);
-							WM_BringToTop(hDlg_FishMap);       
-							WM_SetFocus(hDlg_FishMap);
-       GUI_CURSOR_Show();
-       
+		    		 WM_BringToTop(hDlg_FishMap);
+         WM_BringToBottom(menuWin);
+         WM_HideWindow(subWins[0]);
+         WM_HideWindow(subWins[1]);
+         WM_HideWindow(subWins[2]);
+         WM_HideWindow(subWins[3]);
+         WM_HideWindow(etWin);
+					WM_SetFocus(hDlg_FishMap);
 					break;
 				
 				default:

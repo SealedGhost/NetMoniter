@@ -1,32 +1,52 @@
 
-
+#include "Setting.h"
 #include "MainTask.h"
+#include "SystemConfig.h"
 
 
 /*-------------------------- external variables ------------------------------*/
-
+extern WM_HWIN confirmWin;
 extern WM_HWIN  menuWin;
 extern WM_HWIN  subWins[4];
 extern WM_HWIN  etWin;
 extern boat mothership;
 extern short isAllBoatVisible;
-extern unsigned char * pStrBuf;
+extern  char * pStrBuf;
+extern int N_boat;
 
 extern SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
+extern MNT_BOAT MNT_Boats[MNT_NUM_MAX];
 extern BERTH * pHeader;
-/*--------------------- external variables ----------------------------------*/
-extern void Draw_ScaleRuler(int x0, int y0, long scaleVal);
-
+extern MNT_BERTH * pMntHeader;
+/*--------------------- external function ----------------------------------*/
+extern void MNT_dispBoat(const scale_map * scale,  long center_lg, long center_lt, MNT_BERTH * pIterator);
 
 /*------------------------- local variables --------------------------------*/
 static WM_HTIMER reTimer;
+static TEXT_Handle textHandle  = 0;
+
 static unsigned int drawMapSwitch  = 1;
-unsigned int as[]  = {'1','2',176};
+static unsigned int drawMapSwitchCnt  = 0;
 
 short shift_x  = 0;
 short shift_y  = 0;
 
-short (*line_operation)(short,short);
+MapWin_COLOR mapSkins[2] = { 
+                                    {
+   ///                                 bkColor     ttl_bk    ttl_label  ttl_context  ttl_line      map_grid    map_text   
+                                       GUI_BLACK, GUI_BLACK, GUI_WHITE, GUI_GREEN,   GUI_WHITE,    GUI_WHITE,  GUI_GRAY,
+   ///                                 boat_org   boat_dsp   boat_bgl   boat_drg     boat_tip_bd   boat_name   boat_cdnt
+                                       GUI_BLUE,  GUI_WHITE, GUI_RED,   GUI_GREEN,   GUI_DARKBLUE ,GUI_YELLOW, GUI_DARKYELLOW
+                                        },
+                                    {
+   ///                                 bkColor     ttl_bk    ttl_label  ttl_context  ttl_line      map_grid    map_text   
+                                       GUI_WHITE, GUI_WHITE, GUI_BLACK, GUI_GREEN,   GUI_BLACK,    GUI_BLACK,  GUI_GRAY,
+   ///                                 boat_org   boat_dsp   boat_bgl   boat_drg     boat_tip_bd   boat_name   boat_cdnt
+                                       GUI_BLUE,  GUI_BLACK, GUI_RED,   GUI_GREEN,   GUI_DARKBLUE ,GUI_WHITE,  GUI_DARKMAGENTA
+                                        }
+                                            };
+
+MapWin_COLOR * pMapSkin  = mapSkins;                                           
 
 GUI_RECT pRect[]  = {MAP_LEFT,MAP_TOP,MAP_RIGHT,MAP_BOTTOM};
 
@@ -80,20 +100,17 @@ static void Draw_WinMapTitle()
 
 
 
-void display_longitude_latitude(unsigned long l_o_l,short x, short y)
-{
-  long degree;
-  float minute;
-  degree = l_o_l/(distance<<1);
-  minute = (l_o_l%(distance<<1))/mul_pow;
-	GUI_SetFont (&GUI_Font16B_ASCII);
-  GUI_DispDecAt(degree,x,y,3);
-	GUI_SetFont (&GUI_Font16B_1);
-	GUI_DispCharAt(176,x+22,y);
-	GUI_SetFont (&GUI_Font16B_ASCII);
-  GUI_GotoX(x+30);
-	GUI_DispFloat(minute,6);
-}
+//void display_longitude_latitude(unsigned long l_o_l,short x, short y)
+//{
+//  long degree;
+//  float minute;
+//  
+//  degree = l_o_l/(distance<<1);
+//  minute = (l_o_l%(distance<<1))/mul_pow;
+//  
+//	 GUI_SetFont (&GUI_Font16B_ASCII);
+//  lltostr();
+//}
 
 
 
@@ -104,33 +121,37 @@ void display_longitude_latitude(unsigned long l_o_l,short x, short y)
 */
 void draw_map_grid(mapping gridAnchor,scale_map scale)
 {
-	short x = 0;
-	short y = 0;
+   short x = 0;
+   short y = 0;
 
-	x  = gridAnchor.x;
-	y  = gridAnchor.y;
-	
-	
-  GUI_SetColor(GUI_WHITE);
-	while(x<MAP_LEFT)
-	{
-		x  += scale.pixel;
-	}
-	while(x<MAP_RIGHT)
-	{
-		GUI_DrawLine(x, MAP_TOP, x, MAP_BOTTOM);
-		x  += scale.pixel;
-	}
-	
-	while(y<MAP_TOP)
-	{
-		y  += scale.pixel;
-	}
-	while(y<MAP_BOTTOM)
-	{
-		GUI_DrawLine(MAP_LEFT, y,MAP_RIGHT, y);
-		y  += scale.pixel;
-	}
+   x  = gridAnchor.x;
+   y  = gridAnchor.y;
+   
+   GUI_SetLineStyle(GUI_LS_DASH);
+   GUI_SetColor(pMapSkin->Map_Grid);
+   
+   
+   
+//   GUI_SetColor(GUI_WHITE);
+   while(x<MAP_LEFT)
+   {
+      x  += scale.pixel;
+   }
+   while(x<MAP_RIGHT)
+   {
+      GUI_DrawLine(x, MAP_TOP, x, MAP_BOTTOM);
+      x  += scale.pixel;
+   }
+   
+   while(y<MAP_TOP)
+   {
+      y  += scale.pixel;
+   }
+   while(y<MAP_BOTTOM)
+   {
+      GUI_DrawLine(MAP_LEFT, y, MAP_RIGHT, y);
+      y  += scale.pixel;
+   }
 }
 
 unsigned int getFishingAreaId(long longitude, long latitude )
@@ -188,6 +209,132 @@ unsigned int getFishingAreaId(long longitude, long latitude )
 	
 }
 
+void getMntWrapPara(long *halfDiff_lg, long* halfDiff_lt, scale_map* wrap_scale)
+{
+//   MNT_BERTH * min_lg_addr  = pMntHeader;
+//   MNT_BERTH * max_lg_addr  = pMntHeader;
+//   MNT_BERTH * min_lt_addr  = pMntHeader;
+//   MNT_BERTH * max_lt_addr  = pMntHeader;
+   
+   long min_lg  = 0;
+   long max_lg  = 0;
+   long min_lt  = 0;
+   long max_lt  = 0;
+   
+   long maxDiff_lg  = 0;
+   long maxDiff_lt  = 0;
+   
+   
+   MNT_BERTH * pIterator  = NULL;
+   
+   if(pMntHeader  == NULL)
+   {
+      return ;
+   }
+   pIterator  = pMntHeader;
+   
+
+   
+   if(pIterator == NULL)
+   {
+      *halfDiff_lg  = mothership.longitude;
+      *halfDiff_lt  = mothership.latitude;
+   }
+   else
+   {
+      min_lg  = pMntHeader->mntBoat.pBoat->longitude;
+      max_lg  = min_lg;
+      
+      min_lt  = pMntHeader->mntBoat.pBoat->latitude;
+      max_lt  = min_lt;
+      
+//printf("lt_max:%ld\n\r",max_lt) ;     
+//printf("   min:%ld\n\r",min_lt);
+//printf("lg_max:%ld\n\r",max_lg);
+//printf("   min:%ld\n\r",min_lg);
+      pIterator  = pIterator->pNext;
+      while(pIterator && pIterator->mntBoat.pBoat->latitude)
+      {
+printf("   lt:%ld,lg:%ld\n\r",pIterator->mntBoat.pBoat->latitude,pIterator->mntBoat.pBoat->longitude);      
+         if(pIterator->mntBoat.pBoat->latitude < min_lt)
+         {
+            min_lt  = pIterator->mntBoat.pBoat->latitude;
+         }
+         else if(pIterator->mntBoat.pBoat->latitude > max_lt)
+         {
+            max_lt  = pIterator->mntBoat.pBoat->latitude;
+         }
+         
+         if(pIterator->mntBoat.pBoat->longitude < min_lg)
+         {
+            min_lg  = pIterator->mntBoat.pBoat->longitude;
+         }
+         else if(pIterator->mntBoat.pBoat->longitude > max_lg)
+         {
+            max_lg  = pIterator->mntBoat.pBoat->longitude;
+         }
+         
+         pIterator  = pIterator->pNext;
+      }
+      
+      if(mothership.longitude > max_lg)
+      {
+         maxDiff_lg  = mothership.longitude - min_lg;  
+         *halfDiff_lg = mothership.longitude/2 + min_lg/2;
+       
+      }
+      else if(mothership.longitude < min_lg)
+      {
+         maxDiff_lg  = max_lg - mothership.longitude;
+         *halfDiff_lg = mothership.longitude/2 + max_lg/2;
+       
+      }
+      else  
+      {
+         maxDiff_lg  = max_lg - min_lg;
+         *halfDiff_lg = max_lg/2 + min_lg/2;
+         
+      }
+         
+         
+      if(mothership.latitude > max_lt)
+      {
+         maxDiff_lt  = mothership.latitude - min_lt;
+         *halfDiff_lt = mothership.latitude/2 + min_lt/2;
+        
+      }
+         
+      else if(mothership.latitude < min_lt)
+      {
+         maxDiff_lt  = max_lt - mothership.latitude;
+         *halfDiff_lt = mothership.latitude/2 + max_lt/2;
+        
+      }
+         
+      else
+      {
+         maxDiff_lt  = max_lt  - min_lt;
+         *halfDiff_lt = max_lt/2 + min_lt/2;
+        
+      }
+
+
+   ///map的宽为800pix，高为400pix，判断在适配上述区域时以map的宽来适配还是高来适配
+   
+   ///若适配区域的宽度大于高度的两倍，则以map的宽来适配
+      if(( maxDiff_lg/2) > maxDiff_lt)
+      {
+         wrap_scale->minute  = ( maxDiff_lg/(8*100) + 1)*100;  ///这种写法保证所得到的scale.minute为100的整数倍
+      }
+      ///否则以map的高来适配
+      else
+      {
+         wrap_scale->minute  = ( maxDiff_lt/(4*100) + 1)*100;
+      }
+   }
+}
+
+
 /**    getWrapPara()
 *    
 *    @Description:  通过查找最大和最小的经纬度，确定船舶分布的区域，再计算所需的scale
@@ -196,8 +343,6 @@ unsigned int getFishingAreaId(long longitude, long latitude )
 *    @outputs    :
 *    @return     :
 */
-
-
 
 void getWrapPara(long * halfDiff_lg, long * halfDiff_lt, scale_map* wrap_scale)
 {
@@ -334,20 +479,27 @@ void setWrapedView()
    
    scale_map wrapScale ={100,100};
    
-   if(N_boat > 0)
-      getWrapPara(&lg, &lt, &wrapScale);
+//   if(N_boat > 0)
+//      getWrapPara(&lg, &lt, &wrapScale);
    
-
+  if(pMntHeader->mntBoat.pBoat->latitude)
+  {
+     getMntWrapPara(&lg, &lt, &wrapScale);
+  }
    
    map_draw(lg, lt, wrapScale);
    
-   center.x=(MAP_LEFT+MAP_RIGHT)/2;
+  center.x=(MAP_LEFT+MAP_RIGHT)/2;
 	 center.y=(MAP_TOP+MAP_BOTTOM)/2;
 						
 	 GUI_SetLineStyle(GUI_LS_SOLID);
 	 GUI_SetColor(GUI_BLUE);
-   
-   disp_fish_boat(&wrapScale, lg, lt, SimpBerthes, N_boat);
+//printf("Wrap para lg:%ld\n\r",lg);   
+//printf("          lt:%ld\n\r",lt);
+//printf("          minute:%ld\n\r",wrapScale.minute);
+//   disp_fish_boat(&wrapScale, lg, lt, SimpBerthes, N_boat);
+  MNT_dispBoat(&wrapScale, lg, lt, pMntHeader);
+  Draw_ScaleRuler(wrapScale);
 }
 
 
@@ -381,16 +533,16 @@ void map_draw(long longitude,  long latitude, scale_map scale)
 	 
 		 do
 		 {
-			 if(fishing_area[i+1].latitude_fish<latitude && fishing_area[i].latitude_fish>=latitude)
-			 {
-				 count_fr_fsh_ara  = (longitude - fishing_area[i].longitude_fish)/scale.minute;
-				 num_fr_fsh_ara    = fishing_area[i].fish_number + count_fr_fsh_ara;
-				 break;
-			 }
-			 else
-			 {
-				 i++;
-			 }
+      if(fishing_area[i+1].latitude_fish<latitude && fishing_area[i].latitude_fish>=latitude)
+      {
+         count_fr_fsh_ara  = (longitude - fishing_area[i].longitude_fish)/scale.minute;
+         num_fr_fsh_ara    = fishing_area[i].fish_number + count_fr_fsh_ara;
+         break;
+      }
+      else
+      {
+         i++;
+      }
 		 }while(i<num_fish-1);
 		 
 		 anchor.y  = (MAP_TOP+MAP_BOTTOM)/2 - \
@@ -406,13 +558,13 @@ void map_draw(long longitude,  long latitude, scale_map scale)
 		 
 	   while(anchor.x  >= MAP_LEFT+(scale.pixel-shift_x))
 		 {
-			 anchor.x  -= scale.pixel;
-			 anchor.lgtude -= scale.minute;
+			   anchor.x  -= scale.pixel;
+			   anchor.lgtude -= scale.minute;
 		 }
 		 while(anchor.y  > MAP_TOP+(scale.pixel-shift_y))
 		 {
-			 anchor.y  -= scale.pixel;
-			 anchor.lttude  += scale.minute;
+			   anchor.y  -= scale.pixel;
+			   anchor.lttude  += scale.minute;
 		 }
 		  
 		 draw_map_grid(anchor, scale);
@@ -422,12 +574,12 @@ void map_draw(long longitude,  long latitude, scale_map scale)
 		 tmp_lgtude  = anchor.lgtude;
 		 tmp_lttude  = anchor.lttude;
 
-		 GUI_SetColor (GUI_BLACK);
-     GUI_SetFont(&GUI_Font16B_1);
-     for(tmp_y=anchor.y;tmp_y<=MAP_BOTTOM;)			 
-		 {
-				 
-				if(scale_choose <=  1)
+		 GUI_SetColor (pMapSkin->Map_Text);  
+   GUI_SetFont(&GUI_Font16B_1);
+   
+   for(tmp_y=anchor.y;tmp_y<=MAP_BOTTOM;)			 
+		 {				 
+				 if(scale_choose <=  1)
 				{
 					 tmp_x  = anchor.x;
 					 tmp_lgtude  = anchor.lgtude ;
@@ -471,7 +623,7 @@ void map_draw(long longitude,  long latitude, scale_map scale)
          if( (tmp_y+latitude_display_y_shift) >= MAP_TOP )
          {
            lltostr(tmp_lttude,pStrBuf);
-           GUI_DispStringExAt(pStrBuf, MAP_RIGHT+latitude_display_x_shift,tmp_y+latitude_display_y_shift);         
+           GUI_DispStringAt(pStrBuf, MAP_RIGHT+latitude_display_x_shift,tmp_y+latitude_display_y_shift);         
          }
 
 //	         display_longitude_latitude(tmp_lttude,MAP_RIGHT + latitude_display_x_shift,tmp_y + latitude_display_y_shift);						 
@@ -563,14 +715,14 @@ static void updateTipLoc(short x, short y)
 	}
 }
 
-
-
 void _cbWindowAllFishMap(WM_MESSAGE* pMsg) 
 {	
 	WM_HWIN hWin = pMsg->hWin;
 
-	short i = 0;
+ WM_MESSAGE myMsg;
 
+	short i = 0;
+ char *s  = "E118°48.600";
 	
 	temp_lat  = __cursor.latitude;
 	temp_long  = __cursor.longitude ;
@@ -578,24 +730,77 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 	switch (pMsg->MsgId) 
 	{
 		case WM_CREATE:
+  
 				WM_SetFocus(hWin);
 				GUI_CURSOR_Select(&GUI_CursorCrossS);
-				GUI_CURSOR_Show();
+//				GUI_CURSOR_Show();
+
+		 
+ for(i=0;i<MNT_NUM_MAX;i++)
+ {
+    if(MNT_Boats[i].mmsi > 0)
+       break;
+ }
+INFO("i::%d",i); 
+ /// Do not exist monited boat.
+ if(i>=MNT_NUM_MAX)
+ {
+    myMsg.hWin  = WM_GetClientWindow(confirmWin);
+    myMsg.hWinSrc  = pMsg->hWin;
+    myMsg.MsgId  = USER_MSG_ID_CHOOSE;
+    myMsg.Data.v  = ADD_MONITED;
+    WM_SendMessage(myMsg.hWin, &myMsg);
+    WM_BringToTop(confirmWin);
+	   WM_SetFocus(confirmWin); 
+ }
+
+    
+    
 		
-				TEXT_CreateEx(5,3,150,30,hWin,WM_CF_SHOW,TEXT_CF_LEFT,GUI_ID_TEXT0,"N32°07.295"); //经度
-				TEXT_CreateEx(160,3,160,30,hWin,WM_CF_SHOW,TEXT_CF_LEFT,GUI_ID_TEXT0,"E118°48.600"); //纬度
-				TEXT_CreateEx(420,3,60,30,hWin,WM_CF_SHOW,TEXT_CF_LEFT,GUI_ID_TEXT0,"12km"); //航速
-				TEXT_CreateEx(570,3,60,30,hWin,WM_CF_SHOW,TEXT_CF_LEFT,GUI_ID_TEXT0,"123°"); //航向
-				TEXT_CreateEx(650,3,180,30,hWin,WM_CF_SHOW,TEXT_CF_LEFT,GUI_ID_TEXT0,"06/04/4:55"); //时间
-		  
-		
-		  reTimer  = WM_CreateTimer(pMsg->hWin, ID_TIMER_MAP_REFRESH,3000, 0);
+		  reTimer  = WM_CreateTimer(pMsg->hWin, ID_TIMER_MAP_REFRESH,MAP_REFRESH_SLOT, 0);
 				break;
+  case USER_MSG_SKIN: 
+     pMapSkin  = &(mapSkins[pMsg->Data.v]);
+     break;
+     
+  case USER_MSG_SHAPE:
+       changeShape(pMsg->Data.v);
+       break;
+
+  case USER_MSG_ID_REPLY:
+       switch(pMsg->Data.v)
+       {
+        case REPLY_OK:
+             GUI_CURSOR_Hide();
+					        WM_BringToTop (menuWin);
+					        WM_ShowWindow(subWins[0]);
+             WM_ShowWindow(subWins[1]);
+             WM_ShowWindow(etWin);
+             WM_ShowWindow(subWins[2]);
+             WM_ShowWindow(subWins[3]);
+             WM_BringToTop(subWins[2]);		
+             WM_SetFocus(subWins[2]);
+             break;
+        
+        case REPLY_CANCEL:
+             WM_SetFocus(pMsg->hWin);
+             break;
+       }
+       break;  
+  
 		case WM_TIMER:
+  drawMapSwitchCnt++;
+  if(drawMapSwitchCnt > AUTO_ADAPTER_CNT)
+  {
+     drawMapSwitchCnt  = 0;
+     drawMapSwitch  = 0;
+     GUI_CURSOR_Hide();
+  }
+
 			 if(ID_TIMER_MAP_REFRESH == WM_GetTimerId(reTimer))
 				{		    
 						WM_InvalidateRect( hWin,pRect);
-					WM_RestartTimer(reTimer, 3000);
+			 		WM_RestartTimer(reTimer, MAP_REFRESH_SLOT);
 				}
 				break;
 		
@@ -610,27 +815,7 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 									
 								/* 长按  光标加速移动 */
 									  __cursor.speed = CURSOR_SPEED_FAST;
-								
 
-								if(WM_hwnd)
-								{
-//											if(   (test_p[i_cursor]->x  <=  __cursor.x+__cursor.wide)
-//															&&(test_p[i_cursor]->x  >=  __cursor.x-__cursor.wide)
-//															&&(test_p[i_cursor]->y  <=  __cursor.y+__cursor.wide)
-//															&&(test_p[i_cursor]->y  >=  __cursor.y-__cursor.wide)
-//																																																																		  	)
-//												{
-//												}
-//												/* 若超出tip区域，删除tip */
-//												else
-//												{
-//													   CleanText(pMsg);
-//																WM_DeleteWindow(WM_hwnd);
-//																WM_hwnd=0;
-//																//WM_Invalidate(WM_HBKWIN);
-//																//GUI_Exec();
-//												}
-								}
 								
 						switch(__cursor.key)
 						{
@@ -648,16 +833,9 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 											__cursor.latitude = temp_lat;
 										}
 										TIMER_handle
-				// 						time_delay = 1;
-				// 						__cursor.x = map_width/2;
-				// 						__cursor.y = map_height/2;
-				// 						GUI_CURSOR_SetPosition(__cursor.x,__cursor.y);
-				// 						WM_InvalidateRect( hWin,pRect);
-										//WM_InvalidateWindow(hWin);
 							}
 							else
 							{
-										//UART_SendByte(UART_0,'1');
 										__cursor.y = __cursor.y - __cursor.speed;
 							}
 							break;
@@ -674,7 +852,6 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 											else
 												__cursor.latitude = temp_lat;
 											
-											TIMER_handle
 							}
 							else
 										__cursor.y = __cursor.y + __cursor.speed;
@@ -725,28 +902,20 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 			break;
 			
 		case WM_KEY:
+INFO("case WM_KEY");  
+  drawMapSwitchCnt  = 0;
+  drawMapSwitch     = 1;
+
+		WM_InvalidateRect(hWin,pRect);  
+  if(!GUI_CURSOR_GetState())
+  {
+     GUI_CURSOR_Show();
+  }
+  
+  
 			switch (((WM_KEY_INFO*)(pMsg->Data.p))->Key) 
 			{
-				
-//				case GUI_KEY_F1:
-//					isAllBoatVisible  = 1;
-//					Doubleclick = 1;
-//					WM_BringToTop (hDlg_AllList); //所有船舶列表
-//					WM_SetFocus (hDlg_AllList);
-//					GUI_CURSOR_Hide();
-//				break;
-
-//				case GUI_KEY_F2:
-//					
-//				  if(isAllBoatVisible)
-//						isAllBoatVisible  = 0;
-//					else
-//						isAllBoatVisible  = 1;
-//				  
-
-//					WM_InvalidateRect(hWin, pRect);
-//				break;
-//			
+			
 				
 				/*----------------------   捕捉到中心按键按下的响应:    -----------------------*/
 				/*   中心按键按下后：将本船位置和光标显示到map中心点 */
@@ -766,28 +935,6 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 				   __cursor.latitude = mothership.latitude;
 				   __cursor.longitude = mothership.longitude;
   
-				
-				
-				/* 判断是否离开tip区域，若离开则删除tip */
-//					if(WM_hwnd)
-//					{
-//									if(   (test_p[i_cursor]->x  <=  __cursor.x+__cursor.wide)
-//													 &&(test_p[i_cursor]->x  >=  __cursor.x-__cursor.wide)
-//														&&(test_p[i_cursor]->y  <=  __cursor.y+__cursor.wide)
-//														&&(test_p[i_cursor]->y  >=  __cursor.y-__cursor.wide)
-//																																									)
-//									{ ;// NULL operation
-//									}
-//									/* 若超出tip区域，删除tip */
-//									else
-//									{
-//														CleanText(pMsg);
-//														WM_DeleteWindow(WM_hwnd);
-//														WM_hwnd=0;
-//													//WM_Invalidate(WM_HBKWIN);
-//													//GUI_Exec();
-//									}
-//					}
 
 //map_getWraped();
 					 board_handle					
@@ -954,14 +1101,15 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 					}
 
 					break;
-				case GUI_KEY_LARGE:
+				case GUI_KEY_LARGE: 
 					if(scale_choose <MAX_GEAR)
 						scale_choose++;
 					WM_InvalidateRect( hWin,pRect);//WM_Paint(hWin);
 					flip_lttude = measuring_scale[scale_choose].minute*((flip_speed_lat)/measuring_scale[scale_choose].pixel);
 					flip_lngtude = measuring_scale[scale_choose].minute*((flip_speed_long)/measuring_scale[scale_choose].pixel);
 					break;
-				case GUI_KEY_REDUCE:
+     
+				case GUI_KEY_REDUCE:   
 					if(scale_choose >0)
 						scale_choose--;
 					WM_InvalidateRect( hWin,pRect);//WM_Paint(hWin);
@@ -971,69 +1119,85 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 					
 				case GUI_KEY_MENU:	         
           GUI_CURSOR_Hide();
-					WM_BringToTop (menuWin);
-					WM_ShowWindow(subWins[0]);
+          WM_BringToTop (menuWin);
+          WM_ShowWindow(subWins[0]);
           WM_ShowWindow(subWins[1]);
           WM_ShowWindow(etWin);
           WM_ShowWindow(subWins[2]);
           WM_ShowWindow(subWins[3]);
           WM_SetFocus(menuWin);
 //					WM_SetFocus (WM_GetDialogItem (menuWin, GUI_ID_BUTTON0));
-				break;
+			      	break;
 
 			}
 		break;
 			
 		case WM_PAINT: 
+  
+/// Draw  map grid     
+   GUI_SetBkColor(pMapSkin->BackGround);
+   GUI_ClearRect(0,40, 800, 480);
+   drawMapSwitch  = 0;
+   if(drawMapSwitch)
+   {
+      /// 设置虚线样式
+      
+			   map_draw(__cursor.longitude,__cursor.latitude,measuring_scale[scale_choose]);
 
-//			GUI_MULTIBUF_Begin();
-		    GUI_SetBkColor(GUI_GRAY);
-		    GUI_Clear();
-		    GUI_SetColor(GUI_WHITE);
-		    GUI_SetFont(&GUI_Font28);
-		    GUI_SetPenSize(2);
-		    GUI_DrawLine(0,MAP_TOP-2,800,MAP_TOP-2);
-				GUI_DispStringAt("航速:",340,1);
-				GUI_DispStringAt("航向:",490,1);
-							
-   _PaintFrame();
-
-
-
-		 GUI_SetColor(GUI_BLACK);
-		 GUI_SetLineStyle(GUI_LS_DASH);
-		 GUI_SetTextMode(GUI_TM_TRANS);
-     
-     
-     /// drawMapSwitch 置 1，不适配渔区，只会动态显示船舶
-     /// drawMapSwitch 置 0, 动态适配渔区，（后台经纬度数据会出错，运行一会儿GG）
-     drawMapSwitch  = 0;
-     
-     if(drawMapSwitch)
-     {
-			 map_draw(__cursor.longitude,__cursor.latitude,measuring_scale[scale_choose]);
-
-				center.x=(MAP_LEFT+MAP_RIGHT)/2;
-				center.y=(MAP_TOP+MAP_BOTTOM)/2;
-		
-			center.lgtude = __cursor.longitude;
-			center.lttude = __cursor.latitude;
-			
-			
-			GUI_SetLineStyle(GUI_LS_SOLID);
-			GUI_SetColor(GUI_BLUE);
-//			disp_fish_boat(&measuring_scale[scale_choose],center.lgtude,center.lttude,center.x,center.y,boat_list_p,N_boat);     
-		//	disp_fish_boat(&measuring_scale[scale_choose],center.lgtude,center.lttude,boat_list_p,N_boat);      
-     }
-     else
-     {
+			  	center.x=(MAP_LEFT+MAP_RIGHT)/2;
+				  center.y=(MAP_TOP+MAP_BOTTOM)/2;
+		  
+      center.lgtude = __cursor.longitude;
+      center.lttude = __cursor.latitude;
+    
+      MNT_dispBoat(&measuring_scale[scale_choose], center.lgtude, center.lttude, pMntHeader);
+      
+      Draw_ScaleRuler(measuring_scale[scale_choose]);
+    }
+    else
+    {
        setWrapedView();
-     }
+    }
+   
+/// Draw map title 
+    GUI_SetBkColor(pMapSkin->Title_Background);   
+    GUI_ClearRect(0,0,800,40);
+    
+    GUI_SetColor(pMapSkin->Title_Label);
+    GUI_SetFont(&GUI_Font24B_1);
+    GUI_DispStringAt("N:", 0, 0);
+    GUI_DispStringAt("E:", 150, 0);
+    GUI_DispStringAt("SOG:",300,0);
+    GUI_DispStringAt("COG:",500, 0);
+    GUI_DispStringAt("11/11 11:11",700,0 );
+    
+    GUI_SetColor(pMapSkin->Title_Context);
+    
+    lltostr(mothership.latitude, pStrBuf);
+    GUI_DispStringAt(pStrBuf, 20, 0);
+    lltostr(mothership.longitude, pStrBuf);
+    GUI_DispStringAt(pStrBuf, 170, 0);
+    sprintf(pStrBuf, "%d", mothership.SOG);   
+    GUI_DispStringAt(pStrBuf, 360, 0);
+    sprintf(pStrBuf, "%d", mothership.COG);
+    GUI_DispStringAt(pStrBuf, 560, 0);
+   
+   
+    GUI_SetPenSize(3);
+    GUI_SetColor(pMapSkin->Title_HorLine);
+    GUI_DrawLine(0, MAP_TOP-2, 800, MAP_TOP-2); 
 
-      
-      
-			GUI_SetFont (&GUI_Font16B_1);
-			GUI_PNG_Draw(&acCompass,sizeof(acCompass),350,40);
+    GUI_SetPenSize(1);
+    GUI_SetColor(GUI_DARKGRAY);
+    GUI_FillPolygon(Points_Compass_1, 3, 100, 100);
+    GUI_SetColor(GUI_GRAY);
+    GUI_FillPolygon(Points_Compass_2, 3, 100, 100);
+    GUI_SetColor(GUI_RED);
+    GUI_FillPolygon(Points_Compass_3, 3, 100, 100);  
+    GUI_SetColor(GUI_DARKRED);
+    GUI_FillPolygon(Points_Compass_4, 3, 100, 100);
+//			GUI_SetFont (&GUI_Font16B_1);
+//			GUI_PNG_Draw(&acCompass,sizeof(acCompass),350,40);
 			
 
 

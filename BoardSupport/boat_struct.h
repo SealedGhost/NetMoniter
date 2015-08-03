@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include "GUI.h"
 #include "map_draw.h"
+#include "lpc_types.h"
+#include "SystemConfig.h"
 
 
 #define choose_4 4
@@ -37,7 +39,7 @@ struct _boat
 	 int dist;
  	char name[20];
   MNT_States mntStates;
-	int type_of_electronic_position_fixing_device;
+	 int isInvader;
 };
 
 
@@ -86,12 +88,75 @@ struct _boat_m24B{
 // 	long center_longitude;//raw not real
 // 	long center_latitude;
 // };
- static const GUI_POINT aPoints[] = {
-	{ 6, 12},
-	{ -6, 12},
-	{ 0, -12}
-};
+// static const GUI_POINT aPoints[] = {
+//	{ 6, 12},
+//	{ -6, 12},
+//	{ 0, -12}
+//};
 
+static  GUI_POINT  Points_boat[3]  = {
+                                           { 6, 12},
+                                           {-6, 12},
+                                           { 0,-12}
+                                                         };
+                                           
+//static  GUI_POINT  Points_fish[7]  = {
+//                                           {  0,  12},
+//                                           {-12,  -6},
+//                                           { -3,  -6},
+//                                           { -6, -12},
+//                                           { 12, -12},
+//                                           {  0,  -6},
+//                                           { 12,  -6},
+// 
+/*
+   (-20,190)  (20,190)
+         /\          /\
+        /  \        /  \
+       /    \      /    \ 
+      /      \____/      \
+     /(-10,160) (10,160)  \
+    /                      \
+   /                        \
+  /                          \
+ /                            \
+/ (-100,30)           (100,30) \
+\                              /
+ \                            /
+  \                          /
+   \                        /
+    \                      /
+     \                    /
+      \                  /
+       \                / 
+        \(-20,-110)    /(20,-110)
+        /              \
+       /                \
+      /     (0,-150)     \
+     /         ^          \
+    /       .     .        \
+   /     .           .      \
+  /   .                 .    \
+ / .                       .  \
+/ (-80,-190)          (80,-190)\
+  
+*/                                               
+static  GUI_POINT  Points_fish[11]  = { {  0,-15},
+                                        { -8,-19},
+                                        { -2,-11},
+                                        { -10, 3},
+                                        { -2, 19},
+                                        { -1, 16},
+                                        {  1, 16},
+                                        {  2, 19},
+                                        { 10,  3},
+                                        {  2,-11},
+                                        {  8,-19}
+                                       };                                     
+                                           
+//static const GUI_POINT  Polygons[2][8] ={ { {0,12}, {-12,-6}, {-3,-6}, {-6,-12}, {12,-12}, {0,-6}, {12,-6} },
+//                                          { {6,12}, {-6, 12}, {0, -12}, {0,  0}, {0,   0}, {0, 0}, {0,  0} }  
+//                                        };
 //-Add by XiaoLu at 2015/5/7
  /* The shape of mothership */
                                                   //                *
@@ -103,13 +168,29 @@ struct _boat_m24B{
 																																								{-6,18},  //             *     *
 																																								{-9,-3}   //              *****        
 	};
-//-Add end	
+
+
+static GUI_POINT Points_Compass_1[]  = { { 0,  0},
+                                         {-6,  0},
+                                         { 0, -24}
+                                      };
+static GUI_POINT Points_Compass_2[]  = { { 0,  0},
+                                         { 6,  0},
+                                         { 0, -24}
+                                        };
+static GUI_POINT Points_Compass_3[]  = { { 0,  0},
+                                         { 6,  0},
+                                         { 0, 24}
+                                        };                                        
+static GUI_POINT Points_Compass_4[]  = { { 0,  0},
+                                         {-6,  0},
+                                         { 0, 24}
+                                       };                                       
 	
 void disp_fish_boat(const scale_map * scale,long center_longitude, long center_latitude,SIMP_BERTH* pSimpBerth,short N);
+//void MNT_dispBoat(const scale_map * scale,  long center_lg, long center_lt, MNT_BERTH * pIterator);
+//void MNT_dispInfo( short base_x, short base_y, boat * pBoat);
+void changeShape(BOAT_SHAPES shape);
 
-
-extern _boat test[3];
-extern _boat *test_p[500];
-extern short N_boat;//extern short N_boat;
 
 #endif

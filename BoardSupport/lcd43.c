@@ -145,18 +145,18 @@ void LCD_test(void)
 	/* 初始化LCD */
 	lpc1788_Lcd_Init();
 
-	/* LCD清屏 */
-	LCD_Clear(LCD_PANEL_UPPER, WHITE);
-	LCD_Clear(LCD_PANEL_LOWER, WHITE);
+//	/* LCD清屏 */
+//	LCD_Clear(LCD_PANEL_UPPER, WHITE);
+//	LCD_Clear(LCD_PANEL_LOWER, WHITE);
 
-	/* 填充矩形 */
-	LCD_FillRectangle (LCD_PANEL_UPPER, 10, 100, 10, 100, GREEN);
-	LCD_FillRectangle (LCD_PANEL_UPPER, 100, 200, 100, 200, RED);
-	LCD_FillRectangle (LCD_PANEL_UPPER, 200, 300, 100, 200, BLUE);
+//	/* 填充矩形 */
+//	LCD_FillRectangle (LCD_PANEL_UPPER, 10, 100, 10, 100, GREEN);
+//	LCD_FillRectangle (LCD_PANEL_UPPER, 100, 200, 100, 200, RED);
+//	LCD_FillRectangle (LCD_PANEL_UPPER, 200, 300, 100, 200, BLUE);
 
-	for(x=350;x<400;x++)
-		for(y=100;y<200;y++)
-			LCD_PutPixel(LCD_PANEL_UPPER,x,y,RED);
+//	for(x=350;x<400;x++)
+//		for(y=100;y<200;y++)
+//			LCD_PutPixel(LCD_PANEL_UPPER,x,y,RED);
 }
 
 /************************************* End *************************************/

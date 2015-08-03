@@ -72,9 +72,23 @@
 #define Win_SysSet_WIDHT         (Win_Main_WIDTH-MenuLabel_RIGHT)
 #define Win_SysSet_Y             0
 #define Win_SysSet_BOTTOM        (Win_Main_HEIGT)
-
-
+#define Win_SysSet_Text_HEIGHT   30
+#define Win_SysSet_Text_WIDTH    120
 //#define INFO(format,...) printf("FILE: "__FILE__", LINE: %d: "format"\r\n", __LINE__, ##__VA_ARGS__)
+
+
+//
+#define DSP_BOAT_COLOR   GUI_BLACK
+
+#define BGL_BOAT_COLOR   GUI_GREEN
+#define BGL_CIRCLE_R     15
+
+#define DRG_BOAT_COLOR   GUI_RED
+#define DRG_CIRCLE_R     20
+#define DRG_PENSIZE      4
+
+#define MM_BOAT_COLOR    GUI_BLUE
+#define MM_BOAT_PENSIZE   2
 
 
 
@@ -82,9 +96,15 @@
 #define MNT_NUM_MAX         20
 
 
-#define TIMESTAMP          30
+#define TIMESTAMP          600
+
+#define MAP_REFRESH_SLOT   3000
+#define AUTO_ADAPTER_CNT   3  
 
 #define MSG_QUEUE_TABNUM   20
+
+
+#define CODE_CHECK
 
 #define __INFO_ENABLE 
 
