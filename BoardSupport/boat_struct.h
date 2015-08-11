@@ -14,7 +14,7 @@
 #define choose_1 1888
 
 typedef enum _MNT_States MNT_States;
-enum _MNT_States  {MNTState_None=0, MNTState_Choosen,MNTState_Default,MNTState_Monited};
+enum _MNT_States  {MNTState_None=0, MNTState_Choosen,MNTState_Default,MNTState_Monited,MNTState_Triggered,MNTState_Masked};
 
 
 typedef struct _boat _boat;
@@ -38,7 +38,7 @@ struct _boat
   long latitude;
 	 int dist;
  	char name[20];
-  MNT_States mntStates;
+  unsigned char mntStates;
 	 int isInvader;
 };
 

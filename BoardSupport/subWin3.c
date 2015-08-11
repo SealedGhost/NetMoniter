@@ -82,11 +82,12 @@ extern  WM_HWIN messageCreate(void);
 
 static void myEditTextListener(WM_MESSAGE* pMsg);
 static void myEditListener(WM_MESSAGE * pMsg);
-
+static void myEditAddKeyListener(EDIT_Handle hItem,int i);
 
 /*------------------ Local variables -------------------------*/
 /// Widget
 WM_HWIN Edits[9];
+WM_HWIN Texts[10];
 
 ///
 CONF_SYS agentConf;
@@ -113,25 +114,26 @@ CONF_SYS agentConf;
 static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
  { WINDOW_CreateIndirect, "Window", ID_WINDOW_0,  SubWin_X, SubWin_Y, SubWin_WIDTH, SubWin_HEIGHT, 0, 0x0, 0 },
  
- { TEXT_CreateIndirect, "系统设置", ID_TEXT_TITLE,  0,   0,    120,  30,  0, 0, 0},
- { TEXT_CreateIndirect, "夜间模式", ID_TEXT_NIGHT,  0,   40,   120,  30,  0, 0, 0},
- { TEXT_CreateIndirect, "音量设置", ID_TEXT_VOL  ,  0,   70,   120,  30,  0, 0, 0},
- { TEXT_CreateIndirect, "亮度设置", ID_TEXT_BRIGHT, 0,   100,  120,  30,  0, 0, 0},
- { TEXT_CreateIndirect, "报警  音", ID_TEXT_ARMSND, 0,   130,  120,  30,  0, 0, 0},
- { TEXT_CreateIndirect, "按键  音", ID_TEXT_KEYSND, 0,   160,  120,  30,  0, 0, 0},
- { TEXT_CreateIndirect, "单位设置", ID_TEXT_UNIT,   0,   190,  120,  30,  0, 0, 0},
- { TEXT_CreateIndirect, "船位设置", ID_TEXT_SHAPE,  0,   220,  120,  30,  0, 0, 0},
- { TEXT_CreateIndirect, "软件更新", ID_TEXT_UPDATE, 0,   250,  120,  30,  0, 0, 0},
- { TEXT_CreateIndirect, "系统版本", ID_TEXT_VERSION,0,   280,  120,  30,  0, 0, 0},
+ { TEXT_CreateIndirect, "系统设置", ID_TEXT_TITLE,  0,   0,                                                             120,  30,  0, 0, 0},
+ { TEXT_CreateIndirect, "夜间模式", ID_TEXT_NIGHT,  0,   Win_SysSet_txOrg,                                              120,  30,  0, 0, 0},
+ { TEXT_CreateIndirect, "音量设置", ID_TEXT_VOL  ,  0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap),   120,  30,  0, 0, 0},
+ { TEXT_CreateIndirect, "亮度设置", ID_TEXT_BRIGHT, 0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*2, 120,  30,  0, 0, 0},
+ { TEXT_CreateIndirect, "报警  音", ID_TEXT_ARMSND, 0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3, 120,  30,  0, 0, 0},
+ { TEXT_CreateIndirect, "按键  音", ID_TEXT_KEYSND, 0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4, 120,  30,  0, 0, 0},
+ { TEXT_CreateIndirect, "单位设置", ID_TEXT_UNIT,   0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5, 120,  30,  0, 0, 0},
+ { TEXT_CreateIndirect, "船位设置", ID_TEXT_SHAPE,  0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6, 120,  30,  0, 0, 0},
+ { TEXT_CreateIndirect, "软件更新", ID_TEXT_UPDATE, 0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*7, 120,  30,  0, 0, 0},
+ { TEXT_CreateIndirect, "系统版本", ID_TEXT_VERSION,0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*8, 120,  30,  0, 0, 0},
+ { TEXT_CreateIndirect, "0.0",       ID_TEXT_VER,    120, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*8, 120,  30, 0,  0, 0},
  
- { EDIT_CreateIndirect, "夜间模式", ID_EDIT_NIGHT,  120,   40,   120,  30,  0, 0, 0},
- { EDIT_CreateIndirect, "音量设置", ID_EDIT_VOL  ,  120,   70,   120,  30,  0, 0, 0},
- { EDIT_CreateIndirect, "亮度设置", ID_EDIT_BRIGHT, 120,   100,  120,  30,  0, 0, 0},
- { EDIT_CreateIndirect, "报警  音", ID_EDIT_ARMSND, 120,   130,  120,  30,  0, 0, 0},
- { EDIT_CreateIndirect, "按键  音", ID_EDIT_KEYSND, 120,   160,  120,  30,  0, 0, 0},
- { EDIT_CreateIndirect, "单位设置", ID_EDIT_UNIT,   120,   190,  120,  30,  0, 0, 0},
- { EDIT_CreateIndirect, "船位设置", ID_EDIT_SHAPE,  120,   220,  120,  30,  0, 0, 0},
- { EDIT_CreateIndirect, "软件更新", ID_EDIT_UPDATE, 120,   250,  120,  30,  0, 0, 0}
+ { EDIT_CreateIndirect, "夜间模式", ID_EDIT_NIGHT,  120,   40,                                                            120,  30,  0, 0, 0},
+ { EDIT_CreateIndirect, "音量设置", ID_EDIT_VOL  ,  120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap),   120,  30,  0, 0, 0},
+ { EDIT_CreateIndirect, "亮度设置", ID_EDIT_BRIGHT, 120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*2, 120,  30,  0, 0, 0},
+ { EDIT_CreateIndirect, "报警  音", ID_EDIT_ARMSND, 120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3, 120,  30,  0, 0, 0},
+ { EDIT_CreateIndirect, "按键  音", ID_EDIT_KEYSND, 120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4, 120,  30,  0, 0, 0},
+ { EDIT_CreateIndirect, "单位设置", ID_EDIT_UNIT,   120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5, 120,  30,  0, 0, 0},
+ { EDIT_CreateIndirect, "船位设置", ID_EDIT_SHAPE,  120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6, 120,  30,  0, 0, 0},
+ { EDIT_CreateIndirect, "软件更新", ID_EDIT_UPDATE, 120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*7, 120,  30,  0, 0, 0}
 // { EDIT_CreateIndirect, "系统版本", ID_EDIT_VERSION,120,   280,  120,  30,  0, 0, 0}
   // USER START (Optionally insert additional widgets)
   // USER END
@@ -165,11 +167,26 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
   int     NCode;
   int     Id;
 	char    i;
-
   switch (pMsg->MsgId) 
   {		
+ 
+		case USER_MSG_SKIN:
+       pEtWinSkin  = &(EditWinSkins[pMsg->Data.v]);
+       
+       WINDOW_SetBkColor(pMsg->hWin, pEtWinSkin->EditWin_BackGround);
+       
+       for(i=0;i<10;i++)
+       {
+          TEXT_SetTextColor(Texts[i], pEtWinSkin->EditWin_Label);
+          TEXT_SetBkColor(Texts[i], pEtWinSkin->EditWin_bkEnable);
+       }
 
-			break;
+       for(i=0;i<8;i++)       
+       {
+          EDIT_SetBkColor(Edits[i], EDIT_CI_ENABELD, pEtWinSkin->EditWin_bkEnable);
+          EDIT_SetTextColor(Edits[i], 0, pEtWinSkin->EditWin_Text);          
+       }
+       break;
 			
   case WM_INIT_DIALOG:
 //     //
@@ -180,45 +197,35 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         EDIT_SetText(Edits[0], "关闭");
      else
         EDIT_SetText(Edits[0], "开启");
-     WM_SetCallback(Edits[0], &myEditListener);
      
  
      Edits[1]  = WM_GetDialogItem(pMsg->hWin, ID_EDIT_VOL);
-     EDIT_SetFont(Edits[1], &GUI_Font24_1);
-     WM_SetCallback(Edits[1], &myEditListener);
-     
+     EDIT_SetFont(Edits[1], &GUI_Font24_1);   
      sprintf(pStrBuf, "%d", SysConf.Snd.Vol);
-     EDIT_SetText(Edits[1], pStrBuf);    
+     EDIT_SetText(Edits[1], pStrBuf); 
+  
    
    
      Edits[2]  = WM_GetDialogItem(pMsg->hWin, ID_EDIT_BRIGHT);
-     EDIT_SetFont(Edits[2], &GUI_Font24_1);
-     WM_SetCallback(Edits[2], &myEditListener);  
-     
+     EDIT_SetFont(Edits[2], &GUI_Font24_1);    
      sprintf(pStrBuf, "%d", SysConf.Brt);
      EDIT_SetText(Edits[2], pStrBuf); 
 
 
      Edits[3]  = WM_GetDialogItem(pMsg->hWin, ID_EDIT_ARMSND);
-     EDIT_SetFont(Edits[3], &GUI_Font24_1);
-     WM_SetCallback(Edits[3], &myEditListener);      
-     
+     EDIT_SetFont(Edits[3], &GUI_Font24_1);        
      sprintf(pStrBuf, "%d", SysConf.Snd.ArmSnd);
      EDIT_SetText(Edits[3], pStrBuf);   
 
 
      Edits[4]  = WM_GetDialogItem(pMsg->hWin, ID_EDIT_KEYSND);
-     EDIT_SetFont(Edits[4], &GUI_Font24_1);
-     WM_SetCallback(Edits[4], &myEditListener);    
-     
+     EDIT_SetFont(Edits[4], &GUI_Font24_1);    
      sprintf(pStrBuf, "%d", SysConf.Snd.KeySnd);
      EDIT_SetText(Edits[4], pStrBuf);
 
 
      Edits[5]  = WM_GetDialogItem(pMsg->hWin, ID_EDIT_UNIT);
-     EDIT_SetFont(Edits[5], &GUI_Font24_1); 
-     WM_SetCallback(Edits[5], &myEditListener); 
-     
+     EDIT_SetFont(Edits[5], &GUI_Font24_1);         
      if(SysConf.Unit == UNIT_nm)
         EDIT_SetText(Edits[5], "nm");      
      else 
@@ -226,9 +233,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 
 
      Edits[6]  = WM_GetDialogItem(pMsg->hWin, ID_EDIT_SHAPE);
-     EDIT_SetFont(Edits[6], &GUI_Font24_1);  
-     WM_SetCallback(Edits[6], &myEditListener);     
-     
+     EDIT_SetFont(Edits[6], &GUI_Font24_1);      
      if(SysConf.Shape == SHAPE_Fish)
         EDIT_SetText(Edits[6], "fish");
      else 
@@ -236,12 +241,29 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 
 
      Edits[7]  = WM_GetDialogItem(pMsg->hWin, ID_EDIT_UPDATE);
-     EDIT_SetFont(Edits[7], &GUI_Font24_1);     
-     WM_SetCallback(Edits[7], &myEditListener);  
-     
+     EDIT_SetFont(Edits[7], &GUI_Font24_1);            
      EDIT_SetText(Edits[7], "OK");
 
-
+///  Initialization of skin.
+     WINDOW_SetBkColor(pMsg->hWin, pEtWinSkin->EditWin_BackGround);
+     
+     for(i=0;i<10;i++)
+    {
+       Texts[i]  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_TITLE+i+1);
+       TEXT_SetTextColor(Texts[i], pEtWinSkin->EditWin_Label);
+       TEXT_SetBkColor(Texts[i], pEtWinSkin->EditWin_bkEnable);
+    }
+    
+    TEXT_SetText(Texts[9], GUI_GetVersionString());
+     
+     for(i=0;i<8;i++)       
+     {
+        EDIT_SetBkColor(Edits[i], EDIT_CI_ENABELD, pEtWinSkin->EditWin_bkEnable);
+        EDIT_SetTextColor(Edits[i], 0, pEtWinSkin->EditWin_Text);
+        EDIT_SetpfAddKeyEx(Edits[i], &myEditAddKeyListener);
+        WM_SetCallback(Edits[i], &myEditListener);
+     }
+     
      agentConf.Skin              = SysConf.Skin;
      agentConf.Brt               = SysConf.Brt;
      agentConf.Snd.Vol           = SysConf.Snd.Vol;
@@ -250,24 +272,10 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
      agentConf.Unit              = SysConf.Unit;
      agentConf.Shape             = SysConf.Shape;
      break;
-  
-//  case WM_NOTIFY_PARENT:
-//       Id  = WM_GetId(pMsg->hWinSrc);
-//       NCode  = pMsg->Data.v;
-//       
-//       break;
-  case USER_MSG_SKIN:
-INFO("case msg_skin");
-       if(pMsg->Data.v == SKIN_Night)  
-          WINDOW_SetBkColor(pMsg->hWin, GUI_DARKGRAY);
-       else
-          WINDOW_SetBkColor(pMsg->hWin, GUI_WHITE);
-       break;
-       
+     
   case USER_MSG_ID_REPLY:
        if(pMsg->Data.v == REPLY_OK)
-       {
-INFO("case reply_ok");   
+       { 
           /// Notify all window to change skin & change system config.
           if(agentConf.Skin != SysConf.Skin)
           {
@@ -297,8 +305,7 @@ INFO("case reply_ok");
                    
        }
        else
-       {
-INFO("case reply_cancel"); 
+       { 
           /// Roll back;
           agentConf.Skin  = SysConf.Skin;
           agentConf.Brt   = SysConf.Brt;
@@ -342,7 +349,7 @@ WM_HWIN sub3WinCreate(void);
 WM_HWIN sub3WinCreate(void) {
   WM_HWIN hWin;
 	
-  hWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, WM_HBKWIN, 0, 0);
+  hWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, menuWin, 0, 0);
 
   return hWin;
 }
@@ -350,83 +357,49 @@ WM_HWIN sub3WinCreate(void) {
 // USER START (Optionally insert additional public code)
 // USER END
 
-static void myEditTextListener(WM_MESSAGE* pMsg)
-{
-	const WM_KEY_INFO* pInfo;
-	WM_HWIN thisEditText;
-	WM_HWIN hWin = pMsg->hWin;
- 
- WM_MESSAGE myMsg;
-	char i;
-	switch(pMsg->MsgId)
-	{
-		case USER_MSG_ID_REPLY:
-       switch(pMsg->Data.v)
-       {
-          case REPLY_OK:
-               WM_SetFocus(menuWin);
-               break;
-          
-          case REPLY_CANCEL:
-               WM_SetFocus(menuWin);
-               break;
-               
-       }
-       
-       break;
-       
-		case WM_KEY:
-			pInfo  = (WM_KEY_INFO*)pMsg->Data.p;
-		
-		  switch(pInfo->Key)
-			{
-				case GUI_KEY_BACKSPACE:
-         myMsg.hWin     = WM_GetClientWindow(confirmWin);
-         myMsg.hWinSrc  = pMsg->hWin;
-         myMsg.MsgId    = USER_MSG_ID_CHOOSE;
-         myMsg.Data.v   = SYS_SETTING;
-         WM_SendMessage(myMsg.hWin, &myMsg); 
-         WM_BringToTop(confirmWin);
-         WM_SetFocus(confirmWin);  
-			     	break;
-				
-				default:
-				    	EDIT_Callback(pMsg);
-				    	break;
-			}
-			break;
-		
-		default:
-					EDIT_Callback(pMsg);
-			 	break;
-	}
-}
-
-
 
 static void myEditListener(WM_MESSAGE * pMsg)
 {
    const WM_KEY_INFO * pInfo;
    int Id  = 0;
    int Step  = 0;
+   int index  = 0;
    WM_MESSAGE myMsg;
    
+   WM_HWIN nextEdit;
+
    WM_HWIN thisEdit  = pMsg->hWin; 
    WM_HWIN focussedEdit  = 0;
 
    switch(pMsg->MsgId)   
-   {
+   {  
+      case WM_SET_FOCUS:
+           index  = WM_GetId(pMsg->hWin) - ID_EDIT_NIGHT;
+           
+           if(pMsg->Data.v == 0)
+           {
+              EDIT_SetBkColor(Edits[index], EDIT_CI_ENABLED, pEtWinSkin->EditWin_bkEnable);
+
+              TEXT_SetBkColor(Texts[index], pEtWinSkin->EditWin_bkEnable);
+           }
+           else
+           {
+             EDIT_SetBkColor(Edits[index], EDIT_CI_ENABLED, GUI_WHITE);
+             TEXT_SetBkColor(Texts[index], GUI_WHITE); 
+           }
+           
+           EDIT_Callback(pMsg);
+           break;
       case WM_KEY:
            pInfo  = (WM_KEY_INFO*)pMsg->Data.p;
            
            switch(pInfo->Key)
            {
-              case GUI_KEY_UP:
-              
-                   GUI_StoreKeyMsg(GUI_KEY_BACKTAB, 1);
+              case GUI_KEY_UP:       
+                   nextEdit  = WM_SetFocusOnPrevChild(WM_GetParent(pMsg->hWin)); 
                    break;
               case GUI_KEY_DOWN:
-                   GUI_StoreKeyMsg(GUI_KEY_TAB, 1);
+                   nextEdit  = WM_SetFocusOnNextChild(WM_GetParent(pMsg->hWin)); 
                    break;
               case GUI_KEY_BACKSPACE:
                    myMsg.hWin  = WM_GetClientWindow(confirmWin);
@@ -444,8 +417,7 @@ static void myEditListener(WM_MESSAGE * pMsg)
               case GUI_KEY_LEFT:    
                    Step  = Step>0?1:-1;
                    
-                   focussedEdit  = WM_GetFocussedWindow();
-                   Id  = WM_GetId(focussedEdit);
+                   Id  = WM_GetId(pMsg->hWin);
                    switch(Id)
                    {
                       case ID_EDIT_NIGHT:
@@ -467,7 +439,10 @@ INFO("skin night->day");
 INFO("skin day->night");                              
                            }
                            WM_SendToParent(thisEdit, &myMsg);
-                           
+
+                           index  = Id - ID_EDIT_NIGHT;
+                           TEXT_SetBkColor(Texts[index], GUI_WHITE);
+                           EDIT_SetBkColor(Edits[index], EDIT_CI_ENABLED, GUI_WHITE);
                            break;
                       case ID_EDIT_VOL:
                            agentConf.Snd.Vol  += Step;
@@ -541,6 +516,12 @@ INFO("KeySnd: %d", agentConf.Snd.KeySnd);
            EDIT_Callback(pMsg);
            break;
    }
+}
+
+
+static void myEditAddKeyListener(EDIT_Handle hItem, int i)
+{
+   ;
 }
 
 /*************************** End of file ****************************/

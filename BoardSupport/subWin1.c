@@ -118,8 +118,8 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
   int     Id;
   // USER START (Optionally insert additional variables)
   // USER END
-
   switch (pMsg->MsgId) {
+  
   case USER_MSG_BRING:
        updateListViewContent( WM_GetDialogItem(pMsg->hWin,ID_LISTVIEW_0));
        break;
@@ -132,10 +132,13 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        
        
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0);
-       LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_UNSEL, pLVSkin->LV_Unsel);
-       LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SEL,   pLVSkin->LV_Sel);
-       LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_UNSEL, pLVSkin->LV_Text_Unsel);
-       LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_SEL,   pLVSkin->LV_Text_Sel);
+       LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_UNSEL, pLVSkin->LV_bkUnsel);
+       LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SEL,   pLVSkin->LV_bkSel);
+       LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SELFOCUS, pLVSkin->LV_bkFocus);
+       
+       LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_UNSEL, pLVSkin->LV_tx_Unsel);
+       LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_SEL,   pLVSkin->LV_tx_Sel);
+       LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_SELFOCUS, pLVSkin->LV_tx_Focus);
        
        hItem  = LISTVIEW_GetHeader(hItem);
        HEADER_SetBkColor(hItem,pLVSkin->LV_Header_Bk);
@@ -148,7 +151,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     // Initialization of 'Window'
     //
     hItem = pMsg->hWin;
-    WINDOW_SetBkColor(hItem, 0x000080FF);
+    WINDOW_SetBkColor(hItem, pLVSkin->BackGround);
     //
     // Initialization of 'Listview'
     //
@@ -164,14 +167,22 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     LISTVIEW_SetRowHeight(hItem,LV_MoniteList_Row_HEIGHT);
 
     LISTVIEW_SetFont(hItem, &GUI_Font24_1);
-    LISTVIEW_SetTextColor(hItem, LISTVIEW_CI_UNSEL,GUI_WHITE);
-    LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_UNSEL,DEEPBLUE);
-    LISTVIEW_SetTextColor(hItem, LISTVIEW_CI_SELFOCUS,GUI_BLACK);
-    LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SELFOCUS, GUI_WHITE);
-    LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SEL, DEEPBLUE);
+    LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_UNSEL, pLVSkin->LV_bkUnsel);
+    LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SEL,   pLVSkin->LV_bkSel);
+    LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SELFOCUS, pLVSkin->LV_bkFocus);
+    
+    LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_UNSEL, pLVSkin->LV_tx_Unsel);
+    LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_SEL,   pLVSkin->LV_tx_Sel);
+    LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_SELFOCUS, pLVSkin->LV_tx_Focus);
+    
     updateListViewContent(hItem);
+    
+    hItem  = LISTVIEW_GetHeader(hItem);
+    HEADER_SetBkColor(hItem,pLVSkin->LV_Header_Bk);
+    HEADER_SetTextColor(hItem,pLVSkin->LV_Header_Text);    
+
     // USER START (Optionally insert additional code for further widget initialization)
-	  	hItem  = etWinCreate();
+	  	hItem  = etWinCreate();    
     // USER 
     break;
     
@@ -228,8 +239,8 @@ WM_HWIN sub1WinCreate(void) {
   WM_HWIN hWin;
 		
 
-//  hWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, menuWin, 0, 0);
-  hWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, WM_HBKWIN, 0, 0);
+  hWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, menuWin, 0, 0);
+//  hWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, WM_HBKWIN, 0, 0);
   return hWin;
 }
 
@@ -300,48 +311,24 @@ static void myListViewListener(WM_MESSAGE* pMsg)
                  pIterator->mntBoat.mntState  = MNTState_None;
                  LISTVIEW_SetItemText(thisListView, 2, selectedRow, "N");
                  break;
-            case MNTState_Monited:
-                 pIterator->mntBoat.mntState  = MNTState_Choosen;
-                 LISTVIEW_SetItemText(thisListView, 2, selectedRow, "Y");
-                 break;
+//            case MNTState_Monited:
+//                 pIterator->mntBoat.mntState  = MNTState_Choosen;
+//                 LISTVIEW_SetItemText(thisListView, 2, selectedRow, "Y");
+//                 break;
             case MNTState_None:
                  pIterator->mntBoat.mntState  = MNTState_Default;
                  LISTVIEW_SetItemText(thisListView, 2, selectedRow, "Y");
                  break;
             default:
+                 pIterator->mntBoat.mntState  = MNTState_Choosen;
+                 LISTVIEW_SetItemText(thisListView, 2, selectedRow, "Y");
                  break;
          }
-//         if(index >= 0)
-//         {
-//           switch(MNT_Boats[index].mntState)
-//           {
-//              case MNTState_Choosen:          
-//                   MNT_Boats[index].mntState  = MNTState_Monited;
-//                   LISTVIEW_SetItemText(thisListView, 2, index, "N");
-//                   break;
-//              case MNTState_Default:  
-//                   MNT_Boats[index].mntState  = MNTState_None;
-//                   LISTVIEW_SetItemText(thisListView, 2, index, "N");
-//                   break;
-//              case MNTState_Monited:
-//                   MNT_Boats[index].mntState  = MNTState_Choosen;
-//                   LISTVIEW_SetItemText(thisListView, 2, index, "Y");
-//                   break;
-//              case MNTState_None:
-//                   MNT_Boats[index].mntState  = MNTState_Default;
-//                   LISTVIEW_SetItemText(thisListView, 2, index, "Y");
-//                   break;
-//               default:      
-//                   break;
-//           }
-//           LISTVIEW_Callback(pMsg);
-//         }   
+   
 			    		break;
 					
-				case GUI_KEY_BACKSPACE: 
-INFO("case backspace");  
-
-         while( (MNT_Boats[index].mntState==MNTState_Monited) ||  (MNT_Boats[index].mmsi==0) )
+				case GUI_KEY_BACKSPACE:   
+         while( (MNT_Boats[index].mntState>=MNTState_Monited) ||  (MNT_Boats[index].mmsi==0) )
          {
             index++;
             if(index >= MNT_NUM_MAX)
@@ -382,18 +369,13 @@ INFO("No boat selected");
 			break;
 		
   case USER_MSG_ID_REPLY:
-//INFO("case user_msg_id_reply,%d",pMsg->Data.v);    
-//       WM_BringToBottom(confirmWin);   
-//       WM_SetFocus(pMsg->hWin);
        switch(pMsg->Data.v)
        {
           case REPLY_OK:
-INFO("case REPLY_OK");  \
                MNT_makeSettingUp(&mntSetting);        
                WM_SetFocus(menuWin);
                break;
-          case REPLY_CANCEL:
-INFO("case REPLY_CANCEL");          
+          case REPLY_CANCEL:        
                WM_SetFocus(pMsg->hWin);
                break;
                
@@ -426,7 +408,6 @@ static void updateListViewContent(WM_HWIN thisHandle)
 
 	NumOfRows  = LISTVIEW_GetNumRows(thisListView);
 
-INFO("reach");  
 // MNT_resetIterator();
  pIterator  = pMntHeader;
  while(pIterator)

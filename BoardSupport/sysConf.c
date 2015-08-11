@@ -21,10 +21,7 @@ void sysStore()
 
 
 void sysInit()
-{
-   UI_Skins[0].MapWinColor.Map_Grid  = GUI_RED;
-   UI_Skins[0].MapWinColor.Boat_Tip_Border  = GUI_RED;
-   
+{   
    sysLoad();
    
    SysConf.Skin  = SKIN_Night;

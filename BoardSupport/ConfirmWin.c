@@ -88,10 +88,10 @@ void mySB(WM_MESSAGE * pMsg);
 *       _aDialogCreate
 */
 static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
-  { WINDOW_CreateIndirect, "Win_Confirm", ID_WINDOW_0, 200, 120, 400, 240, 0, 0x64, 0 },
-  { BUTTON_CreateIndirect, "OK", ID_BUTTON_OK, 40, 100, 80, 40, 0, 0x0, 0 },
-  { BUTTON_CreateIndirect, "Cancel", ID_BUTTON_CANCEL, 280, 100, 80, 40, 0, 0x0, 0 },
-  { TEXT_CreateIndirect, "Text", ID_TEXT_CONTENT, 40, 20, 319, 45, 0, 0, 0 }
+  { WINDOW_CreateIndirect, "Win_Confirm", ID_WINDOW_0,      200,  120,  400,  200,   0, 0x64, 0 },
+  { BUTTON_CreateIndirect, "OK",          ID_BUTTON_OK,      60,  110,   80,  40,    0, 0x0,  0 },
+  { BUTTON_CreateIndirect, "Cancel",      ID_BUTTON_CANCEL, 260,  110,   80,  40,    0, 0x0,  0 },
+  { TEXT_CreateIndirect, "Text",          ID_TEXT_CONTENT,   0,   40,  400, 40, TEXT_CF_HCENTER, 0x0,  0 }
   // USER START (Optionally insert additional widgets)
   // USER END
 };
@@ -102,6 +102,10 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
 *
 **********************************************************************
 */
+
+//const CnfmWin_COLOR CnfmWinSkins[2]  = {
+
+//                                        };
 
 // USER START (Optionally insert additional static code)
 // USER END
@@ -129,21 +133,12 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
           WINDOW_SetBkColor(pMsg->hWin, GUI_WHITE);
        break;  
 	
-//	case WM_PAINT:
-//				//GUI_SetBkColor (GUI_LIGHTBLUE);
-//				GUI_Clear();
-//				GUI_SetTextMode(GUI_TEXTMODE_TRANS);
-//				GUI_SetColor (GUI_BLACK);
-//				GUI_SetFont (&GUI_Font28);
-//				GUI_DispStringAt ("开始添加网位仪监控列表？",35,20);
-//		break;
   case WM_INIT_DIALOG:
     //
-    // Initialization of 'Frm_Confirm'
+    // Initialization of 'text'
     //
-//    
-//    FRAMEWIN_SetText(thisFrame, " Confirm?");
-//    FRAMEWIN_SetTitleHeight(thisFrame, 20);
+
+    
     //
     // Initialization of 'bt_OK'
     //
@@ -189,28 +184,11 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     Id    = WM_GetId(pMsg->hWinSrc);    // Id of widget
     NCode = pMsg->Data.v;               // Notification code
     switch (NCode) {
-    case GUI_KEY_BACKSPACE:
-INFO("case backspace");    
+    case GUI_KEY_BACKSPACE:    
          break;
     case WM_NOTIFICATION_RELEASED:      // React only if released
       switch (Id) {
       case ID_BUTTON_OK:
-//           switch(Option)
-//           {
-//              case CANCEL_MONITED:
-//INFO("reach");              
-//                   i  = MNT_deleteById(MNT_Boats, ReceivedDatas[2]);
-//INFO("index:%d",i);                   
-//                   MNT_Boats[i].pBoat->mntStates  = MNTState_None;
-//                   WM_BringToBottom(pMsg->hWin);
-//                   WM_SetFocus(menuWin);
-//                   break;
-//              
-//              case STORE_SETTING:
-//                   
-//                   break;
-//           }
-INFO("case BUTTON_OK");
            myMsg.hWin     = myMsg.hWinSrc;
            myMsg.hWinSrc  = pMsg->hWin;
            myMsg.MsgId    = USER_MSG_ID_REPLY;
@@ -219,14 +197,7 @@ INFO("case BUTTON_OK");
            break;
       case ID_BUTTON_CANCEL:
            WM_SetFocusOnPrevChild(confirmWin);
-//           switch(Option)
-//           {
-//              case CANCEL_MONITED:
-//                   WM_BringToBottom(pMsg->hWin);
-//                   WM_SetFocus(subWins[2]);
-//                   break;
-//           }
-INFO("case BUTTON_CANCEL");
+           
            myMsg.hWin     = myMsg.hWinSrc;
            myMsg.hWinSrc  = pMsg->hWin;
            myMsg.MsgId    = USER_MSG_ID_REPLY;
@@ -240,30 +211,21 @@ INFO("case BUTTON_CANCEL");
     break;
   // USER START (Optionally insert additional message handling)
   case USER_MSG_ID_CHOOSE:
-INFO("case user_msg_id_choose");  
       Option  = pMsg->Data.v;
       
       myMsg.hWinSrc  = pMsg->hWinSrc;
       myMsg.Data.v   = Option;
       
-//      ReceivedDatas[2]  = ((long*)pMsg->Data.p)[2];
-INFO("Option:%d",Option);      
-//      myHWinSrc  = pMsg->hWinSrc;      
       switch(Option)   
       {
-         case CANCEL_MONITED:
-INFO("case cancel_monited");         
+         case CANCEL_MONITED:         
               TEXT_SetText(dlgTextContent, "确认取消监控该船舶？");
-//              userMsgChoose  = CANCEL_MONITED;
               break;
           
-         case STORE_SETTING:
-INFO("case store_setting");         
-//              userMsgChoose  = STORE_SETTING;
+         case STORE_SETTING:       
               TEXT_SetText(dlgTextContent, "确认保存监控设置项？");         
               break;
-         case ADD_MONITED:
-INFO("case add_monited");              
+         case ADD_MONITED:             
               TEXT_SetText(dlgTextContent, "确认网位仪监控列表？");
               break;
          case SYS_SETTING:
@@ -275,10 +237,7 @@ INFO("Something error!");
               break;
       }
       break;
-//      
-//      WM_BringToTop(confirmWin);
-//      WM_SetFocus(confirmWin);
-      break;
+   break;
 //   case USER_MSG_ID_CHOOSE:
 //        
 //        break;
@@ -313,29 +272,7 @@ WM_HWIN confirmWinCreate(void) {
 
 
 
-//static void myButtonListener(WM_MESSAGE* pMsg)
-//{
-//	const WM_KEY_INFO* pInfo;
-//	WM_MESSAGE msg;
-//	WM_HWIN thisButton = pMsg->hWin;
-//	
-//	msg.hWin  = WM_GetParent(thisButton);
-//	msg.hWinSrc  = thisButton;
-//	msg.MsgId  = WM_NOTIFY_PARENT;
-//	msg.Data.v = GUI_ID_OK;
-//	switch(pMsg->MsgId)
-//	{
-//		case WM_KEY:
-//			pInfo  = (WM_KEY_INFO*)pMsg->Data.p;
-//		
-//		  switch(pInfo->Key)
-//			{
-//				case GUI_KEY_ENTER:
-//					WM_SendToParent(thisButton,&msg);
-//					break;
-//			}
-//	}
-//}
+
 
 /*************************** End of file ****************************/
 

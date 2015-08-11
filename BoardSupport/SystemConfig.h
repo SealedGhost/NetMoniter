@@ -24,7 +24,6 @@ enum _BOAT_SHAPES{SHAPE_Fish=0, SHAPE_Boat};
 
 
 
-
 /// Sound config struct.
 typedef struct _CONF_SND CONF_SND;
 struct _CONF_SND
@@ -112,12 +111,14 @@ struct _LVWin_COLOR
   
   GUI_COLOR LV_Header_Bk;
   GUI_COLOR LV_Header_Text;
+  GUI_COLOR LV_Header_Grid;
   
-  GUI_COLOR LV_Unsel;
-  GUI_COLOR LV_Sel; 
-  GUI_COLOR LV_Text_Unsel;
-  GUI_COLOR LV_Text_Sel;
-  GUI_COLOR LV_Grid; 
+  GUI_COLOR LV_bkUnsel;
+  GUI_COLOR LV_bkSel; 
+  GUI_COLOR LV_bkFocus;
+  GUI_COLOR LV_tx_Unsel;
+  GUI_COLOR LV_tx_Sel;
+  GUI_COLOR LV_tx_Focus;
   
   GUI_COLOR String;   
 };
@@ -129,9 +130,9 @@ struct _EditWin_COLOR
   
   GUI_COLOR EditWin_Label;
   
-  GUI_COLOR Edit_Enable;
-  GUI_COLOR Edit_Disable;
-  GUI_COLOR Edit_Text; 
+  GUI_COLOR EditWin_bkEnable;
+  GUI_COLOR EditWin_Text; 
+  GUI_COLOR EditWin_txBk;
 };
 
 
@@ -194,6 +195,8 @@ struct _CONF_SYS
 extern LVWin_COLOR lvWinSkins[2];
 extern LVWin_COLOR * pLVSkin;
 
+extern EditWin_COLOR EditWinSkins[2];
+extern EditWin_COLOR * pEtWinSkin;
 
 
 void sysInit(void);

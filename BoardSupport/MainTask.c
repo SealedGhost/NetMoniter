@@ -14,8 +14,10 @@ WM_HWIN mapWin;
 WM_HWIN hDlg_FishMap;
 WM_HWIN menuWin;
 WM_HWIN confirmWin;
+WM_HWIN loadingWin;
 extern WM_HWIN subWins[4];
 
+extern WM_HWIN loadingWinCreate(void);
 extern WM_HWIN menuWinCreate(void);
 extern WM_HWIN subCreateWindow(void);
 extern WM_HWIN confirmWinCreate(void);
@@ -36,7 +38,7 @@ void MainTask(void) {
 	GUI_SetColor (0xb58400);
 	GUI_SetFont (&GUI_Font120);
 	GUI_DispStringAt("AM-128",220,100);
-	GUI_PNG_Draw (&_accover_colo_1,sizeof(_accover_colo_1),300,LCD_GetYSize()/2);
+ GUI_PNG_Draw (&_accover_colo_1,sizeof(_accover_colo_1),300,LCD_GetYSize()/2);
 	GUI_MEMDEV_Select(0);
 	GUI_MEMDEV_CopyToLCD(hMem0);
 	GUI_MEMDEV_Delete(hMem0);
@@ -52,13 +54,15 @@ void MainTask(void) {
 	HEADER_SetDefaultBkColor(DEEPBLUE);
 	BUTTON_SetDefaultFocusColor(GUI_RED);
 	EDIT_SetDefaultFont(&GUI_Font28);
+ WIDGET_SetDefaultEffect(&WIDGET_Effect_None);
 	//创建窗口 
 
-	
-  
-	menuWin  = menuWinCreate();
+	loadingWin  = loadingWinCreate();
+
  confirmWin  = confirmWinCreate();
+ menuWin  = menuWinCreate();
  hDlg_FishMap = WM_CreateWindowAsChild (0, 0, 800, 480, WM_HBKWIN, WM_CF_SHOW, &_cbWindowAllFishMap, 0);
+// WM_SetFocus(menuWin);
 // WM_SetFocus(hDlg_FishMap);
 
 	//焦点设置

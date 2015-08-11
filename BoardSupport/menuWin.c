@@ -48,7 +48,7 @@
 
 
 // USER START (Optionally insert additional defines)
-extern  void  UpdateListViewContent(WM_HWIN thisHandle);
+//extern  void  UpdateListViewContent(WM_HWIN thisHandle);
 // USER END
 
 /*********************************************************************
@@ -68,7 +68,7 @@ static void myButtonListener(WM_MESSAGE * pMsg);
 */
 static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
 //  {TEXT_CreateAsChild(0, 0, 200, 40,  pMsg->hWin,  WM_CF_SHOW, TEXT_CF_LEFT,  GUI_ID_USER+0x20),
-  { WINDOW_CreateIndirect, "Window", ID_WINDOW_0, 0, 0, Win_Main_WIDTH, Win_Main_HEIGHT, 0, 0x0, 0 },
+  { WINDOW_CreateIndirect, "Window", ID_WINDOW_0, 0, 0, MenuLabel_WIDTH, 240, 0, 0x0, 0 },
   
   { TEXT_CreateIndirect,   "MainMenu", ID_TEXT_0, 0, 0, MenuLabel_WIDTH, 40, 0, 0, 0},
   
@@ -103,6 +103,7 @@ extern WM_HWIN sub2WinCreate(void);
 extern WM_HWIN sub3WinCreate(void);
 
 
+static int btIndex  = 0;
 
 /*********************************************************************
 *
@@ -123,15 +124,22 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 //  WM_HWIN hItem;
   int     NCode;
   int     Id;
-	char    i;
+ 	char     i;
   // USER START (Optionally insert additional variables)
   // USER END
-
+//  if(pMsg->MsgId == WM_POST_PAINT)
+//  {
+//INFO("case post_paint");  
+//  }
+  
   switch (pMsg->MsgId) {
+ 
     case USER_MSG_SKIN: 
          pMenuSkin  = &(menuWinSkins[pMsg->Data.v]);
          
          WINDOW_SetBkColor(pMsg->hWin,pMenuSkin->BackGround);         
+         
+         TEXT_SetTextColor(WM_GetDialogItem(pMsg->hWin, ID_TEXT_0), pMenuSkin->Menu_Label);
          
          for(i=0;i<4;i++)
          {
@@ -140,26 +148,10 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
             BUTTON_SetTextColor(hButtons[i],BUTTON_CI_UNPRESSED,pMenuSkin->Bt_Text);         
          }
          break;
-         
-//			case WM_PAINT:
-//				GUI_SetBkColor (GUI_LIGHTBLUE);
-//				GUI_Clear();
-//				GUI_SetTextMode(GUI_TEXTMODE_TRANS);
-//				GUI_SetColor (GUI_WHITE);
-//				GUI_SetFont (&GUI_Font28);
-//				GUI_DispStringAt ("主菜单",15,10);
-//    
-//			break;
-//		case WM_KEY:
-//			pInfo  = (WM_KEY_INFO*)pMsg->Data.p;
-//			switch(pInfo->Key)
-//			{
-//				case GUI_KEY_DOWN:
-
-//          WM_SetFocus(WM_GetDialogItem(pMsg->hWin,ID_BUTTON_0));				
-//					break;
-//			}
-//			break;
+  case WM_POST_PAINT:   
+       break;
+  
+  
   case WM_INIT_DIALOG:
 		 
     //
@@ -189,24 +181,26 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     hButtons[3] = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_3);
     BUTTON_SetText(hButtons[3], "系统设置");	
 		
-		for (i = 0; i < 4; i++)
-		{		
-   WIDGET_SetEffect(hButtons[i],&WIDGET_Effect_Simple);
-			BUTTON_SetBkColor(hButtons[i],BUTTON_CI_PRESSED,GUI_WHITE);
-			BUTTON_SetBkColor(hButtons[i],BUTTON_CI_UNPRESSED,DEEPBLUE);	
-			BUTTON_SetTextColor(hButtons[i],BUTTON_CI_PRESSED,GUI_BLACK);
-			BUTTON_SetTextColor(hButtons[i],BUTTON_CI_UNPRESSED,GUI_WHITE);
-			WM_SetCallback(hButtons[i],&myButtonListener);
-		}
+  
+    WINDOW_SetBkColor(pMsg->hWin,pMenuSkin->BackGround);  
+    TEXT_SetTextColor(WM_GetDialogItem(pMsg->hWin, ID_TEXT_0), pMenuSkin->Menu_Label);
+    
+		  for (i = 0; i < 4; i++)
+	 	{		
+     WIDGET_SetEffect(hButtons[i],&WIDGET_Effect_Simple);
+     BUTTON_SetBkColor(hButtons[i],  BUTTON_CI_PRESSED,  pMenuSkin->Bt_PRESSED);
+     BUTTON_SetBkColor(hButtons[i]  ,BUTTON_CI_UNPRESSED,pMenuSkin->Bt_UNPRESSED);
+     BUTTON_SetTextColor(hButtons[i],BUTTON_CI_UNPRESSED,pMenuSkin->Bt_Text); 
+     
+     WM_SetCallback(hButtons[i],&myButtonListener);
+		 }
 		//
 		// initialization of subWindow
 		//
-		
-	  	subWins[0]  = sub0WinCreate();
-		 	subWins[1]  = sub1WinCreate();				
+	  	subWins[0]  = sub0WinCreate(); 
+		 	subWins[1]  = sub1WinCreate();
 	 		subWins[2]  = sub2WinCreate();
 	  	subWins[3]  = sub3WinCreate();
-
     // USER START (Optionally insert additional code for further widget initialization)
     // USER END
     break;
@@ -218,7 +212,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     case ID_BUTTON_0: // Notifications sent by 'bt_0'
 				
       switch(NCode) {     
-      break;
+
       case WM_NOTIFICATION_CLICKED:
 			
         // USER START (Optionally insert code for reacting on notification message)
@@ -276,44 +270,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
       // USER END
       }
       break;
-//    case ID_LISTVIEW_0: // Notifications sent by 'thisListview'
-//      switch(NCode) {
-//      case WM_NOTIFICATION_CLICKED:
-//        // USER START (Optionally insert code for reacting on notification message)
-//        // USER END
-//        break;
-//      case WM_NOTIFICATION_RELEASED:
-//        // USER START (Optionally insert code for reacting on notification message)
-//        // USER END
-//        break;
-//      case WM_NOTIFICATION_SEL_CHANGED:
-//        // USER START (Optionally insert code for reacting on notification message)
-//        // USER END
-//        break;
-//      // USER START (Optionally insert additional code for further notification handling)
-//      // USER END
-//      }
-//      break;
-//    case ID_EDIT_0: // Notifications sent by 'Edit'
-//      switch(NCode) {
-//      case WM_NOTIFICATION_CLICKED:
-//        // USER START (Optionally insert code for reacting on notification message)
-//        // USER END
-//        break;
-//      case WM_NOTIFICATION_RELEASED:
-//        // USER START (Optionally insert code for reacting on notification message)
-//        // USER END
-//        break;
-//      case WM_NOTIFICATION_VALUE_CHANGED:
-//        // USER START (Optionally insert code for reacting on notification message)
-//        // USER END
-//        break;
-//      // USER START (Optionally insert additional code for further notification handling)
-//      // USER END
-//      }
-//      break;
-    // USER START (Optionally insert additional code for further Ids)
-    // USER END
+
     }
     break;
   // USER START (Optionally insert additional message handling)
@@ -351,63 +308,35 @@ static void myButtonListener(WM_MESSAGE * pMsg)
 	const WM_KEY_INFO * pInfo;
 	WM_HWIN thisButton  = pMsg->hWin;
 	WM_HWIN handle;
-	int i  = 0;
 	
-	
-	///判断当前焦点落在哪个button 上
-	handle  = WM_GetFocussedWindow();
-	
-	BUTTON_SetPressed(hButtons[0],0);
-	BUTTON_SetPressed(hButtons[1],0);
-	BUTTON_SetPressed(hButtons[2],0);
-	BUTTON_SetPressed(hButtons[3],0);
-	if(handle  == hButtons[0])
-	{
-		
-	  	i  = 0;
-    WM_BringToTop(subWins[0]);	
-    BUTTON_SetPressed(hButtons[0],1);
-	}
-	else if(handle == hButtons[1])
-	{		
-		
-    i  = 1;		
-//  UpdateListViewContent(WM_GetDialogItem(subWins[1],GUI_ID_USER + 0x01));
-		WM_BringToTop(subWins[1]);
-		WM_BringToTop(etWin);
-		BUTTON_SetPressed(hButtons[1],1);
-		
-	}
-	else if(handle == hButtons[2])
-	{
-		
-		i  = 2;
-		WM_BringToTop(subWins[2]);
-		BUTTON_SetPressed(hButtons[2],1);
-	}
-	else if(handle == hButtons[3])
-	{
-		
-    i  = 3;
-    WM_BringToTop(subWins[3]);
-    BUTTON_SetPressed(hButtons[3],1);
-	}
-	else 
-	{
-    BUTTON_SetPressed(hButtons[0],0);
-    BUTTON_SetPressed(hButtons[1],0);
-    BUTTON_SetPressed(hButtons[2],0);
-    BUTTON_SetPressed(hButtons[3],0);  
-	}
-	
- if(i<2)
- {
-    WM_SendMessageNoPara(subWins[i], USER_MSG_BRING);
- }
- 
+
 	
 	switch(pMsg->MsgId)
 	{
+ 
+ case WM_SET_FOCUS:
+      if(pMsg->Data.v)
+      {
+         for(btIndex=0;btIndex<4;btIndex++)
+         {
+            if(pMsg->hWin == hButtons[btIndex])
+               break;
+         }
+         if(btIndex<4)
+         {
+            WM_BringToTop(subWins[btIndex]);
+            if(btIndex == 1)
+            {
+               WM_BringToTop(etWin);
+            }
+            if(btIndex<2)
+            {
+               WM_SendMessageNoPara(subWins[btIndex],  USER_MSG_BRING);
+            }
+         }
+      }
+      BUTTON_Callback(pMsg);
+      break;
 
 		case WM_KEY:
 			pInfo  = (WM_KEY_INFO*)pMsg->Data.p;
@@ -424,7 +353,7 @@ static void myButtonListener(WM_MESSAGE * pMsg)
 				
 				case GUI_KEY_RIGHT:
 //         if(i!=3)
-          WM_SetFocus(subWins[i]);
+          WM_SetFocus(subWins[btIndex]);
 //				 else 
 //				 {	
 //        WM_SetFocus (WM_GetDialogItem(subWins[i], GUI_ID_EDIT0));
@@ -439,8 +368,7 @@ static void myButtonListener(WM_MESSAGE * pMsg)
 							WM_HideWindow(subWins[1]);
 							WM_HideWindow(subWins[2]);
 							WM_HideWindow(subWins[3]);
-							WM_HideWindow(etWin);
-							WM_BringToTop(hDlg_FishMap);       
+							WM_HideWindow(etWin);     
 							WM_SetFocus(hDlg_FishMap);
        GUI_CURSOR_Show();
        

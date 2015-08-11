@@ -64,14 +64,22 @@ void fixPos(short * base_x, short * base_y)
 
 void MNT_dispInfo( short base_x, short base_y, boat * pBoat)
 {
+   if(pBoat == NULL)
+      return ;
+//   GUI_ALPHA_STATE AlphaState;
+    
 //   GUI_SetDrawMode(GUI_DRAWMODE_XOR);
    fixPos(&base_x, &base_y);
-   
+//   GUI_SetUserAlpha(&AlphaState, 50);
+//   GUI_SetAlpha(0x40);
    GUI_SetColor(pMapSkin->BackGround);
+
    GUI_ClearRect(base_x, base_y, base_x+180,base_y+80);
    
    GUI_SetColor(pMapSkin->Boat_Tip_Border);
    GUI_DrawRect(base_x, base_y, base_x+180,base_y+80);
+   
+//   GUI_SetAlpha(0);
    
    GUI_SetFont(&GUI_Font16_1);
    GUI_SetColor(pMapSkin->Boat_Name);
@@ -86,9 +94,13 @@ void MNT_dispInfo( short base_x, short base_y, boat * pBoat)
    lltostr(pBoat->longitude, pStrBuf);
    GUI_DispStringAt(pStrBuf, base_x+10, base_y+38);
    
-   GUI_SetFont(&GUI_Font16_1);
+
+//   GUI_SetFont(&GUI_Font16_1);
    sprintf(pStrBuf, "%09ld", pBoat->user_id);
    GUI_DispStringAt(pStrBuf, base_x+10, base_y+62);
+//   GUI_SetFont(&GUI_Font16_1);
+//   GUI_DispDecAt(pBoat->SOG, base_x+10, base_y+62, 3);
+//   GUI_DispDecAt(pBoat->COG, base_x+10+60, base_y+62, 3);
 }
 
 //void draw_ship(_boat *boat_ay,float x,float y,short true_heading,short center_x,short center_y){
@@ -96,7 +108,9 @@ void draw_ship(boat* pBoat,short basePoint_x,short basePoint_y,  const GUI_POINT
 
 	GUI_POINT aEnlargedPoints[11];
 
-
+ if(pBoat == NULL)
+    return ;
+ 
 	GUI_RotatePolygon(aEnlargedPoints,pPoints,PointNum,pBoat->COG*3.14/180);
 
 	if((basePoint_x >=MAP_LEFT)&&(basePoint_x<= MAP_RIGHT)&&(basePoint_y >=MAP_TOP)&&(basePoint_y <= MAP_BOTTOM))
@@ -111,6 +125,8 @@ void drawColrofulBoat(boat * pBoat, short basePoint_x, short basePoint_y, const 
 {
 	GUI_POINT aEnlargedPoints[11];
 
+ if(pBoat == NULL)
+    return;
  
  GUI_SetColor(color);
 	GUI_RotatePolygon(aEnlargedPoints,pPoints,count,pBoat->COG*3.14/180);
@@ -188,48 +204,64 @@ void MNT_dispBoat(const scale_map * scale,  long center_lg, long center_lt, MNT_
    short base_x  = 0;
    short base_y  = 0;
    
-   while(pIterator && pIterator->mntBoat.pBoat->latitude)
+//   GUI_EnableAlpha(1);
+//   GUI_SetAlpha(0x80);
+   
+   while(pIterator)
    {
-      base_x  = 1.0*scale->pixel * (pIterator->mntBoat.pBoat->longitude - center_lg) / scale->minute;
-      base_y  = 1.0*scale->pixel * (pIterator->mntBoat.pBoat->latitude - center_lt) / scale->minute;
-      
-      base_x  = (MAP_LEFT/2 + MAP_RIGHT/2) + base_x;
-      base_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - base_y;
- 
- ///  Org boat conf.
-      GUI_SetColor(GUI_LIGHTGRAY);    
-      GUI_SetPenSize(2); 
-      
+      if(pIterator->mntBoat.pBoat)
+      {
+         base_x  = 1.0*scale->pixel * (pIterator->mntBoat.pBoat->longitude - center_lg) / scale->minute;
+         base_y  = 1.0*scale->pixel * (pIterator->mntBoat.pBoat->latitude - center_lt) / scale->minute;
+         
+         base_x  = (MAP_LEFT/2 + MAP_RIGHT/2) + base_x;
+         base_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - base_y;
+    
+///  Org boat conf.
+         GUI_SetColor(GUI_LIGHTGRAY);    
+         GUI_SetPenSize(2); 
+         
 ///   DSP boat conf.      
-      if(pIterator->mntBoat.mntSetting.DSP_Setting.isEnable == ENABLE) 
-      {
-         GUI_SetColor(GUI_LIGHTCYAN);    
-      }
-      
-      draw_ship(pIterator->mntBoat.pBoat, base_x, base_y,pPoints, PointNum);
- 
+         if(pIterator->mntBoat.mntSetting.DSP_Setting.isEnable == ENABLE) 
+         {
+            GUI_SetColor(GUI_LIGHTCYAN);    
+         }
+         
+         draw_ship(pIterator->mntBoat.pBoat, base_x, base_y,pPoints, PointNum);
+    
 ///   BGL circle conf.
-      if(pIterator->mntBoat.mntSetting.BGL_Setting.isEnable == ENABLE)
-      {
-         GUI_SetColor(BGL_BOAT_COLOR);
-         GUI_SetPenSize(1); 
-         GUI_DrawCircle(base_x, base_y,pIterator->mntBoat.mntSetting.BGL_Setting.Dist*scale->pixel/scale->minute);         
-      } 
- 
+         if(pIterator->mntBoat.mntSetting.BGL_Setting.isEnable == ENABLE)
+         {
+            GUI_SetColor(BGL_BOAT_COLOR);
+            GUI_SetPenSize(1); 
+            GUI_DrawCircle(base_x, base_y,pIterator->mntBoat.mntSetting.BGL_Setting.Dist*scale->pixel/scale->minute);            
+         } 
+    
 ///   Drg circle conf. 
-      if(pIterator->mntBoat.mntSetting.DRG_Setting.isEnable == ENABLE)
+         if(pIterator->mntBoat.mntSetting.DRG_Setting.isEnable == ENABLE)
+         {
+            base_x  = 1.0*scale->pixel * (pIterator->mntBoat.lg - center_lg) / scale->minute;
+            base_y  = 1.0*scale->pixel * (pIterator->mntBoat.lt - center_lt) / scale->minute;
+            
+            base_x  = (MAP_LEFT/2 + MAP_RIGHT/2) + base_x;
+            base_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - base_y;
+            
+            GUI_SetColor(DRG_BOAT_COLOR);
+            GUI_SetPenSize(DRG_PENSIZE);        
+            GUI_DrawCircle(base_x, base_y, pIterator->mntBoat.mntSetting.DRG_Setting.Dist*scale->pixel/scale->minute);
+         }
+      }
+      else
       {
          base_x  = 1.0*scale->pixel * (pIterator->mntBoat.lg - center_lg) / scale->minute;
          base_y  = 1.0*scale->pixel * (pIterator->mntBoat.lt - center_lt) / scale->minute;
          
          base_x  = (MAP_LEFT/2 + MAP_RIGHT/2) + base_x;
-         base_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - base_y;
-         
-         GUI_SetColor(DRG_BOAT_COLOR);
-         GUI_SetPenSize(DRG_PENSIZE);
-         GUI_DrawCircle(base_x, base_y, pIterator->mntBoat.mntSetting.DRG_Setting.Dist*scale->pixel/scale->minute);
-      }
+         base_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - base_y; 
       
+         GUI_SetColor(GUI_YELLOW);      
+         GUI_DrawCircle(base_x, base_y, 20);
+      }
       pIterator  = pIterator->pNext;
    }
    
@@ -241,6 +273,16 @@ void MNT_dispBoat(const scale_map * scale,  long center_lg, long center_lt, MNT_
    
     disp_fish_boat(scale, center_lg, center_lt, SimpBerthes, N_boat);
     
+//GUI_SetColor(GUI_BLACK);
+//GUI_DispStringHCenterAt("Alphablending", 45, 41);
+//GUI_SetColor((0x40uL << 24) | GUI_RED);
+//GUI_FillRect(0, 50, 49, 49);
+//GUI_SetColor((0x80uL << 24) | GUI_GREEN);
+//GUI_FillRect(20, 70, 69, 69);
+//GUI_SetColor((0xC0uL << 24) | GUI_BLUE);
+//GUI_FillRect(40, 90, 89, 89);
+//    GUI_SetAlpha(0);
+//    GUI_EnableAlpha(0);   
 }
 
 

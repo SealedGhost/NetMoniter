@@ -114,7 +114,7 @@ MNT_BOAT MNT_Boats[MNT_NUM_MAX];
 struct message_18 msg_18;
 
 int N_boat = 0;
-
+static int LPC_recCnt  = 0;
 /*----------------- local   function  --------------------*/
 
 
@@ -163,6 +163,7 @@ void UI_Task(void *p_arg)/*描述(Description):	任务UI_Task*/
 void Insert_Task(void *p_arg)  //等待接收采集到的数据
 { 
 	int tmp  = 0;
+
 	uint8_t *s; 
 	INT8U err;
 //	static int a=0;
@@ -176,11 +177,15 @@ void Insert_Task(void *p_arg)  //等待接收采集到的数据
 	{	
 
 		s = OSQPend(QSem,0,&err);
-    
-    tmp  = translate_(s,&text_out,&text_out_24A,&text_out_type_of_ship);   
+  
+  LPC_recCnt++; 
+ 
+    tmp  = translate_(s,&text_out,&text_out_24A,&text_out_type_of_ship); 
+
+    OSMutexPend(Refresher, 0, &myErr);  
+printf("insert\n\r");    
     switch(tmp)
     {
-OSMutexPend(Refresher, 0, &myErr);   
        case 18:
             insert_18(&text_out);
             break;
@@ -205,15 +210,14 @@ void Refresh_Task(void *p_arg)//任务Refresh_Task
 {
  static int CurMntBoatIndex;
  int i  = 0;
- int cnt  = 0;
+static int cnt  = 0;
 
 #ifdef CODE_CHECK 
- MNT_BERTH  * vernier  = NULL;
+ static MNT_BERTH  * vernier  = NULL;
 #endif 
  
 	while(1)
 	{
-  cnt  = 0;
   
 	
 //		  OSTimeDly(30000); 		/* 延时8000ms */
@@ -225,21 +229,31 @@ void Refresh_Task(void *p_arg)//任务Refresh_Task
 //  OSMutexPend(Updater, 0, &myErr_2);
   updateTimeStamp();
 //  OSMutexPost(Updater);
-    
+INFO("xukeke:%d",LPC_recCnt);    
   OSMutexPost(Refresher);
 #ifdef CODE_CHECK
-INFO(" DSP check");  
-  if(vernier == NULL)
-  {
-     vernier  = pMntHeader;
-  }
-  
-  if(vernier)
-  {
-    check((MNT_BOAT*)(vernier));
-    vernier  = vernier->pNext;
-  }
-  
+//INFO(" DSP check"); 
+
+   if(cnt == 0) 
+   {
+printf("check\n\r");   
+      if(vernier == NULL)
+      {
+         vernier  = pMntHeader; 
+      }
+      
+      if(vernier)
+      {
+        check((MNT_BOAT*)(vernier));
+printf("state:%x",vernier->mntBoat.mntState);       
+        
+        vernier  = vernier->pNext;
+      }  
+   }
+
+   cnt++;
+   
+   cnt  = cnt%6;
 #endif 
  
 //  CurMntBoatIndex++;
@@ -282,8 +296,8 @@ void App_TaskStart(void)//初始化UCOS，初始化SysTick节拍，并创建三个任务
 //   mntSetting_init();
    
    
-   mothership.latitude = 1927265;
-   mothership.longitude = 7128663;
+   mothership.latitude = MOTHERShIP_LA;
+   mothership.longitude = MOTHERShIP_LG;
    mothership.true_heading  = 0;
 
   sysInit();
@@ -309,6 +323,7 @@ int translate_(unsigned char *text,message_18 *text_out,message_24_partA *text_o
 {
   int i=0,comma=0;
   int tmp  = 0;
+  
   if((text[0]!='!')&&(text[0]!='$'))
     return 0;
   if((text[1]=='A')&&(text[2]==0x49)&&(text[3]=='V')&&(text[4]=='D')&&(text[5]=='M'))

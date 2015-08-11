@@ -567,6 +567,10 @@ void LCD_X_Config(void) {
     }
   #endif
   //
+  // Initialize multibuffering.
+  //
+//  GUI_MULTIBUF_Config(3);
+  //
   // Set display driver and color conversion for 1st layer
   //
   #ifndef _WINDOWS

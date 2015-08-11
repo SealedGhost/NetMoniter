@@ -5,6 +5,7 @@
 #include "string.h"
 #include <math.h>
 #include <stdlib.h>
+#include "Setting.h"
 // find if id exist in aux_boat, yes return 1, otherwise 0, size exclusive
 
 /*----------------------- Macro defination -----------------------*/
@@ -24,6 +25,7 @@ extern _boat* boat_list_p[BOAT_LIST_SIZE_MAX];
 extern boat mothership;
 extern BERTH Berthes[BOAT_LIST_SIZE_MAX];
 extern SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
+extern MNT_BERTH * pMntHeader;
 
 /*----------------------- external functions -----------------------*/
 
@@ -56,8 +58,7 @@ static BERTH * allocOneBerth(void);
 */
 int insert_18(struct message_18 * p_msg)
 {
-   int i  = 0;
-   
+   int i  = 0; 
    /// Give up berthes out of range .
    if( (p_msg->longitude < mothership.longitude-30000)  ||  (p_msg->longitude > mothership.longitude+30000) ) 
         return 0;
@@ -482,9 +483,10 @@ INFO("alloc berth failed!");
 
 void updateTimeStamp()
 {
-
+   MNT_BERTH * pIterator  = NULL;
    BERTH * tmp  = NULL;
    BERTH * tmpTail  = pTail;
+   
    
    BERTH * pCur  = NULL;
    int i  = 0;  
@@ -506,7 +508,22 @@ void updateTimeStamp()
       }
       else
       { 
-printf("Delete\n\r");      
+printf("Delete %09ld\n\r", pCur->Boat.user_id); 
+         pIterator  = pMntHeader;
+         while(pIterator)
+         {
+            if(pIterator->mntBoat.mmsi == pCur->Boat.user_id)
+            {
+               pIterator->mntBoat.pBoat  = NULL;
+               break;
+            }
+            else
+            {
+               pIterator  = pIterator->pNext;
+            }
+         }
+         
+              
          /// Delete at header
          if(pCur == pHeader)
          {
@@ -542,18 +559,18 @@ printf("Delete\n\r");
     N_boat  = i;    
 
 
-   for(i=0;i<BOAT_LIST_SIZE_MAX;i++)
-   {
-      if(Berthes[i].Boat.user_id != 0)
-      {
-         k++;
-      }
-   } 
-  if(N_boat != k)
-  {
-     mymyCnt++;
-     INFO("N_boat:%d < true N_Boat:%d %d err happend",N_boat,k,mymyCnt);
-  }
+//   for(i=0;i<BOAT_LIST_SIZE_MAX;i++)
+//   {
+//      if(Berthes[i].Boat.user_id != 0)
+//      {
+//         k++;
+//      }
+//   } 
+//  if(N_boat != k)
+//  {
+//     mymyCnt++;
+//     INFO("N_boat:%d < true N_Boat:%d %d err happend",N_boat,k,mymyCnt);
+//  }
 }
 
 

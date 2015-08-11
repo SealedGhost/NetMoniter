@@ -211,51 +211,23 @@ unsigned int getFishingAreaId(long longitude, long latitude )
 
 void getMntWrapPara(long *halfDiff_lg, long* halfDiff_lt, scale_map* wrap_scale)
 {
-//   MNT_BERTH * min_lg_addr  = pMntHeader;
-//   MNT_BERTH * max_lg_addr  = pMntHeader;
-//   MNT_BERTH * min_lt_addr  = pMntHeader;
-//   MNT_BERTH * max_lt_addr  = pMntHeader;
    
-   long min_lg  = 0;
-   long max_lg  = 0;
-   long min_lt  = 0;
-   long max_lt  = 0;
+   long min_lg  = mothership.longitude;
+   long max_lg  = mothership.longitude;
+   long min_lt  = mothership.latitude;
+   long max_lt  = mothership.latitude;
    
    long maxDiff_lg  = 0;
    long maxDiff_lt  = 0;
    
    
-   MNT_BERTH * pIterator  = NULL;
+   MNT_BERTH * pIterator  = pMntHeader;
    
-   if(pMntHeader  == NULL)
-   {
-      return ;
-   }
-   pIterator  = pMntHeader;
    
-
-   
-   if(pIterator == NULL)
+   while(pIterator)
    {
-      *halfDiff_lg  = mothership.longitude;
-      *halfDiff_lt  = mothership.latitude;
-   }
-   else
-   {
-      min_lg  = pMntHeader->mntBoat.pBoat->longitude;
-      max_lg  = min_lg;
-      
-      min_lt  = pMntHeader->mntBoat.pBoat->latitude;
-      max_lt  = min_lt;
-      
-//printf("lt_max:%ld\n\r",max_lt) ;     
-//printf("   min:%ld\n\r",min_lt);
-//printf("lg_max:%ld\n\r",max_lg);
-//printf("   min:%ld\n\r",min_lg);
-      pIterator  = pIterator->pNext;
-      while(pIterator && pIterator->mntBoat.pBoat->latitude)
+      if( pIterator->mntBoat.pBoat && (pIterator->mntBoat.mmsi==pIterator->mntBoat.pBoat->user_id) )
       {
-printf("   lt:%ld,lg:%ld\n\r",pIterator->mntBoat.pBoat->latitude,pIterator->mntBoat.pBoat->longitude);      
          if(pIterator->mntBoat.pBoat->latitude < min_lt)
          {
             min_lt  = pIterator->mntBoat.pBoat->latitude;
@@ -274,64 +246,129 @@ printf("   lt:%ld,lg:%ld\n\r",pIterator->mntBoat.pBoat->latitude,pIterator->mntB
             max_lg  = pIterator->mntBoat.pBoat->longitude;
          }
          
-         pIterator  = pIterator->pNext;
-      }
-      
-      if(mothership.longitude > max_lg)
-      {
-         maxDiff_lg  = mothership.longitude - min_lg;  
-         *halfDiff_lg = mothership.longitude/2 + min_lg/2;
-       
-      }
-      else if(mothership.longitude < min_lg)
-      {
-         maxDiff_lg  = max_lg - mothership.longitude;
-         *halfDiff_lg = mothership.longitude/2 + max_lg/2;
-       
-      }
-      else  
-      {
-         maxDiff_lg  = max_lg - min_lg;
-         *halfDiff_lg = max_lg/2 + min_lg/2;
-         
-      }
-         
-         
-      if(mothership.latitude > max_lt)
-      {
-         maxDiff_lt  = mothership.latitude - min_lt;
-         *halfDiff_lt = mothership.latitude/2 + min_lt/2;
-        
-      }
-         
-      else if(mothership.latitude < min_lt)
-      {
-         maxDiff_lt  = max_lt - mothership.latitude;
-         *halfDiff_lt = mothership.latitude/2 + max_lt/2;
-        
-      }
-         
-      else
-      {
-         maxDiff_lt  = max_lt  - min_lt;
-         *halfDiff_lt = max_lt/2 + min_lt/2;
-        
-      }
 
-
+      }
+      pIterator  = pIterator->pNext;
+   }
+   
+   maxDiff_lg  = max_lg - min_lg;
+   maxDiff_lt  = max_lt - min_lt;
+   
+   *halfDiff_lg  = max_lg/2 + min_lg/2;
+   *halfDiff_lt  = max_lt/2 + min_lt/2;
+   
+   
    ///map的宽为800pix，高为400pix，判断在适配上述区域时以map的宽来适配还是高来适配
    
    ///若适配区域的宽度大于高度的两倍，则以map的宽来适配
-      if(( maxDiff_lg/2) > maxDiff_lt)
-      {
-         wrap_scale->minute  = ( maxDiff_lg/(8*100) + 1)*100;  ///这种写法保证所得到的scale.minute为100的整数倍
-      }
-      ///否则以map的高来适配
-      else
-      {
-         wrap_scale->minute  = ( maxDiff_lt/(4*100) + 1)*100;
-      }
-   }
+    if(( maxDiff_lg/2) > maxDiff_lt)
+    {
+       wrap_scale->minute  = ( maxDiff_lg/(8*100) + 1)*100;  ///这种写法保证所得到的scale.minute为100的整数倍
+    }
+    ///否则以map的高来适配
+    else
+    {
+       wrap_scale->minute  = ( maxDiff_lt/(4*100) + 1)*100;
+    }
+ 
+//   
+//   while( (pIterator->mntBoat.pBoat==NULL) && pIterator->pNext) 
+//   {
+//      pIterator  = pIterator->pNext;
+//   }  
+//   
+//   if(pIterator == NULL)
+//   {
+//      *halfDiff_lg  = mothership.longitude;
+//      *halfDiff_lt  = mothership.latitude;
+//   }
+//   else
+//   {
+//      min_lg  = pMntHeader->mntBoat.pBoat->longitude;
+//      max_lg  = min_lg;
+//      
+//      min_lt  = pMntHeader->mntBoat.pBoat->latitude;
+//      max_lt  = min_lt;
+//      
+//      pIterator  = pIterator->pNext;
+//      while(pIterator && pIterator->mntBoat.pBoat)
+//      {     
+//         if(pIterator->mntBoat.pBoat->latitude < min_lt)
+//         {
+//            min_lt  = pIterator->mntBoat.pBoat->latitude;
+//         }
+//         else if(pIterator->mntBoat.pBoat->latitude > max_lt)
+//         {
+//            max_lt  = pIterator->mntBoat.pBoat->latitude;
+//         }
+//         
+//         if(pIterator->mntBoat.pBoat->longitude < min_lg)
+//         {
+//            min_lg  = pIterator->mntBoat.pBoat->longitude;
+//         }
+//         else if(pIterator->mntBoat.pBoat->longitude > max_lg)
+//         {
+//            max_lg  = pIterator->mntBoat.pBoat->longitude;
+//         }
+//         
+//         pIterator  = pIterator->pNext;
+//      }
+//      
+//      if(mothership.longitude > max_lg)
+//      {
+//         maxDiff_lg  = mothership.longitude - min_lg;  
+//         *halfDiff_lg = mothership.longitude/2 + min_lg/2;
+//       
+//      }
+//      else if(mothership.longitude < min_lg)
+//      {
+//         maxDiff_lg  = max_lg - mothership.longitude;
+//         *halfDiff_lg = mothership.longitude/2 + max_lg/2;
+//       
+//      }
+//      else  
+//      {
+//         maxDiff_lg  = max_lg - min_lg;
+//         *halfDiff_lg = max_lg/2 + min_lg/2;
+//         
+//      }
+//         
+//         
+//      if(mothership.latitude > max_lt)
+//      {
+//         maxDiff_lt  = mothership.latitude - min_lt;
+//         *halfDiff_lt = mothership.latitude/2 + min_lt/2;
+//        
+//      }
+//         
+//      else if(mothership.latitude < min_lt)
+//      {
+//         maxDiff_lt  = max_lt - mothership.latitude;
+//         *halfDiff_lt = mothership.latitude/2 + max_lt/2;
+//        
+//      }
+//         
+//      else
+//      {
+//         maxDiff_lt  = max_lt  - min_lt;
+//         *halfDiff_lt = max_lt/2 + min_lt/2;
+//        
+//      }
+
+
+//   ///map的宽为800pix，高为400pix，判断在适配上述区域时以map的宽来适配还是高来适配
+//   
+//   ///若适配区域的宽度大于高度的两倍，则以map的宽来适配
+//      if(( maxDiff_lg/2) > maxDiff_lt)
+//      {
+//         wrap_scale->minute  = ( maxDiff_lg/(8*100) + 1)*100;  ///这种写法保证所得到的scale.minute为100的整数倍
+//      }
+//      ///否则以map的高来适配
+//      else
+//      {
+//         wrap_scale->minute  = ( maxDiff_lt/(4*100) + 1)*100;
+//      }
+//   }
 }
 
 
@@ -482,10 +519,10 @@ void setWrapedView()
 //   if(N_boat > 0)
 //      getWrapPara(&lg, &lt, &wrapScale);
    
-  if(pMntHeader->mntBoat.pBoat->latitude)
-  {
+//  if(pMntHeader->mntBoat.pBoat->latitude)
+//  {
      getMntWrapPara(&lg, &lt, &wrapScale);
-  }
+//  }
    
    map_draw(lg, lt, wrapScale);
    
@@ -722,7 +759,6 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
  WM_MESSAGE myMsg;
 
 	short i = 0;
- char *s  = "E118°48.600";
 	
 	temp_lat  = __cursor.latitude;
 	temp_long  = __cursor.longitude ;
@@ -741,7 +777,6 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
     if(MNT_Boats[i].mmsi > 0)
        break;
  }
-INFO("i::%d",i); 
  /// Do not exist monited boat.
  if(i>=MNT_NUM_MAX)
  {
@@ -901,8 +936,7 @@ INFO("i::%d",i);
 			}
 			break;
 			
-		case WM_KEY:
-INFO("case WM_KEY");  
+		case WM_KEY: 
   drawMapSwitchCnt  = 0;
   drawMapSwitch     = 1;
 
@@ -1119,12 +1153,14 @@ INFO("case WM_KEY");
 					
 				case GUI_KEY_MENU:	         
           GUI_CURSOR_Hide();
-          WM_BringToTop (menuWin);
+
+
           WM_ShowWindow(subWins[0]);
           WM_ShowWindow(subWins[1]);
           WM_ShowWindow(etWin);
           WM_ShowWindow(subWins[2]);
           WM_ShowWindow(subWins[3]);
+          WM_BringToTop(menuWin);
           WM_SetFocus(menuWin);
 //					WM_SetFocus (WM_GetDialogItem (menuWin, GUI_ID_BUTTON0));
 			      	break;
@@ -1196,8 +1232,6 @@ INFO("case WM_KEY");
     GUI_FillPolygon(Points_Compass_3, 3, 100, 100);  
     GUI_SetColor(GUI_DARKRED);
     GUI_FillPolygon(Points_Compass_4, 3, 100, 100);
-//			GUI_SetFont (&GUI_Font16B_1);
-//			GUI_PNG_Draw(&acCompass,sizeof(acCompass),350,40);
 			
 
 

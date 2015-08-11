@@ -81,6 +81,7 @@ static int fdDist  = 0;
 static int zmDist  = 0;
 static void myEditListener(WM_MESSAGE* pMsg);
 static void myEditAddKeyEx(EDIT_Handle hObj, int key);
+static void EtReset(WM_HWIN thisWin);
 
 MNT_SETTING mntSetting;
 /*------------------- local    functions -------------------------*/
@@ -111,27 +112,27 @@ MNT_SETTING mntSetting;
 *       _aDialogCreate
 */
 static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
-  { WINDOW_CreateIndirect, "ETWin", ID_WINDOW_0, ETWin_X, SubWin_Y, ETWin_WIDHT, ETWin_HEIGHT, 0, 0x0, 0 },
+  { WINDOW_CreateIndirect, "ETWin", ID_WINDOW_0, ETWin_X, SubWin_Y+40, ETWin_WIDHT, ETWin_HEIGHT-40, 0, 0x0, 0 },
 	
-	{ TEXT_CreateIndirect, "监控设置项:",       ID_TEXT_0, 0,   0,                  ETWin_WIDHT,30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "1.消失报警:",       ID_TEXT_1, 0,   LV_MoniteSet_Y,     160,        40, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "2.防盗报警功能:",   ID_TEXT_2, 0,   LV_MoniteSet_Y+40,  195,        40, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "距离:",             ID_TEXT_3, 130, LV_MoniteSet_Y+80,  70,         40, 0, 0x0, 0},
- { TEXT_CreateIndirect, "nm",                ID_TEXT_8, 230, LV_MoniteSet_Y+80,   70,         40, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "声音",              ID_TEXT_4, 40,  LV_MoniteSet_Y+160, 80,          40, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "3.走锚报警功能:",  ID_TEXT_5, 0,   LV_MoniteSet_Y+200, 195,         40, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "距离:",             ID_TEXT_6, 130, LV_MoniteSet_Y+240, 70,          40,  0, 0x0, 0},
- { TEXT_CreateIndirect, "nm",                ID_TEXT_9, 230, LV_MoniteSet_Y+240, 70,          40,  0, 0x0,0},
- { TEXT_CreateIndirect, "声音:",             ID_TEXT_7, 40,  LV_MoniteSet_Y+280, 80,         40,  0, 0x0, 0},
+	{ TEXT_CreateIndirect, "监控设置项:",   ID_TEXT_0, 0,    0,                  ETWin_WIDHT,30, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "1.消失报警:",   ID_TEXT_1, 0,    LV_MoniteSet_Y,     160,        30, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "2.防盗报警:",   ID_TEXT_2, 0,    LV_MoniteSet_Y+40,  200,        30, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "报警距离:",     ID_TEXT_3, 30,   LV_MoniteSet_Y+80,  200,         0, 0, 0x0, 0},
+ { TEXT_CreateIndirect, "nm",             ID_TEXT_8, 240,  LV_MoniteSet_Y+80,   50,        30, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "报警声音:",     ID_TEXT_4, 30,   LV_MoniteSet_Y+120, 200,        30, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "3.走锚报警:",   ID_TEXT_5, 0,    LV_MoniteSet_Y+160, 200,        40, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "报警距离:",     ID_TEXT_6, 30,   LV_MoniteSet_Y+200, 200,        40,  0, 0x0, 0},
+ { TEXT_CreateIndirect, "nm",             ID_TEXT_9, 240,  LV_MoniteSet_Y+200, 50,         40,  0, 0x0,0},
+ { TEXT_CreateIndirect, "报警声音:",     ID_TEXT_7, 30,   LV_MoniteSet_Y+240, 200,        40,  0, 0x0, 0},
 
  
- { EDIT_CreateIndirect, "et_0", ID_EDIT_0, 200, LV_MoniteSet_Y,     80, 40, 0, 0xa,  0 },
- { EDIT_CreateIndirect, "et_1", ID_EDIT_1, 200, LV_MoniteSet_Y+40,  80, 40, 0, 0x64, 0 },
- { EDIT_CreateIndirect, "et_2", ID_EDIT_2, 200, LV_MoniteSet_Y+80,  80, 40, 0, 0x64, 0 },
- { EDIT_CreateIndirect, "et_3", ID_EDIT_3, 200, LV_MoniteSet_Y+160, 80, 40, 0, 0x64, 0 },
- { EDIT_CreateIndirect, "et_4", ID_EDIT_4, 200, LV_MoniteSet_Y+200, 80, 40, 0, 0x64, 0 },
- { EDIT_CreateIndirect, "et_5", ID_EDIT_5, 200, LV_MoniteSet_Y+240, 80, 40, 0, 0x64, 0},
-	{ EDIT_CreateIndirect, "et_6", ID_EDIT_6, 200, LV_MoniteSet_Y+280, 80, 40, 0, 0x64, 0}
+ { EDIT_CreateIndirect, "et_0", ID_EDIT_0, 160, LV_MoniteSet_Y,     80, 30, 0, 0xa,  0 },
+ { EDIT_CreateIndirect, "et_1", ID_EDIT_1, 160, LV_MoniteSet_Y+40,  80, 30, 0, 0x64, 0 },
+ { EDIT_CreateIndirect, "et_2", ID_EDIT_2, 160, LV_MoniteSet_Y+80,  80, 30, 0, 0x64, 0 },
+ { EDIT_CreateIndirect, "et_3", ID_EDIT_3, 160, LV_MoniteSet_Y+120, 80, 30, 0, 0x64, 0 },
+ { EDIT_CreateIndirect, "et_4", ID_EDIT_4, 160, LV_MoniteSet_Y+160, 80, 30, 0, 0x64, 0 },
+ { EDIT_CreateIndirect, "et_5", ID_EDIT_5, 160, LV_MoniteSet_Y+200, 80, 30, 0, 0x64, 0},
+	{ EDIT_CreateIndirect, "et_6", ID_EDIT_6, 160, LV_MoniteSet_Y+240, 80, 30, 0, 0x64, 0}
 	
   // USER START (Optionally insert additional widgets)
   // USER END
@@ -143,7 +144,13 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
 *
 **********************************************************************
 */
+EditWin_COLOR EditWinSkins[2]  = {
+///                                      bkColor         etLabel     etBkEnable       etText          etTxBk
+                                        { GUI_DARKGRAY,  GUI_BLACK,  GUI_DARKGREEN,   GUI_LIGHTGRAY, GUI_BLACK},
+                                        { GUI_GRAY,      GUI_GRAY,   GUI_LIGHTGREEN,  GUI_DARKGRAY,  GUI_LIGHTMAGENTA} 
+                                       };
 
+EditWin_COLOR * pEtWinSkin  = EditWinSkins;
 // USER START (Optionally insert additional static code)
 // USER END
 
@@ -154,23 +161,70 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
 static void _cbDialog(WM_MESSAGE * pMsg) {
 	
 	const WM_KEY_INFO* pInfo;
+ WM_HWIN  hItem  = 0;
+ 
+  int     i  = 0;
   int     NCode;
   int     Id;
   // USER START (Optionally insert additional variables)
   // USER END
-
   switch (pMsg->MsgId) {
   
-  case USER_MSG_SKIN:
-INFO(" etWin case user_msg_skin");  
-       if(pMsg->Data.v == SKIN_Night)    
-          WINDOW_SetBkColor(pMsg->hWin, GUI_DARKGRAY); 
-       else
-          WINDOW_SetBkColor(pMsg->hWin, GUI_WHITE);
-       break;
+  case USER_MSG_SKIN: 
+       pEtWinSkin  = &(EditWinSkins[pMsg->Data.v]);
+       
+       WINDOW_SetBkColor(pMsg->hWin, pEtWinSkin->EditWin_BackGround);
+       
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_0);
+       TEXT_SetTextColor(hItem, pEtWinSkin->EditWin_Label);
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_1);
+       TEXT_SetTextColor(hItem, pEtWinSkin->EditWin_Label);    
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_2);
+       TEXT_SetTextColor(hItem, pEtWinSkin->EditWin_Label); 
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_3);
+       TEXT_SetTextColor(hItem, pEtWinSkin->EditWin_Label);    
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_4);
+       TEXT_SetTextColor(hItem, pEtWinSkin->EditWin_Label);    
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_5);
+       TEXT_SetTextColor(hItem, pEtWinSkin->EditWin_Label);    
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_6);
+       TEXT_SetTextColor(hItem, pEtWinSkin->EditWin_Label);    
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_7);
+       TEXT_SetTextColor(hItem, pEtWinSkin->EditWin_Label);    
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_8);
+       TEXT_SetTextColor(hItem, pEtWinSkin->EditWin_Label);    
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_9);
+       TEXT_SetTextColor(hItem, pEtWinSkin->EditWin_Label);  
+
+       for(i=0;i<7;i++)
+       {
+          EDIT_SetBkColor(hEts[i], EDIT_CI_ENABLED, pEtWinSkin->EditWin_Text);
+          EDIT_SetTextColor(hEts[i], 0, pEtWinSkin->EditWin_Text);
+       }       
   case WM_INIT_DIALOG:
-  
-//    TEXT_SetFont(WM_GetDialogItem(pMsg->hWin, ID_TEXT_0), &GUI_Font24);
+    //
+    // Initialization of 'text'
+    //    
+    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_0);
+    TEXT_SetTextColor(hItem, pEtWinSkin->EditWin_Label);
+    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_1);
+    TEXT_SetTextColor(hItem, pEtWinSkin->EditWin_Label);    
+    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_2);
+    TEXT_SetTextColor(hItem, pEtWinSkin->EditWin_Label); 
+    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_3);
+    TEXT_SetTextColor(hItem, pEtWinSkin->EditWin_Label);    
+    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_4);
+    TEXT_SetTextColor(hItem, pEtWinSkin->EditWin_Label);    
+    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_5);
+    TEXT_SetTextColor(hItem, pEtWinSkin->EditWin_Label);    
+    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_6);
+    TEXT_SetTextColor(hItem, pEtWinSkin->EditWin_Label);    
+    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_7);
+    TEXT_SetTextColor(hItem, pEtWinSkin->EditWin_Label);    
+    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_8);
+    TEXT_SetTextColor(hItem, pEtWinSkin->EditWin_Label);    
+    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_9);
+    TEXT_SetTextColor(hItem, pEtWinSkin->EditWin_Label);    
   
     //
     // Initialization of 'et_0'
@@ -224,39 +278,16 @@ INFO(" etWin case user_msg_skin");
     EDIT_SetText(hEts[6], mntSetting.DRG_Setting.isSndEnable>DISABLE?"开启":"关闭");
     WM_SetCallback(hEts[6], &myEditListener);
     EDIT_SetpfAddKeyEx(hEts[6], myEditAddKeyEx);
+    
+    for(i=0;i<7;i++)
+    {
+       EDIT_SetBkColor(hEts[i], EDIT_CI_ENABLED, pEtWinSkin->EditWin_Text);
+       EDIT_SetTextColor(hEts[i], 0, pEtWinSkin->EditWin_Text);
+    }
     // USER START (Optionally insert additional code for further widget initialization)
     // USER END
     break;
-// case WM_PAINT:
-//      if(SysConf.Unit == UNIT_nm)
-//      {
-//         TEXT_SetText(WM_GetDialogItem(pMsg->hWin, ID_TEXT_8),"nm");
-//         TEXT_SetText(WM_GetDialogItem(pMsg->hWin, ID_TEXT_9), "nm");
-//      }
-//      else if(SysConf.Unit == UNIT_km)
-//      {
-//         TEXT_SetText(WM_GetDialogItem(pMsg->hWin, ID_TEXT_8),"km");
-//         TEXT_SetText(WM_GetDialogItem(pMsg->hWin, ID_TEXT_9),"km");         
-//      }
 
-//      break;
-//	case WM_KEY:
-//		pInfo  = (WM_KEY_INFO*)pMsg->Data.p;
-//	
-//	  switch(pInfo->Key)
-//		{
-//			case GUI_KEY_LEFT:
-//				GUI_StoreKeyMsg(GUI_KEY_BACKTAB,1);
-//			break;
-//			case GUI_KEY_RIGHT:
-//				GUI_StoreKeyMsg(GUI_KEY_TAB,1);
-//			break;
-
-//			
-//			default:
-//				break;
-//		}
-//		break;
 	
   case WM_NOTIFY_PARENT:
     Id    = WM_GetId(pMsg->hWinSrc);
@@ -377,8 +408,8 @@ INFO(" etWin case user_msg_skin");
 WM_HWIN etWinCreate(void);
 WM_HWIN etWinCreate(void) {
 
-//  etWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, subWins[1], 0, 0);
-etWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, WM_HBKWIN, 0, 0);
+  etWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, subWins[1], 0, 0);
+//etWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, WM_HBKWIN, 0, 0);
   return etWin;
 }
 
@@ -418,18 +449,6 @@ static void myEditListener(WM_MESSAGE* pMsg)
          focussedEdit  = WM_GetFocussedWindow();
          while( (focussedEdit != hEts[i])  &&  (i<7) )
               i++;
-//printf("\r\n"); 
-//printf("pMsg:     %ld",pMsg->hWin);
-//printf("\r\nfocussed:%ld",focussedEdit); 
-//printf("\r\nsubWin[1]:%ld",subWins[1]);
-//printf("\r\netWin  :%ld",etWin);           
-//printf("\r\nhEts[0]:%ld",hEts[0]);
-//printf("\r\nhEts[1]:%ld",hEts[1]);
-//printf("\r\nhEts[2]:%ld",hEts[2]);
-//printf("\r\nhEts[3]:%ld",hEts[3]);
-//printf("\r\nhEts[4]:%ld",hEts[4]);
-//printf("\r\nhEts[5]:%ld",hEts[5]);
-//printf("\r\nhEts[6]:%ld",hEts[6]);
 
          switch(i)
          {
@@ -538,14 +557,13 @@ static void myEditListener(WM_MESSAGE* pMsg)
        switch(pMsg->Data.v)
        {
           case REPLY_OK:
-INFO("case REPLY_OK");  \
                MNT_makeSettingUp(&mntSetting);  
                MNT_init(&mntSetting);
+               EtReset(etWin);
                printMoniteSetting(MNT_Boats);              
                WM_SetFocus(menuWin);
                break;
-          case REPLY_CANCEL:
-INFO("case REPLY_CANCEL");          
+          case REPLY_CANCEL:         
                WM_SetFocus(subWins[1]);
                break;
                
@@ -576,7 +594,18 @@ static void myEditAddKeyEx(EDIT_Handle hObj, int key)
 }
 // USER END
 
-
+static void EtReset(WM_HWIN thisWin)
+{
+   EDIT_SetText(hEts[0], mntSetting.DSP_Setting.isEnable>DISABLE?"开启":"关闭");   
+   EDIT_SetText(hEts[1], mntSetting.BGL_Setting.isEnable>DISABLE?"开启":"关闭"); 
+   sprintf(pStrBuf, "%d",mntSetting.BGL_Setting.Dist);
+   EDIT_SetText(hEts[2], pStrBuf); 
+   EDIT_SetText(hEts[3], mntSetting.BGL_Setting.isSndEnable>DISABLE?"开启":"关闭"); 
+   EDIT_SetText(hEts[4], mntSetting.DRG_Setting.isEnable>DISABLE?"开启":"关闭"); 
+   sprintf(pStrBuf, "%d",mntSetting.DRG_Setting.Dist);
+   EDIT_SetText(hEts[5], pStrBuf);  
+   EDIT_SetText(hEts[6], mntSetting.DRG_Setting.isSndEnable>DISABLE?"开启":"关闭");    
+}
 
 
 

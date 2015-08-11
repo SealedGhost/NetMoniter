@@ -1,7 +1,8 @@
 #ifndef _CONFIG_H
 #define _CONFIG_H
 
-
+#define MOTHERShIP_LA    1927265
+#define MOTHERShIP_LG    7128663
 
 /// UI --- main menu window
 #define Win_Main_WIDTH 800
@@ -47,25 +48,29 @@
 #define LV_MoniteSet_Y         40
 #define LV_MoniteSet_HEIGHT    440
 
-#define LV_MoniteSet_Col_0_WIDTH    160
+#define LV_MoniteSet_Col_0_WIDTH    200
 #define LV_MoniteSet_Col_1_WIDTH    160
-#define LV_MoniteSet_Col_2_WIDTH    80
+#define LV_MoniteSet_Col_2_WIDTH    40
 #define LV_MoniteSet_Row_HEIGHT     40
 #define LV_MoniteSet_Header_HEIGHT  40
 
 
 /// UI --- All list
 #define LV_AllList_X            0
-#define LV_AllList_WIDTH        400
+#define LV_AllList_WIDTH        320
 #define LV_AllList_Y            40
 #define LV_AllList_HEIGHT       444
 
 #define LV_AllList_Col_0_WIDTH    80
-#define LV_AllList_Col_1_WIDTH    80
+//#define LV_AllList_Col_1_WIDTH    80
 #define LV_AllList_Col_2_WIDTH    160
 #define LV_AllList_Col_3_WIDTH    80
 #define LV_AllList_Row_HEIGHT     40
 #define LV_AllList_Header_HEIGHT  40
+#define LV_AllList_Col_DIST        0
+#define LV_AllList_Col_MMSI        1
+#define LV_AllList_Col_STT         2
+
 
 /// UI  --- Sys set
 #define Win_SysSet_X             0
@@ -74,6 +79,8 @@
 #define Win_SysSet_BOTTOM        (Win_Main_HEIGT)
 #define Win_SysSet_Text_HEIGHT   30
 #define Win_SysSet_Text_WIDTH    120
+#define Win_SysSet_txOrg         40
+#define Win_SysSet_txGrap        2
 //#define INFO(format,...) printf("FILE: "__FILE__", LINE: %d: "format"\r\n", __LINE__, ##__VA_ARGS__)
 
 
@@ -94,9 +101,9 @@
 
 #define BOAT_LIST_SIZE_MAX  400
 #define MNT_NUM_MAX         20
+#define INVD_NUM_MAX        100
 
-
-#define TIMESTAMP          600
+#define TIMESTAMP          20
 
 #define MAP_REFRESH_SLOT   3000
 #define AUTO_ADAPTER_CNT   3  
