@@ -8,7 +8,7 @@
 extern WM_HWIN confirmWin;
 extern WM_HWIN  menuWin;
 extern WM_HWIN  subWins[4];
-extern WM_HWIN  etWin;
+extern WM_HWIN  btWin;
 extern boat mothership;
 extern short isAllBoatVisible;
 extern  char * pStrBuf;
@@ -708,7 +708,7 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 					        WM_BringToTop (menuWin);
 					        WM_ShowWindow(subWins[0]);
              WM_ShowWindow(subWins[1]);
-             WM_ShowWindow(etWin);
+             WM_ShowWindow(btWin);
              WM_ShowWindow(subWins[2]);
              WM_ShowWindow(subWins[3]);
              WM_BringToTop(subWins[2]);
@@ -1056,7 +1056,7 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 
           WM_ShowWindow(subWins[0]);
           WM_ShowWindow(subWins[1]);
-          WM_ShowWindow(etWin);
+          WM_ShowWindow(btWin);
           WM_ShowWindow(subWins[2]);
           WM_ShowWindow(subWins[3]);
           WM_BringToTop(menuWin);

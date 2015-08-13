@@ -93,7 +93,7 @@ WM_HWIN subWins[4];
 WM_HWIN hButtons[4];
 
 extern WM_HWIN  menuWin;
-extern WM_HWIN etWin;
+extern WM_HWIN btWin;
 //extern WM_HWIN winTest;
 extern WM_HWIN hDlg_FishMap;
 extern WM_HWIN confirmWin;
@@ -326,7 +326,7 @@ static void myButtonListener(WM_MESSAGE * pMsg)
             WM_BringToTop(subWins[btIndex]);
             if(btIndex == 1)
             {
-               WM_BringToTop(etWin);
+               WM_BringToTop(btWin);
             }
             if(btIndex<2)
             {
@@ -368,7 +368,7 @@ static void myButtonListener(WM_MESSAGE * pMsg)
 							WM_HideWindow(subWins[1]);
 							WM_HideWindow(subWins[2]);
 							WM_HideWindow(subWins[3]);
-							WM_HideWindow(etWin);     
+							WM_HideWindow(btWin);     
 							WM_SetFocus(hDlg_FishMap);
        GUI_CURSOR_Show();
        

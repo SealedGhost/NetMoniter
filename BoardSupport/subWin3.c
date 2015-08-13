@@ -46,16 +46,16 @@
 #define ID_TEXT_VERSION     (GUI_ID_USER + 0x19)
 #define ID_TEXT_VER         (GUI_ID_USER + 0x1a)
 
-#define ID_EDIT_NIGHT       (GUI_ID_USER + 0x21)
-#define ID_EDIT_VOL         (GUI_ID_USER + 0x22)
-#define ID_EDIT_BRIGHT      (GUI_ID_USER + 0x23)
-#define ID_EDIT_ARMSND      (GUI_ID_USER + 0x24)
-#define ID_EDIT_KEYSND      (GUI_ID_USER + 0x25)
-#define ID_EDIT_UNIT        (GUI_ID_USER + 0x26)
-#define ID_EDIT_SHAPE       (GUI_ID_USER + 0x27)
-#define ID_EDIT_UPDATE      (GUI_ID_USER + 0x28)
-#define ID_EDIT_VERSION     (GUI_ID_USER + 0x29)
-#define ID_EDIT_VER         (GUI_ID_USER + 0x2a)
+#define ID_BUTTON_NIGHT       (GUI_ID_USER + 0x21)
+#define ID_BUTTON_VOL         (GUI_ID_USER + 0x22)
+#define ID_BUTTON_BRIGHT      (GUI_ID_USER + 0x23)
+#define ID_BUTTON_ARMSND      (GUI_ID_USER + 0x24)
+#define ID_BUTTON_KEYSND      (GUI_ID_USER + 0x25)
+#define ID_BUTTON_UNIT        (GUI_ID_USER + 0x26)
+#define ID_BUTTON_SHAPE       (GUI_ID_USER + 0x27)
+#define ID_BUTTON_UPDATE      (GUI_ID_USER + 0x28)
+#define ID_BUTTON_VERSION     (GUI_ID_USER + 0x29)
+#define ID_BUTTON_VER         (GUI_ID_USER + 0x2a)
 
 
 
@@ -68,7 +68,7 @@ extern WM_HWIN etWin;
 
 /// 
 extern CONF_SYS SysConf;
-extern const CONF_UI_COLOR UI_Skins[2];
+extern MntSetWin_COLOR MntSetWinSkins[2];
 
 
 extern char * pStrBuf;
@@ -79,14 +79,12 @@ extern  WM_HWIN messageCreate(void);
 
 
 /*------------------- Local func ------------------------------*/
+static void myButtonListener(WM_MESSAGE * pMsg);
 
-static void myEditTextListener(WM_MESSAGE* pMsg);
-static void myEditListener(WM_MESSAGE * pMsg);
-static void myEditAddKeyListener(EDIT_Handle hItem,int i);
 
 /*------------------ Local variables -------------------------*/
 /// Widget
-WM_HWIN Edits[9];
+WM_HWIN Buttons[9];
 WM_HWIN Texts[10];
 
 ///
@@ -126,15 +124,15 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
  { TEXT_CreateIndirect, "系统版本", ID_TEXT_VERSION,0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*8, 120,  30,  0, 0, 0},
  { TEXT_CreateIndirect, "0.0",       ID_TEXT_VER,    120, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*8, 120,  30, 0,  0, 0},
  
- { EDIT_CreateIndirect, "夜间模式", ID_EDIT_NIGHT,  120,   40,                                                            120,  30,  0, 0, 0},
- { EDIT_CreateIndirect, "音量设置", ID_EDIT_VOL  ,  120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap),   120,  30,  0, 0, 0},
- { EDIT_CreateIndirect, "亮度设置", ID_EDIT_BRIGHT, 120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*2, 120,  30,  0, 0, 0},
- { EDIT_CreateIndirect, "报警  音", ID_EDIT_ARMSND, 120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3, 120,  30,  0, 0, 0},
- { EDIT_CreateIndirect, "按键  音", ID_EDIT_KEYSND, 120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4, 120,  30,  0, 0, 0},
- { EDIT_CreateIndirect, "单位设置", ID_EDIT_UNIT,   120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5, 120,  30,  0, 0, 0},
- { EDIT_CreateIndirect, "船位设置", ID_EDIT_SHAPE,  120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6, 120,  30,  0, 0, 0},
- { EDIT_CreateIndirect, "软件更新", ID_EDIT_UPDATE, 120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*7, 120,  30,  0, 0, 0}
-// { EDIT_CreateIndirect, "系统版本", ID_EDIT_VERSION,120,   280,  120,  30,  0, 0, 0}
+ { BUTTON_CreateIndirect, "夜间模式", ID_BUTTON_NIGHT,  120,   40,                                                            120,  30,  0, 0, 0},
+ { BUTTON_CreateIndirect, "音量设置", ID_BUTTON_VOL  ,  120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap),   120,  30,  0, 0, 0},
+ { BUTTON_CreateIndirect, "亮度设置", ID_BUTTON_BRIGHT, 120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*2, 120,  30,  0, 0, 0},
+ { BUTTON_CreateIndirect, "报警  音", ID_BUTTON_ARMSND, 120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3, 120,  30,  0, 0, 0},
+ { BUTTON_CreateIndirect, "按键  音", ID_BUTTON_KEYSND, 120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4, 120,  30,  0, 0, 0},
+ { BUTTON_CreateIndirect, "单位设置", ID_BUTTON_UNIT,   120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5, 120,  30,  0, 0, 0},
+ { BUTTON_CreateIndirect, "船位设置", ID_BUTTON_SHAPE,  120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6, 120,  30,  0, 0, 0},
+ { BUTTON_CreateIndirect, "软件更新", ID_BUTTON_UPDATE, 120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*7, 120,  30,  0, 0, 0}
+// { BUTTON_CreateIndirect, "系统版本", ID_BUTTON_VERSION,120,   280,  120,  30,  0, 0, 0}
   // USER START (Optionally insert additional widgets)
   // USER END
 };
@@ -181,97 +179,96 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        WINDOW_Callback(pMsg);     
        break;
 		case USER_MSG_SKIN:
-       pEtWinSkin  = &(EditWinSkins[pMsg->Data.v]);
+       pMntSetWinSkin  = &(MntSetWinSkins[pMsg->Data.v]);
        
-       WINDOW_SetBkColor(pMsg->hWin, pEtWinSkin->EditWin_BackGround);
+       WINDOW_SetBkColor(pMsg->hWin, pMntSetWinSkin->MntSetWin_BackGround);
        
        for(i=0;i<10;i++)
        {
-          TEXT_SetTextColor(Texts[i], pEtWinSkin->EditWin_Label);
-          TEXT_SetBkColor(Texts[i], pEtWinSkin->EditWin_bkEnable);
+          TEXT_SetTextColor(Texts[i], pMntSetWinSkin->MntSetWin_Label);
+          TEXT_SetBkColor(Texts[i], pMntSetWinSkin->MntSetWin_bkUnpressed);
        }
 
        for(i=0;i<8;i++)       
        {
-          EDIT_SetBkColor(Edits[i], EDIT_CI_ENABELD, pEtWinSkin->EditWin_bkEnable);
-          EDIT_SetTextColor(Edits[i], 0, pEtWinSkin->EditWin_Text);          
+          BUTTON_SetBkColor(Buttons[i], BUTTON_CI_UNPRESSED, pMntSetWinSkin->MntSetWin_bkUnpressed);
+          BUTTON_SetTextColor(Buttons[i], BUTTON_CI_UNPRESSED, pMntSetWinSkin->MntSetWin_Text);          
        }
        break;
 			
   case WM_INIT_DIALOG:
 //     //
-//     // Initialization of 'Edit'
+//     // Initialization of 'Button'
 //     //
-     Edits[0]  = WM_GetDialogItem(pMsg->hWin, ID_EDIT_NIGHT);
+     Buttons[0]  = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_NIGHT);
      if(SysConf.Skin == SKIN_Night)
-        EDIT_SetText(Edits[0], "关闭");
+        BUTTON_SetText(Buttons[0], "关闭");
      else
-        EDIT_SetText(Edits[0], "开启");
+        BUTTON_SetText(Buttons[0], "开启");
      
  
-     Edits[1]  = WM_GetDialogItem(pMsg->hWin, ID_EDIT_VOL);
-     EDIT_SetFont(Edits[1], &GUI_Font24_1);   
+     Buttons[1]  = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_VOL);
+     BUTTON_SetFont(Buttons[1], &GUI_Font24_1);   
      sprintf(pStrBuf, "%d", SysConf.Snd.Vol);
-     EDIT_SetText(Edits[1], pStrBuf); 
+     BUTTON_SetText(Buttons[1], pStrBuf); 
   
    
    
-     Edits[2]  = WM_GetDialogItem(pMsg->hWin, ID_EDIT_BRIGHT);
-     EDIT_SetFont(Edits[2], &GUI_Font24_1);    
+     Buttons[2]  = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_BRIGHT);
+     BUTTON_SetFont(Buttons[2], &GUI_Font24_1);    
      sprintf(pStrBuf, "%d", SysConf.Brt);
-     EDIT_SetText(Edits[2], pStrBuf); 
+     BUTTON_SetText(Buttons[2], pStrBuf); 
 
 
-     Edits[3]  = WM_GetDialogItem(pMsg->hWin, ID_EDIT_ARMSND);
-     EDIT_SetFont(Edits[3], &GUI_Font24_1);        
+     Buttons[3]  = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_ARMSND);
+     BUTTON_SetFont(Buttons[3], &GUI_Font24_1);        
      sprintf(pStrBuf, "%d", SysConf.Snd.ArmSnd);
-     EDIT_SetText(Edits[3], pStrBuf);   
+     BUTTON_SetText(Buttons[3], pStrBuf);   
 
 
-     Edits[4]  = WM_GetDialogItem(pMsg->hWin, ID_EDIT_KEYSND);
-     EDIT_SetFont(Edits[4], &GUI_Font24_1);    
+     Buttons[4]  = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_KEYSND);
+     BUTTON_SetFont(Buttons[4], &GUI_Font24_1);    
      sprintf(pStrBuf, "%d", SysConf.Snd.KeySnd);
-     EDIT_SetText(Edits[4], pStrBuf);
+     BUTTON_SetText(Buttons[4], pStrBuf);
 
 
-     Edits[5]  = WM_GetDialogItem(pMsg->hWin, ID_EDIT_UNIT);
-     EDIT_SetFont(Edits[5], &GUI_Font24_1);         
+     Buttons[5]  = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_UNIT);
+     BUTTON_SetFont(Buttons[5], &GUI_Font24_1);         
      if(SysConf.Unit == UNIT_nm)
-        EDIT_SetText(Edits[5], "nm");      
+        BUTTON_SetText(Buttons[5], "nm");      
      else 
-        EDIT_SetText(Edits[5], "km");
+        BUTTON_SetText(Buttons[5], "km");
 
 
-     Edits[6]  = WM_GetDialogItem(pMsg->hWin, ID_EDIT_SHAPE);
-     EDIT_SetFont(Edits[6], &GUI_Font24_1);      
+     Buttons[6]  = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_SHAPE);
+     BUTTON_SetFont(Buttons[6], &GUI_Font24_1);      
      if(SysConf.Shape == SHAPE_Fish)
-        EDIT_SetText(Edits[6], "fish");
+        BUTTON_SetText(Buttons[6], "fish");
      else 
-        EDIT_SetText(Edits[6], "boat");
+        BUTTON_SetText(Buttons[6], "boat");
 
 
-     Edits[7]  = WM_GetDialogItem(pMsg->hWin, ID_EDIT_UPDATE);
-     EDIT_SetFont(Edits[7], &GUI_Font24_1);            
-     EDIT_SetText(Edits[7], "OK");
+     Buttons[7]  = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_UPDATE);
+     BUTTON_SetFont(Buttons[7], &GUI_Font24_1);            
+     BUTTON_SetText(Buttons[7], "OK");
 
 ///  Initialization of skin.
-     WINDOW_SetBkColor(pMsg->hWin, pEtWinSkin->EditWin_BackGround);
+     WINDOW_SetBkColor(pMsg->hWin, pMntSetWinSkin->MntSetWin_BackGround);
      
      for(i=0;i<10;i++)
     {
        Texts[i]  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_TITLE+i+1);
-       TEXT_SetTextColor(Texts[i], pEtWinSkin->EditWin_Label);
-       TEXT_SetBkColor(Texts[i], pEtWinSkin->EditWin_bkEnable);
+       TEXT_SetTextColor(Texts[i], pMntSetWinSkin->MntSetWin_Label);
+       TEXT_SetBkColor(Texts[i], pMntSetWinSkin->MntSetWin_bkUnpressed);
     }
     
     TEXT_SetText(Texts[9], GUI_GetVersionString());
      
      for(i=0;i<8;i++)       
      {
-        EDIT_SetBkColor(Edits[i], EDIT_CI_ENABELD, pEtWinSkin->EditWin_bkEnable);
-        EDIT_SetTextColor(Edits[i], 0, pEtWinSkin->EditWin_Text);
-        EDIT_SetpfAddKeyEx(Edits[i], &myEditAddKeyListener);
-        WM_SetCallback(Edits[i], &myEditListener);
+        BUTTON_SetBkColor(Buttons[i], BUTTON_CI_UNPRESSED, pMntSetWinSkin->MntSetWin_bkUnpressed);
+        BUTTON_SetTextColor(Buttons[i], 0, pMntSetWinSkin->MntSetWin_Text);
+        WM_SetCallback(Buttons[i], &myButtonListener);
      }
      
      agentConf.Skin              = SysConf.Skin;
@@ -368,7 +365,7 @@ WM_HWIN sub3WinCreate(void) {
 // USER END
 
 
-static void myEditListener(WM_MESSAGE * pMsg)
+static void myButtonListener(WM_MESSAGE * pMsg)
 {
    const WM_KEY_INFO * pInfo;
    int Id  = 0;
@@ -376,29 +373,28 @@ static void myEditListener(WM_MESSAGE * pMsg)
    int index  = 0;
    WM_MESSAGE myMsg;
    
-   WM_HWIN nextEdit;
+   WM_HWIN nextButton;
 
-   WM_HWIN thisEdit  = pMsg->hWin; 
-   WM_HWIN focussedEdit  = 0;
+   WM_HWIN thisButton  = pMsg->hWin; 
+   WM_HWIN focussedButton  = 0;
 
    switch(pMsg->MsgId)   
    {  
       case WM_SET_FOCUS:
-           index  = WM_GetId(pMsg->hWin) - ID_EDIT_NIGHT;
+           index  = WM_GetId(pMsg->hWin) - ID_BUTTON_NIGHT;
            
            if(pMsg->Data.v == 0)
            {
-              EDIT_SetBkColor(Edits[index], EDIT_CI_ENABLED, pEtWinSkin->EditWin_bkEnable);
-
-              TEXT_SetBkColor(Texts[index], pEtWinSkin->EditWin_bkEnable);
+              BUTTON_SetBkColor(Buttons[index], BUTTON_CI_UNPRESSED, pMntSetWinSkin->MntSetWin_bkUnpressed);
+              TEXT_SetBkColor(Texts[index], pMntSetWinSkin->MntSetWin_bkUnpressed);
            }
            else
            {
-             EDIT_SetBkColor(Edits[index], EDIT_CI_ENABLED, GUI_WHITE);
-             TEXT_SetBkColor(Texts[index], GUI_WHITE); 
+             BUTTON_SetBkColor(Buttons[index], BUTTON_CI_UNPRESSED, GUI_DARKMAGENTA);
+             TEXT_SetBkColor(Texts[index], GUI_DARKMAGENTA); 
            }
            
-           EDIT_Callback(pMsg);
+           BUTTON_Callback(pMsg);
            break;
       case WM_KEY:
            pInfo  = (WM_KEY_INFO*)pMsg->Data.p;
@@ -406,10 +402,10 @@ static void myEditListener(WM_MESSAGE * pMsg)
            switch(pInfo->Key)
            {
               case GUI_KEY_UP:       
-                   nextEdit  = WM_SetFocusOnPrevChild(WM_GetParent(pMsg->hWin)); 
+                   nextButton  = WM_SetFocusOnPrevChild(WM_GetParent(pMsg->hWin)); 
                    break;
               case GUI_KEY_DOWN:
-                   nextEdit  = WM_SetFocusOnNextChild(WM_GetParent(pMsg->hWin)); 
+                   nextButton  = WM_SetFocusOnNextChild(WM_GetParent(pMsg->hWin)); 
                    break;
               case GUI_KEY_BACKSPACE:
                    myMsg.hWin  = WM_GetClientWindow(confirmWin);
@@ -430,83 +426,83 @@ static void myEditListener(WM_MESSAGE * pMsg)
                    Id  = WM_GetId(pMsg->hWin);
                    switch(Id)
                    {
-                      case ID_EDIT_NIGHT:
+                      case ID_BUTTON_NIGHT:
 
                            myMsg.MsgId  = USER_MSG_SKIN;
                            
                            if(agentConf.Skin == SKIN_Night)
                            { 
                               agentConf.Skin  = SKIN_Day;
-                              EDIT_SetText(thisEdit,"开启");
+                              BUTTON_SetText(thisButton,"开启");
                               myMsg.Data.v  = SKIN_Day;
 INFO("skin night->day");                              
                            }
                            else
                            {
                               agentConf.Skin  = SKIN_Night;
-                              EDIT_SetText(thisEdit, "关闭"); 
+                              BUTTON_SetText(thisButton, "关闭"); 
                               myMsg.Data.v  = SKIN_Night;                              
 INFO("skin day->night");                              
                            }
-                           WM_SendToParent(thisEdit, &myMsg);
+                           WM_SendToParent(thisButton, &myMsg);
 
-                           index  = Id - ID_EDIT_NIGHT;
+                           index  = Id - ID_BUTTON_NIGHT;
                            TEXT_SetBkColor(Texts[index], GUI_WHITE);
-                           EDIT_SetBkColor(Edits[index], EDIT_CI_ENABLED, GUI_WHITE);
+                           BUTTON_SetBkColor(Buttons[index], BUTTON_CI_UNPRESSED, GUI_WHITE);
                            break;
-                      case ID_EDIT_VOL:
+                      case ID_BUTTON_VOL:
                            agentConf.Snd.Vol  += Step;
 INFO("VOL: %d",agentConf.Snd.Vol);                            
                            agentConf.Snd.Vol   = (agentConf.Snd.Vol+7)%7; 
                            sprintf(pStrBuf, "%d", agentConf.Snd.Vol);
-                           EDIT_SetText(thisEdit, pStrBuf);
+                           BUTTON_SetText(thisButton, pStrBuf);
                            break;
-                      case ID_EDIT_BRIGHT:
+                      case ID_BUTTON_BRIGHT:
                            agentConf.Brt  += Step;
 INFO("Brt: %d", agentConf.Brt);                           
                            agentConf.Brt  = (agentConf.Brt+5)%5;                           
                            sprintf(pStrBuf, "%d", agentConf.Brt);
-                           EDIT_SetText(thisEdit, pStrBuf);
+                           BUTTON_SetText(thisButton, pStrBuf);
                            break;
-                      case ID_EDIT_ARMSND:
+                      case ID_BUTTON_ARMSND:
 //                           agentConf.Snd.ArmSnd  += Step;
 INFO("ArmSnd: %d", agentConf.Snd.ArmSnd);                            
                            agentConf.Snd.ArmSnd  = (agentConf.Snd.ArmSnd&0x01) +1;                          
                            sprintf(pStrBuf, "%d", agentConf.Snd.ArmSnd);
-                           EDIT_SetText(thisEdit, pStrBuf);
+                           BUTTON_SetText(thisButton, pStrBuf);
                            break;
-                      case ID_EDIT_KEYSND:
+                      case ID_BUTTON_KEYSND:
                            agentConf.Snd.KeySnd  += Step;
 INFO("KeySnd: %d", agentConf.Snd.KeySnd);                           
                            agentConf.Snd.KeySnd  = (agentConf.Snd.KeySnd+3)%3;                           
                            sprintf(pStrBuf, "%d", agentConf.Snd.KeySnd);
-                           EDIT_SetText(thisEdit, pStrBuf);
+                           BUTTON_SetText(thisButton, pStrBuf);
                            break;
-                      case ID_EDIT_UNIT:
+                      case ID_BUTTON_UNIT:
                            if(agentConf.Unit == UNIT_nm)
                            {
                               agentConf.Unit  = UNIT_km;
-                              EDIT_SetText(thisEdit, "nm");
+                              BUTTON_SetText(thisButton, "nm");
                            }
                            else 
                            {
                               agentConf.Unit  = UNIT_nm;
-                              EDIT_SetText(thisEdit, "km");
+                              BUTTON_SetText(thisButton, "km");
                            }
                            break;
-                      case ID_EDIT_SHAPE:
+                      case ID_BUTTON_SHAPE:
                            if(agentConf.Shape == SHAPE_Boat)
                            {
                               agentConf.Shape  = SHAPE_Fish;
-                              EDIT_SetText(thisEdit, "Fish");
+                              BUTTON_SetText(thisButton, "Fish");
                            }
                            else
                            {
                               agentConf.Shape  = SHAPE_Boat;
-                              EDIT_SetText(thisEdit, "Boat ");
+                              BUTTON_SetText(thisButton, "Boat ");
                            }                      
                            break;
-                      case ID_EDIT_UPDATE:
+                      case ID_BUTTON_UPDATE:
                            break;
                       default:
                            break;
@@ -515,7 +511,7 @@ INFO("KeySnd: %d", agentConf.Snd.KeySnd);
               
               
               default:
-                   EDIT_Callback(pMsg);
+                   BUTTON_Callback(pMsg);
                    break;
            }
            break; 
@@ -523,13 +519,13 @@ INFO("KeySnd: %d", agentConf.Snd.KeySnd);
                       
            
       default:
-           EDIT_Callback(pMsg);
+           BUTTON_Callback(pMsg);
            break;
    }
 }
 
 
-static void myEditAddKeyListener(EDIT_Handle hItem, int i)
+static void myButtonAddKeyListener(BUTTON_Handle hItem, int i)
 {
    ;
 }

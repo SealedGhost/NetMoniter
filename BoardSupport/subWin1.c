@@ -40,10 +40,10 @@
 /*------------------ external variables --------------------*/
 extern _boat* boat_list_p[BOAT_LIST_SIZE_MAX];
 
-extern WM_HWIN etWin;
+extern WM_HWIN btWin;
 extern WM_HWIN menuWin;
 extern WM_HWIN confirmWin;
-extern WM_HWIN etWinCreate(void);
+extern WM_HWIN btWinCreate(void);
 
 extern int N_boat;
 extern short N_monitedBoat;
@@ -182,7 +182,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     HEADER_SetTextColor(hItem,pLVSkin->LV_Header_Text);    
 
     // USER START (Optionally insert additional code for further widget initialization)
-	  	hItem  = etWinCreate();    
+	  	hItem  = btWinCreate();    
     // USER 
     break;
     
@@ -298,7 +298,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 					break;
 				
 				case GUI_KEY_RIGHT:
-					WM_SetFocus(etWin);
+					WM_SetFocus(btWin);
 					break;
 				
 				

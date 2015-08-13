@@ -123,16 +123,16 @@ struct _LVWin_COLOR
   GUI_COLOR String;   
 };
 
-typedef struct _EditWin_COLOR EditWin_COLOR;
-struct _EditWin_COLOR
+typedef struct _MntSetWin_COLOR MntSetWin_COLOR;
+struct _MntSetWin_COLOR
 {
-  GUI_COLOR EditWin_BackGround;
+  GUI_COLOR MntSetWin_BackGround;
   
-  GUI_COLOR EditWin_Label;
+  GUI_COLOR MntSetWin_Label;
   
-  GUI_COLOR EditWin_bkEnable;
-  GUI_COLOR EditWin_Text; 
-  GUI_COLOR EditWin_txBk;
+  GUI_COLOR MntSetWin_bkUnpressed;
+  GUI_COLOR MntSetWin_Text; 
+  GUI_COLOR MntSetWin_txBk;
 };
 
 
@@ -170,14 +170,14 @@ struct _SysWin_COLOR
 typedef struct _CONF_UI_COLOR CONF_UI_COLOR;
 struct _CONF_UI_COLOR
 {
-   MapWin_COLOR   MapWinColor;      /// Map window color config.
-   MenuWin_COLOR  MenuWinColor;     /// Menu window color config.
-   LVWin_COLOR    Sub0WinColor;     /// Sub0 window color config.
-   LVWin_COLOR    Sub1WinColor;     /// Sub1 window color config.
-   LVWin_COLOR    Sub2WinColor;     /// Sub2 window color config.
-   LVWin_COLOR    Sub3WinColor;     /// Sub3 window color config.
-   EditWin_COLOR  EditWinCOLOR;     /// Edit window color config.
-   CnfmWin_COLOR  CnfmWinColor;     /// Confirm window color config.
+   MapWin_COLOR     MapWinColor;      /// Map window color config.
+   MenuWin_COLOR    MenuWinColor;     /// Menu window color config.
+   LVWin_COLOR      Sub0WinColor;     /// Sub0 window color config.
+   LVWin_COLOR      Sub1WinColor;     /// Sub1 window color config.
+   LVWin_COLOR      Sub2WinColor;     /// Sub2 window color config.
+   LVWin_COLOR      Sub3WinColor;     /// Sub3 window color config.
+   MntSetWin_COLOR  EditWinCOLOR;     /// Edit window color config.
+   CnfmWin_COLOR    CnfmWinColor;     /// Confirm window color config.
 };
 
 
@@ -195,8 +195,9 @@ struct _CONF_SYS
 extern LVWin_COLOR lvWinSkins[2];
 extern LVWin_COLOR * pLVSkin;
 
-extern EditWin_COLOR EditWinSkins[2];
-extern EditWin_COLOR * pEtWinSkin;
+
+extern MntSetWin_COLOR EditWinSkins[2];
+extern MntSetWin_COLOR * pMntSetWinSkin;
 
 
 void sysInit(void);
