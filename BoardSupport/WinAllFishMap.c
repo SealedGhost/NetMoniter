@@ -12,6 +12,9 @@ extern WM_HWIN  etWin;
 extern boat mothership;
 extern short isAllBoatVisible;
 extern  char * pStrBuf;
+extern unsigned long SYS_Date ;
+extern unsigned long SYS_Time ;
+
 extern int N_boat;
 
 extern SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
@@ -48,7 +51,7 @@ MapWin_COLOR mapSkins[2] = {
 
 MapWin_COLOR * pMapSkin  = mapSkins;                                           
 
-GUI_RECT pRect[]  = {MAP_LEFT,MAP_TOP,MAP_RIGHT,MAP_BOTTOM};
+GUI_RECT pRect[]  = {MAP_LEFT,0,MAP_RIGHT,MAP_BOTTOM};
 
 static int v;
 
@@ -226,7 +229,7 @@ void getMntWrapPara(long *halfDiff_lg, long* halfDiff_lt, scale_map* wrap_scale)
    
    while(pIterator)
    {
-      if( pIterator->mntBoat.pBoat && (pIterator->mntBoat.mmsi==pIterator->mntBoat.pBoat->user_id) )
+      if( pIterator->mntBoat.pBoat && (pIterator->mntBoat.pBoat->latitude) && (pIterator->mntBoat.pBoat->longitude) )
       {
          if(pIterator->mntBoat.pBoat->latitude < min_lt)
          {
@@ -270,105 +273,6 @@ void getMntWrapPara(long *halfDiff_lg, long* halfDiff_lt, scale_map* wrap_scale)
     {
        wrap_scale->minute  = ( maxDiff_lt/(4*100) + 1)*100;
     }
- 
-//   
-//   while( (pIterator->mntBoat.pBoat==NULL) && pIterator->pNext) 
-//   {
-//      pIterator  = pIterator->pNext;
-//   }  
-//   
-//   if(pIterator == NULL)
-//   {
-//      *halfDiff_lg  = mothership.longitude;
-//      *halfDiff_lt  = mothership.latitude;
-//   }
-//   else
-//   {
-//      min_lg  = pMntHeader->mntBoat.pBoat->longitude;
-//      max_lg  = min_lg;
-//      
-//      min_lt  = pMntHeader->mntBoat.pBoat->latitude;
-//      max_lt  = min_lt;
-//      
-//      pIterator  = pIterator->pNext;
-//      while(pIterator && pIterator->mntBoat.pBoat)
-//      {     
-//         if(pIterator->mntBoat.pBoat->latitude < min_lt)
-//         {
-//            min_lt  = pIterator->mntBoat.pBoat->latitude;
-//         }
-//         else if(pIterator->mntBoat.pBoat->latitude > max_lt)
-//         {
-//            max_lt  = pIterator->mntBoat.pBoat->latitude;
-//         }
-//         
-//         if(pIterator->mntBoat.pBoat->longitude < min_lg)
-//         {
-//            min_lg  = pIterator->mntBoat.pBoat->longitude;
-//         }
-//         else if(pIterator->mntBoat.pBoat->longitude > max_lg)
-//         {
-//            max_lg  = pIterator->mntBoat.pBoat->longitude;
-//         }
-//         
-//         pIterator  = pIterator->pNext;
-//      }
-//      
-//      if(mothership.longitude > max_lg)
-//      {
-//         maxDiff_lg  = mothership.longitude - min_lg;  
-//         *halfDiff_lg = mothership.longitude/2 + min_lg/2;
-//       
-//      }
-//      else if(mothership.longitude < min_lg)
-//      {
-//         maxDiff_lg  = max_lg - mothership.longitude;
-//         *halfDiff_lg = mothership.longitude/2 + max_lg/2;
-//       
-//      }
-//      else  
-//      {
-//         maxDiff_lg  = max_lg - min_lg;
-//         *halfDiff_lg = max_lg/2 + min_lg/2;
-//         
-//      }
-//         
-//         
-//      if(mothership.latitude > max_lt)
-//      {
-//         maxDiff_lt  = mothership.latitude - min_lt;
-//         *halfDiff_lt = mothership.latitude/2 + min_lt/2;
-//        
-//      }
-//         
-//      else if(mothership.latitude < min_lt)
-//      {
-//         maxDiff_lt  = max_lt - mothership.latitude;
-//         *halfDiff_lt = mothership.latitude/2 + max_lt/2;
-//        
-//      }
-//         
-//      else
-//      {
-//         maxDiff_lt  = max_lt  - min_lt;
-//         *halfDiff_lt = max_lt/2 + min_lt/2;
-//        
-//      }
-
-
-//   ///map的宽为800pix，高为400pix，判断在适配上述区域时以map的宽来适配还是高来适配
-//   
-//   ///若适配区域的宽度大于高度的两倍，则以map的宽来适配
-//      if(( maxDiff_lg/2) > maxDiff_lt)
-//      {
-//         wrap_scale->minute  = ( maxDiff_lg/(8*100) + 1)*100;  ///这种写法保证所得到的scale.minute为100的整数倍
-//      }
-//      ///否则以map的高来适配
-//      else
-//      {
-//         wrap_scale->minute  = ( maxDiff_lt/(4*100) + 1)*100;
-//      }
-//   }
 }
 
 
@@ -770,28 +674,22 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 				WM_SetFocus(hWin);
 				GUI_CURSOR_Select(&GUI_CursorCrossS);
 //				GUI_CURSOR_Show();
-
-		 
- for(i=0;i<MNT_NUM_MAX;i++)
- {
-    if(MNT_Boats[i].mmsi > 0)
-       break;
- }
- /// Do not exist monited boat.
- if(i>=MNT_NUM_MAX)
- {
-    myMsg.hWin  = WM_GetClientWindow(confirmWin);
-    myMsg.hWinSrc  = pMsg->hWin;
-    myMsg.MsgId  = USER_MSG_ID_CHOOSE;
-    myMsg.Data.v  = ADD_MONITED;
-    WM_SendMessage(myMsg.hWin, &myMsg);
-    WM_BringToTop(confirmWin);
-	   WM_SetFocus(confirmWin); 
- }
-
-    
-    
-		
+    for(i=0;i<MNT_NUM_MAX;i++)
+    {
+       if(MNT_Boats[i].mmsi > 0)
+          break;
+    }
+    /// Do not exist monited boat.
+    if(i>=MNT_NUM_MAX)
+    {
+       myMsg.hWin  = WM_GetClientWindow(confirmWin);
+       myMsg.hWinSrc  = pMsg->hWin;
+       myMsg.MsgId  = USER_MSG_ID_CHOOSE;
+       myMsg.Data.v  = ADD_MONITED;
+       WM_SendMessage(myMsg.hWin, &myMsg);
+       WM_BringToTop(confirmWin);
+       WM_SetFocus(confirmWin); 
+    }
 		  reTimer  = WM_CreateTimer(pMsg->hWin, ID_TIMER_MAP_REFRESH,MAP_REFRESH_SLOT, 0);
 				break;
   case USER_MSG_SKIN: 
@@ -813,7 +711,8 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
              WM_ShowWindow(etWin);
              WM_ShowWindow(subWins[2]);
              WM_ShowWindow(subWins[3]);
-             WM_BringToTop(subWins[2]);		
+             WM_BringToTop(subWins[2]);
+             WM_SetFocus(WM_GetDialogItem(menuWin, GUI_ID_USER + 0x03));             
              WM_SetFocus(subWins[2]);
              break;
         
@@ -823,7 +722,7 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
        }
        break;  
   
-		case WM_TIMER:
+		case WM_TIMER: 
   drawMapSwitchCnt++;
   if(drawMapSwitchCnt > AUTO_ADAPTER_CNT)
   {
@@ -940,7 +839,7 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
   drawMapSwitchCnt  = 0;
   drawMapSwitch     = 1;
 
-		WM_InvalidateRect(hWin,pRect);  
+//		WM_InvalidateRect(hWin,pRect);  
   if(!GUI_CURSOR_GetState())
   {
      GUI_CURSOR_Show();
@@ -986,8 +885,8 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 									}
 									else													
 										__cursor.latitude = temp_lat;
-									
-									board_handle
+//									
+//									board_handle
 
 					}
 					if(temp_lat<MAP_TOP_LT)
@@ -1026,7 +925,7 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 						else
 							__cursor.latitude = temp_lat;
 						
-						board_handle
+//						board_handle
 					}
 
 					if(temp_lat>MAP_BOTTOM_LT){
@@ -1065,7 +964,7 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 						else
 							__cursor.longitude = temp_long;
 						
-						board_handle
+//						board_handle
 					}
 
 					if(temp_long>MAP_LEFT_LG){
@@ -1105,7 +1004,7 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 						}
 						else
 							__cursor.longitude = temp_long;
-						board_handle
+//						board_handle
 					}
 
 					if(temp_long<MAP_RIGHT_LG){
@@ -1169,7 +1068,6 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 		break;
 			
 		case WM_PAINT: 
-  
 /// Draw  map grid     
    GUI_SetBkColor(pMapSkin->BackGround);
    GUI_ClearRect(0,40, 800, 480);
@@ -1204,8 +1102,8 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
     GUI_DispStringAt("N:", 0, 0);
     GUI_DispStringAt("E:", 150, 0);
     GUI_DispStringAt("SOG:",300,0);
-    GUI_DispStringAt("COG:",500, 0);
-    GUI_DispStringAt("11/11 11:11",700,0 );
+    GUI_DispStringAt("COG:",450, 0);
+//    GUI_DispStringAt("11/11 11:11",700,0 );
     
     GUI_SetColor(pMapSkin->Title_Context);
     
@@ -1216,8 +1114,10 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
     sprintf(pStrBuf, "%d", mothership.SOG);   
     GUI_DispStringAt(pStrBuf, 360, 0);
     sprintf(pStrBuf, "%d", mothership.COG);
-    GUI_DispStringAt(pStrBuf, 560, 0);
-   
+    GUI_DispStringAt(pStrBuf, 510, 0);
+    sprintf(pStrBuf, "%02ld-%02ld/%02ld  %02ld:%02ld:%02ld",(SYS_Date%10000)/100,SYS_Date/10000,  SYS_Date%100, 
+                                           SYS_Time/10000+8, (SYS_Time%10000)/100,SYS_Time%100);                                         
+    GUI_DispStringAt(pStrBuf, 620, 0);
    
     GUI_SetPenSize(3);
     GUI_SetColor(pMapSkin->Title_HorLine);
@@ -1227,11 +1127,11 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
     GUI_SetColor(GUI_DARKGRAY);
     GUI_FillPolygon(Points_Compass_1, 3, 100, 100);
     GUI_SetColor(GUI_GRAY);
-    GUI_FillPolygon(Points_Compass_2, 3, 100, 100);
+    GUI_FillPolygon(Points_Compass_2, 3, 101, 100);
     GUI_SetColor(GUI_RED);
-    GUI_FillPolygon(Points_Compass_3, 3, 100, 100);  
+    GUI_FillPolygon(Points_Compass_3, 3, 101, 101);  
     GUI_SetColor(GUI_DARKRED);
-    GUI_FillPolygon(Points_Compass_4, 3, 100, 100);
+    GUI_FillPolygon(Points_Compass_4, 3, 100, 101);
 			
 
 

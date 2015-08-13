@@ -75,6 +75,7 @@ static void updateListViewContent(WM_HWIN thisHandle);
 * @ Attention: 矩形坐标是相对于窗口 subWins[0] 左上角点的坐标
 */
 static GUI_RECT infoRect={LV_MoniteList_WIDTH+1,LV_MoniteList_Y,Win_Main_WIDTH-MenuLabel_WIDTH,480};
+static GUI_RECT lvIndicate  = {LV_MoniteList_WIDTH-100,LV_MoniteList_Y-40,Win_Main_WIDTH-MenuLabel_WIDTH,LV_MoniteList_Y};
 // USER START (Optionally insert additional defines)
 // USER END
 
@@ -133,20 +134,22 @@ LVWin_COLOR * pLVSkin  = lvWinSkins;
 */
 static void _cbDialog(WM_MESSAGE * pMsg) {
   WM_HWIN hItem;
+  WM_MESSAGE myMsg;
   int     NCode;
   long  Id;
   int  SelectedRow  = -1;
   int i  = 0;
-  
+  int TotalRows  = 0;
   MNT_BERTH * pIterator  = NULL;
   
   // USER START (Optionally insert additional variables)
   // USER END
 
   switch (pMsg->MsgId) {
-   
   case USER_MSG_BRING:
-       updateListViewContent(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0));
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0);
+       updateListViewContent(hItem);
+       WM_InvalidateRect(hItem, &lvIndicate);
        break;
   
   case USER_MSG_SKIN:
@@ -208,12 +211,17 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_4);
     TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_5);
-    TEXT_SetTextColor(hItem, pLVSkin->Win_Label);       
+    TEXT_SetTextColor(hItem, pLVSkin->Win_Label); 
+    
+        
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_6);
+    TEXT_SetFont(hItem,  &GUI_Font24_1);
     TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_7);
+    TEXT_SetFont(hItem,  &GUI_Font24_1);
     TEXT_SetTextColor(hItem, pLVSkin->Win_Label); 
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_8);
+    TEXT_SetFont(hItem,  &GUI_Font24_1);
     TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
     
     //
@@ -224,7 +232,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 	  
     LISTVIEW_AddColumn(hItem, LV_MoniteList_Col_0_WIDTH, "距离", GUI_TA_HCENTER | GUI_TA_VCENTER);
     LISTVIEW_AddColumn(hItem, LV_MoniteList_Col_1_WIDTH, "MMSI", GUI_TA_HCENTER | GUI_TA_VCENTER);
-    LISTVIEW_AddColumn(hItem, LV_MoniteList_Col_2_WIDTH, "方位", GUI_TA_HCENTER | GUI_TA_VCENTER);
+    LISTVIEW_AddColumn(hItem, LV_MoniteList_Col_2_WIDTH, "S      ", GUI_TA_HCENTER | GUI_TA_VCENTER);
     LISTVIEW_AddRow(hItem, NULL);
     LISTVIEW_SetGridVis(hItem, 1);
 	   LISTVIEW_SetHeaderHeight(hItem,LV_MoniteList_Header_HEIGHT);
@@ -259,16 +267,21 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
      GUI_SetColor(pLVSkin->String);
      GUI_SetTextMode(GUI_TM_TRANS);
 	  
-     SelectedRow  = LISTVIEW_GetSel(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0));
+     hItem  = WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0);
+     SelectedRow  = LISTVIEW_GetSel(hItem);
      if(SelectedRow < 0)
         break;
+     TotalRows  = LISTVIEW_GetNumRows(hItem);     
+     sprintf(pStrBuf,"%3d/%3d",SelectedRow+1, TotalRows);
+     GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH-100, LV_MoniteList_Y-30);
+     
      pIterator  = pMntHeader;
      for(i=0;i<SelectedRow;i++)
      {
         pIterator  = pIterator->pNext;
      }  
   
-     GUI_DispStringAt(pIterator->mntBoat.name, LV_MoniteList_WIDTH+50, 80);         
+     GUI_DispStringAt(pIterator->mntBoat.name, LV_MoniteList_WIDTH+80, 80);         
      
      if(pIterator->mntBoat.pBoat)
      {
@@ -288,9 +301,9 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         GUI_DispStringAt("开启",  LV_MoniteList_WIDTH+60,240);
         
      GUI_DispDecAt(pIterator->mntBoat.mntSetting.BGL_Setting.Dist,
-               LV_MoniteList_WIDTH+60,280,3);
+               LV_MoniteList_WIDTH+110,280,3);
      GUI_DispDecAt(pIterator->mntBoat.mntSetting.DRG_Setting.Dist,
-                 LV_MoniteList_WIDTH+60,320,3);   
+                 LV_MoniteList_WIDTH+110,320,3);   
      break;
 
   case WM_NOTIFY_PARENT:
@@ -357,19 +370,32 @@ WM_HWIN sub0WinCreate(void) {
 */
 static void myListViewListener(WM_MESSAGE* pMsg)
 {
+  int selectedRow  = -1;
+  int lastRow  = 0;
 	 const WM_KEY_INFO * pInfo;
 	 WM_HWIN thisListView  = pMsg->hWin; 
-   
+  WM_MESSAGE myMsg;
 	switch(pMsg->MsgId)
 	{
 		case WM_SET_FOCUS:
-
-      if(LISTVIEW_GetNumRows(pMsg->hWin))
-         LISTVIEW_SetSel(pMsg->hWin, 0);
-//      updateListViewContent(thisListView);
-      LISTVIEW_Callback(pMsg);
-      WM_InvalidateRect(subWins[0], &infoRect);
-      break;
+       if(pMsg->Data.v)
+       {
+          myMsg.hWin  = menuWin;
+          myMsg.hWinSrc  = thisListView;
+          myMsg.MsgId  = USER_MSG_BRING;
+          myMsg.Data.v  = 0;
+          WM_SendMessage(myMsg.hWin, &myMsg);  
+       }
+     
+       
+       if(LISTVIEW_GetNumRows(pMsg->hWin))
+          LISTVIEW_SetSel(pMsg->hWin, 0);
+          
+       LISTVIEW_Callback(pMsg);
+       WM_InvalidateRect(subWins[0], &infoRect);
+       WM_InvalidateRect(subWins[0], &lvIndicate);
+       break;
+       
 		case WM_KEY:
 			pInfo  = (WM_KEY_INFO*)pMsg->Data.p;
 		
@@ -378,13 +404,37 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 				case GUI_KEY_UP:
 				case GUI_KEY_DOWN:
        LISTVIEW_Callback(pMsg);
-       WM_InvalidateRect(subWins[0], &infoRect);       
+       WM_InvalidateRect(subWins[0], &infoRect);    
+       WM_InvalidateRect(subWins[0], &lvIndicate);       
 //       showSelectedBoatInfo(thisListView);	
        break;
-				
-				case GUI_KEY_LEFT:				
+				case GUI_KEY_BACKSPACE:				
 					WM_SetFocus(menuWin);
 					break;
+    case GUI_KEY_RIGHT:
+         selectedRow  = LISTVIEW_GetSel(thisListView);
+         lastRow      = LISTVIEW_GetNumRows(thisListView);
+         
+
+         
+         if(selectedRow/10 < lastRow/10)
+         {
+            LISTVIEW_SetSel(thisListView, lastRow);         
+            LISTVIEW_SetSel(thisListView, selectedRow-selectedRow%10+10);
+         }
+         WM_InvalidateRect(subWins[0], &lvIndicate);
+         break;
+    case GUI_KEY_LEFT:
+         selectedRow  = LISTVIEW_GetSel(thisListView);
+         lastRow      = LISTVIEW_GetNumRows(thisListView);
+         
+         if(selectedRow > 9)
+         {
+            LISTVIEW_SetSel(thisListView, lastRow);
+            LISTVIEW_SetSel(thisListView, selectedRow-selectedRow%10-10);
+         }
+         WM_InvalidateRect(subWins[0], &lvIndicate);         
+         break;
 				case GUI_KEY_MENU:
 //         WM_BringToBottom(thisListView);
 					WM_BringToTop(hDlg_FishMap);

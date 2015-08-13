@@ -91,15 +91,13 @@ int MNT_deleteById(MNT_BOAT * pMNT_Boat, long id)
 void MNT_makeSettingUp (MNT_SETTING * pMNT_Setting)
 {
    int i  = 0;
-
    MNT_BERTH * pIterator  = pMntHeader;
+   
    while(pIterator)
-   {
+   {    
       if(   (pIterator->mntBoat.mntState == MNTState_Choosen)
           ||(pIterator->mntBoat.mntState == MNTState_Default)  )
       {
-         pIterator->mntBoat.mntState  = MNTState_Monited;
-         
          pIterator->mntBoat.mntState  = MNTState_Monited;
          
          pIterator->mntBoat.mntSetting.DSP_Setting.isEnable  = 
@@ -114,7 +112,7 @@ void MNT_makeSettingUp (MNT_SETTING * pMNT_Setting)
                    pMNT_Setting->DRG_Setting.isEnable;
          pIterator->mntBoat.mntSetting.DRG_Setting.isSndEnable  = 
                    pMNT_Setting->DRG_Setting.isSndEnable;  
-         pIterator->mntBoat.pBoat->isInvader  = 0;                   
+                 
                    
          if(SysConf.Unit == UNIT_nm)
          {
@@ -129,13 +127,7 @@ void MNT_makeSettingUp (MNT_SETTING * pMNT_Setting)
                       pMNT_Setting->BGL_Setting.Dist*54/10;
             pIterator->mntBoat.mntSetting.DRG_Setting.Dist  = 
                       pMNT_Setting->DRG_Setting.Dist*54/10; 
-         }
-                   
-
- 
-
-         pIterator->mntBoat.lt  = pIterator->mntBoat.pBoat->latitude;
-         pIterator->mntBoat.lg  = pIterator->mntBoat.pBoat->longitude;         
+         }                    
       }
       
       else if(pIterator->mntBoat.mntState == MNTState_None)
@@ -177,6 +169,19 @@ Bool MNT_add(boat * pBoat)
    int i  = 0;
    MNT_BERTH * buf  = NULL;
    MNT_BERTH * pIterator  = NULL; 
+   
+   pIterator  = pMntHeader;
+   while(pIterator)
+   {
+      if(pIterator->mntBoat.mmsi == pBoat->user_id)
+      {
+         return TRUE;
+      }
+      else
+      {
+         pIterator  = pIterator->pNext;
+      }
+   }
    
    buf  = MNT_allocOneBerth(MNT_Berthes);
    if(buf == NULL)
@@ -289,6 +294,8 @@ void MNT_init(MNT_SETTING * pMntSetting)
 {
    memset((void*)pMntSetting, 0, sizeof(MNT_SETTING));
    pMntSetting->DSP_Setting.isEnable  = ENABLE; 
+   pMntSetting->BGL_Setting.Dist  = 5;
+   pMntSetting->DRG_Setting.Dist  = 10;
    
 }
 

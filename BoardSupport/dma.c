@@ -150,8 +150,7 @@ void DMA_IRQHandler (void)
 //           pt++;
 //        }
 //        OSQPost(QSem,(void *)pt0);		
-
-printf("\n\r %c \n\r",UART2_RX[0]);        
+        
        for(index=0;index<50;index++)	
        {
          Partition[myCnt][index]=UART2_RX[index];

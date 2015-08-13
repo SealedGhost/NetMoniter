@@ -44,12 +44,12 @@
 
 /// UI --- Monite set
 #define LV_MoniteSet_X         0
-#define LV_MoniteSet_WIDTH     400
+#define LV_MoniteSet_WIDTH     440
 #define LV_MoniteSet_Y         40
 #define LV_MoniteSet_HEIGHT    440
 
-#define LV_MoniteSet_Col_0_WIDTH    200
-#define LV_MoniteSet_Col_1_WIDTH    160
+#define LV_MoniteSet_Col_0_WIDTH    280
+#define LV_MoniteSet_Col_1_WIDTH    120
 #define LV_MoniteSet_Col_2_WIDTH    40
 #define LV_MoniteSet_Row_HEIGHT     40
 #define LV_MoniteSet_Header_HEIGHT  40
@@ -99,13 +99,13 @@
 
 
 
-#define BOAT_LIST_SIZE_MAX  400
+#define BOAT_LIST_SIZE_MAX  500
 #define MNT_NUM_MAX         20
 #define INVD_NUM_MAX        100
 
-#define TIMESTAMP          20
+#define TIMESTAMP          600
 
-#define MAP_REFRESH_SLOT   3000
+#define MAP_REFRESH_SLOT   500
 #define AUTO_ADAPTER_CNT   3  
 
 #define MSG_QUEUE_TABNUM   20

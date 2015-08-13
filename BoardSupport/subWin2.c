@@ -393,13 +393,23 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 	{  
 		case WM_SET_FOCUS:
 
-      if(LISTVIEW_GetNumRows(pMsg->hWin) && (LISTVIEW_GetSel(pMsg->hWin)<0))
-         LISTVIEW_SetSel(pMsg->hWin, 0);
-      
-         LISTVIEW_Callback(pMsg);
-         WM_InvalidateRect(subWins[2],&lvRect);
-         WM_InvalidateRect(subWins[2],&lvIndicate); 
-      break;	    
+       if(LISTVIEW_GetNumRows(pMsg->hWin) && (LISTVIEW_GetSel(pMsg->hWin)<0))
+          LISTVIEW_SetSel(pMsg->hWin, 0);
+ 
+       if(pMsg->Data.v)
+       {
+          myMsg.hWin  = menuWin;
+          myMsg.hWinSrc  = thisListView;
+          myMsg.MsgId  = USER_MSG_BRING;
+          myMsg.Data.v  = 2;
+          WM_SendMessage(myMsg.hWin, &myMsg);           
+       }
+
+       
+       LISTVIEW_Callback(pMsg);
+       WM_InvalidateRect(subWins[2],&lvRect);
+       WM_InvalidateRect(subWins[2],&lvIndicate); 
+       break;	    
     
     case WM_KEY:
 			pInfo  = (WM_KEY_INFO*)pMsg->Data.p; 
@@ -458,13 +468,74 @@ static void myListViewListener(WM_MESSAGE* pMsg)
          MNT_printSetting();         
          WM_SetFocus(menuWin);
          break;
- 
-    case GUI_KEY_ENTER:
+    case GUI_KEY_MONITORING:
          selectedRow  = LISTVIEW_GetSel(thisListView);
          
          LISTVIEW_GetItemText(thisListView, LV_AllList_Col_MMSI, selectedRow, pStrBuf, 10);
          Id  = strtoi(pStrBuf);
          
+         for(i=0;i<N_boat;i++)
+         {
+     
+            if(SimpBerthes[i].pBoat->user_id == Id)
+            {          
+               break;
+            }
+         }
+              
+         if(SimpBerthes[i].pBoat->mntStates == MNTState_None)     
+         {
+            SimpBerthes[i].pBoat->mntStates  = MNTState_Choosen;
+            LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, selectedRow, "Y");
+         }
+         break;
+    case GUI_KEY_CANCEL:
+         selectedRow  = LISTVIEW_GetSel(thisListView);
+         
+         LISTVIEW_GetItemText(thisListView, LV_AllList_Col_MMSI, selectedRow, pStrBuf, 10);
+         Id  = strtoi(pStrBuf);
+         
+         for(i=0;i<N_boat;i++)
+         {
+     
+            if(SimpBerthes[i].pBoat->user_id == Id)
+            {          
+               break;
+            }
+         }
+
+         if(MNTState_Choosen  == SimpBerthes[i].pBoat->mntStates)
+         {
+     
+            SimpBerthes[i].pBoat->mntStates  = MNTState_None;
+            LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, selectedRow, "N");
+         }
+         
+         else if(MNTState_Monited  <= SimpBerthes[i].pBoat->mntStates)
+         {  
+            MMSI  = SimpBerthes[i].pBoat->user_id;
+            myMsg.hWin     = WM_GetClientWindow(confirmWin);
+            myMsg.hWinSrc  = thisListView;
+            myMsg.MsgId    = USER_MSG_ID_CHOOSE;
+            myMsg.Data.v   = CANCEL_MONITED;
+            WM_SendMessage(myMsg.hWin, &myMsg); 
+           	WM_BringToTop(confirmWin);
+				        WM_SetFocus(confirmWin);  
+         }               
+         break;    
+     
+    case GUI_KEY_ENTER:
+         selectedRow  = LISTVIEW_GetSel(thisListView);
+         
+         if(selectedRow < 0)
+         {
+            break;
+         }
+         
+         LISTVIEW_GetItemText(thisListView, LV_AllList_Col_MMSI, selectedRow, pStrBuf, 10);
+         Id  = strtoi(pStrBuf);
+         
+
 //         OSMutexPend(Updater, 0, &myErr_2);
          for(i=0;i<N_boat;i++)
          {
@@ -474,7 +545,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
                break;
             }
          }
-         
+                 
          
          if(MNTState_None == SimpBerthes[i].pBoat->mntStates)
          {

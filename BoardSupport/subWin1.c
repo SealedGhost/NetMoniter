@@ -267,9 +267,19 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 	{
 		case WM_SET_FOCUS:
 
-      if(LISTVIEW_GetNumRows(pMsg->hWin))
-         LISTVIEW_SetSel(pMsg->hWin, 0);
-//      updateListViewContent(thisListView);
+       if(LISTVIEW_GetNumRows(pMsg->hWin))
+          LISTVIEW_SetSel(pMsg->hWin, 0);
+          
+       if(pMsg->Data.v)
+       {
+          myMsg.hWin  = menuWin;
+          myMsg.hWinSrc  = thisListView;
+          myMsg.MsgId  = USER_MSG_BRING;
+          myMsg.Data.v  = 1;
+          WM_SendMessage(myMsg.hWin, &myMsg);          
+       }
+  
+       
       LISTVIEW_Callback(pMsg);
       break;		
     case WM_KEY:

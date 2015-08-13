@@ -1,3 +1,4 @@
+
 /*********************************************************************
 *                                                                    *
 *                SEGGER Microcontroller GmbH & Co. KG                *
@@ -68,7 +69,7 @@ static void myButtonListener(WM_MESSAGE * pMsg);
 */
 static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
 //  {TEXT_CreateAsChild(0, 0, 200, 40,  pMsg->hWin,  WM_CF_SHOW, TEXT_CF_LEFT,  GUI_ID_USER+0x20),
-  { WINDOW_CreateIndirect, "Window", ID_WINDOW_0, 0, 0, MenuLabel_WIDTH, 240, 0, 0x0, 0 },
+  { WINDOW_CreateIndirect, "Window", ID_WINDOW_0, 0, 0, MenuLabel_WIDTH, 480, 0, 0x0, 0 },
   
   { TEXT_CreateIndirect,   "MainMenu", ID_TEXT_0, 0, 0, MenuLabel_WIDTH, 40, 0, 0, 0},
   
@@ -81,10 +82,10 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
 };
 
 static MenuWin_COLOR menuWinSkins[2]  = {
-///                                         bkColor     menu_label  bt_Pressed  bt_Unpressed   bt_text    bt_Focus
-                                          { GUI_BLACK, GUI_WHITE,  GUI_GRAY,    GUI_DARKGRAY, GUI_WHITE, GUI_GRAY },
-///                                        
-                                          { GUI_WHITE, GUI_BLACK,  GUI_GRAY,    GUI_LIGHTGRAY,GUI_BLACK, GUI_DARKGRAY }                                          
+///                                         bkColor     menu_label  bt_Sel         bt_Unsle      bt_text    bt_Focus
+                                          { GUI_BLACK, GUI_WHITE,  GUI_DARKGREEN,  GUI_DARKGRAY, GUI_WHITE, GUI_GRAY },
+///                                          
+                                          { GUI_WHITE, GUI_BLACK,  GUI_GRAY,       GUI_LIGHTGRAY,GUI_BLACK, GUI_DARKGRAY }                                          
                                         };
 static MenuWin_COLOR * pMenuSkin  = menuWinSkins;
 
@@ -132,8 +133,10 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 //INFO("case post_paint");  
 //  }
   
-  switch (pMsg->MsgId) {
- 
+  switch (pMsg->MsgId) { 
+    case USER_MSG_BRING:
+         BUTTON_SetBkColor(hButtons[pMsg->Data.v], BUTTON_CI_UNPRESSED, pMenuSkin->Bt_Sel);
+         break;    
     case USER_MSG_SKIN: 
          pMenuSkin  = &(menuWinSkins[pMsg->Data.v]);
          
@@ -143,15 +146,11 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
          
          for(i=0;i<4;i++)
          {
-            BUTTON_SetBkColor(hButtons[i],  BUTTON_CI_PRESSED,  pMenuSkin->Bt_PRESSED);
-            BUTTON_SetBkColor(hButtons[i]  ,BUTTON_CI_UNPRESSED,pMenuSkin->Bt_UNPRESSED);
-            BUTTON_SetTextColor(hButtons[i],BUTTON_CI_UNPRESSED,pMenuSkin->Bt_Text);         
+            BUTTON_SetBkColor(hButtons[i],  BUTTON_CI_PRESSED,  pMenuSkin->Bt_Sel);
+            BUTTON_SetBkColor(hButtons[i]  ,BUTTON_CI_UNPRESSED,pMenuSkin->Bt_Unsel);
+            BUTTON_SetTextColor(hButtons[i],BUTTON_CI_UNPRESSED,pMenuSkin->Bt_Text);             
          }
-         break;
-  case WM_POST_PAINT:   
-       break;
-  
-  
+
   case WM_INIT_DIALOG:
 		 
     //
@@ -188,10 +187,10 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 		  for (i = 0; i < 4; i++)
 	 	{		
      WIDGET_SetEffect(hButtons[i],&WIDGET_Effect_Simple);
-     BUTTON_SetBkColor(hButtons[i],  BUTTON_CI_PRESSED,  pMenuSkin->Bt_PRESSED);
-     BUTTON_SetBkColor(hButtons[i]  ,BUTTON_CI_UNPRESSED,pMenuSkin->Bt_UNPRESSED);
+     BUTTON_SetBkColor(hButtons[i],  BUTTON_CI_PRESSED,  pMenuSkin->Bt_Sel);
+     BUTTON_SetBkColor(hButtons[i]  ,BUTTON_CI_UNPRESSED,pMenuSkin->Bt_Unsel);
      BUTTON_SetTextColor(hButtons[i],BUTTON_CI_UNPRESSED,pMenuSkin->Bt_Text); 
-     
+     BUTTON_SetFocusColor(hButtons[i], pMenuSkin->Bt_Sel);
      WM_SetCallback(hButtons[i],&myButtonListener);
 		 }
 		//
@@ -305,18 +304,18 @@ WM_HWIN menuWinCreate(void) {
 
 static void myButtonListener(WM_MESSAGE * pMsg)
 {
+ static 
 	const WM_KEY_INFO * pInfo;
 	WM_HWIN thisButton  = pMsg->hWin;
 	WM_HWIN handle;
 	
-
 	
 	switch(pMsg->MsgId)
 	{
  
  case WM_SET_FOCUS:
       if(pMsg->Data.v)
-      {
+      {   
          for(btIndex=0;btIndex<4;btIndex++)
          {
             if(pMsg->hWin == hButtons[btIndex])
@@ -334,6 +333,12 @@ static void myButtonListener(WM_MESSAGE * pMsg)
                WM_SendMessageNoPara(subWins[btIndex],  USER_MSG_BRING);
             }
          }
+         
+         BUTTON_SetBkColor(thisButton, BUTTON_CI_UNPRESSED, pMenuSkin->Bt_Sel);
+      }
+      else
+      {
+         BUTTON_SetBkColor(thisButton, BUTTON_CI_UNPRESSED, pMenuSkin->Bt_Unsel);
       }
       BUTTON_Callback(pMsg);
       break;
@@ -342,25 +347,20 @@ static void myButtonListener(WM_MESSAGE * pMsg)
 			pInfo  = (WM_KEY_INFO*)pMsg->Data.p;
 		  switch(pInfo->Key)
 			{
-				case GUI_KEY_DOWN:
+				case GUI_KEY_DOWN:    
+//         BUTTON_SetBkColor(thisButton, BUTTON_CI_UNPRESSED, pMenuSkin->Bt_Unsel);
          GUI_StoreKeyMsg(GUI_KEY_TAB,1);		
 				
 					break;
 				
-				case GUI_KEY_UP:
-					GUI_StoreKeyMsg(GUI_KEY_BACKTAB,1);
+				case GUI_KEY_UP:         
+				    	GUI_StoreKeyMsg(GUI_KEY_BACKTAB,1);
 					break;
 				
 				case GUI_KEY_RIGHT:
-//         if(i!=3)
           WM_SetFocus(subWins[btIndex]);
-//				 else 
-//				 {	
-//        WM_SetFocus (WM_GetDialogItem(subWins[i], GUI_ID_EDIT0));
-//        WM_EnableWindow(WM_GetFocussedWindow());
-//        editindex = 0;
-//				 }
-				  break;
+         
+				     break;
 				case GUI_KEY_MENU:       
 
 							WM_BringToBottom(menuWin);

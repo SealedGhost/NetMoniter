@@ -25,12 +25,13 @@ void lpc1788_Lcd_Init(void)
 {
 	LCD_Config_Type lcd_config;
 
+	/* Ú˜Ò•LCDà ˜×† */
+	LCD_Enable (FALSE);
+ 
 	/* ³õÊ¼»¯SDRAM */
 	lpc1788_SDRAM_Init();
-  lpc1788_SDRAM_Clean();
+ lpc1788_SDRAM_Clean();
 
-	/* ¹Ø±ÕLCD¿ØÖÆ */
-	LCD_Enable (FALSE);
 
  	/* ÅäÖÃLCD²ÎÊý */
   lcd_config.big_endian_byte = 0;

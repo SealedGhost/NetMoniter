@@ -6,6 +6,12 @@
 //#include "GUIDEMO.h"
 #include "exfuns.h"
 #include "cover_colo_1.c"
+#include "SystemConfig.h"
+#include "Setting.h"
+
+
+/*---------------------- external variables -------------------------------------*/
+
 
 GUI_RECT lvRect  = {7, 106, 320, 369};
 
@@ -26,7 +32,9 @@ extern GUI_CONST_STORAGE GUI_FONT GUI_Font28;
 extern GUI_CONST_STORAGE GUI_FONT GUI_Font120;
 
 void MainTask(void) {
-	
+	int i  = 0;
+  WM_MESSAGE myMsg;
+ 
 	GUI_MEMDEV_Handle hMem0;
   GUI_Init();	
   WM_SetCreateFlags(WM_CF_MEMDEV);
@@ -43,7 +51,7 @@ void MainTask(void) {
 	GUI_MEMDEV_CopyToLCD(hMem0);
 	GUI_MEMDEV_Delete(hMem0);
 	GUI_Delay(1000);
-	
+	 GUI_Clear();
 	//创建字体
  	GUI_UC_SetEncodeUTF8();	
 	//字体设置	//GUI_SetDefaultFont (&SIF_Font);
@@ -52,7 +60,6 @@ void MainTask(void) {
 	BUTTON_SetDefaultFont (&GUI_Font28);
 	HEADER_SetDefaultFont(&GUI_Font28);
 	HEADER_SetDefaultBkColor(DEEPBLUE);
-	BUTTON_SetDefaultFocusColor(GUI_RED);
 	EDIT_SetDefaultFont(&GUI_Font28);
  WIDGET_SetDefaultEffect(&WIDGET_Effect_None);
 	//创建窗口 
@@ -62,6 +69,8 @@ void MainTask(void) {
  confirmWin  = confirmWinCreate();
  menuWin  = menuWinCreate();
  hDlg_FishMap = WM_CreateWindowAsChild (0, 0, 800, 480, WM_HBKWIN, WM_CF_SHOW, &_cbWindowAllFishMap, 0);
+ 
+
 // WM_SetFocus(menuWin);
 // WM_SetFocus(hDlg_FishMap);
 

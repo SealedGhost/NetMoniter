@@ -48,6 +48,10 @@ extern WM_HWIN _CreateFrame(WM_CALLBACK* cb);
 void _cbWindowMenu(WM_MESSAGE * pMsg);
 extern unsigned char acCompass;
 extern  void _cbEditAddKey(EDIT_Handle hObj, int Key);
+
+   
+
+
 #define GUI_KEY_F1                40
 #define GUI_KEY_F2                41
 #define GUI_KEY_MENU              42

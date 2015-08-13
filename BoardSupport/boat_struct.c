@@ -3,27 +3,31 @@
 #include "Config.h"
 #include "Setting.h"
 #include "Drawinformation.h"
+/*--------------------------------- Macro defines -------------------------------------*/
+#define MYABS(x)   ((x)>0?(x):(-(x)))
 
 
+
+
+/*--------------------------------- external variables ---------------------------------*/
 extern int N_boat;
-
-GUI_POINT * pPoints  = Points_fish;
-short       PointNum  = 11; 
-
-boat mothership;
-short isAllBoatVisible = 1;
 extern char * pStrBuf;
 extern SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
 extern CONF_SYS SysConf;
 
 extern MapWin_COLOR mapSkins[2];
 extern MapWin_COLOR * pMapSkin;
-//void draw_ship(boat* p_ship)
-//{
-//	 GUI_POINT aEnlargedPoints[GUI_COUNTOF(aPoints)];
-//	 GUI_RotatePolygon(aEnlargedPoints, aPoints, GUI_COUNTOF(aPoints), p_ship->true_heading*3.14/180);
-//	 GUI_DrawPolygon(aEnlargedPoints, GUI_COUNTOF(aPoints), p_ship->x, p_ship->y);
-//}
+
+extern _cursor __cursor;
+
+
+GUI_POINT * pPoints  = Points_fish;
+short       PointNum  = 11; 
+
+boat mothership;
+short isAllBoatVisible = 1;
+
+
 
 
 void changeShape(BOAT_SHAPES shape)
@@ -168,12 +172,6 @@ void disp_fish_boat(const scale_map * scale,long center_longitude, long center_l
  short base_y = 0;
 	for(i=0;i<N;i++)
 	{
-//		isAllBoatVisible  = 1;
-//		tmp_x  = 1.0*scale->pixel * (boat_array[i]->longitude-center_longitude) / scale->minute;
-//		tmp_y  = 1.0*scale->pixel * (boat_array[i]->latitude-center_latitude) / scale->minute;
-//		if(isAllBoatVisible || boat_array[i]->isVisible)
-//		{
-//				base_x =1.0*scale->pixel * (boat_array[i]->longitude - center_longitude) / scale->minute;
     base_x  = 1.0*scale->pixel * (pSimpBerth[i].longitude-center_longitude) / scale->minute;
 			 base_y =1.0*scale->pixel * (pSimpBerth[i].latitude-center_latitude) / scale->minute;
     
@@ -181,7 +179,14 @@ void disp_fish_boat(const scale_map * scale,long center_longitude, long center_l
     base_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - base_y;    
 //				draw_ship(pSimpBerth[i].pBoat,base_x,base_y,aPoints, 3);	
     if(pSimpBerth[i].pBoat->isInvader)
+    {
        drawColrofulBoat(pSimpBerth[i].pBoat, base_x, base_y, Points_boat,  3, GUI_RED);
+       
+       if( MYABS(__cursor.x-base_x)<=10 && MYABS(__cursor.y-base_y)<=10 )
+       {
+          MNT_dispInfo(base_x, base_y, pSimpBerth[i].pBoat);        
+       }
+    }
 //		}
   
 	}
@@ -203,7 +208,6 @@ void MNT_dispBoat(const scale_map * scale,  long center_lg, long center_lt, MNT_
 {
    short base_x  = 0;
    short base_y  = 0;
-   
 //   GUI_EnableAlpha(1);
 //   GUI_SetAlpha(0x80);
    
@@ -234,6 +238,7 @@ void MNT_dispBoat(const scale_map * scale,  long center_lg, long center_lt, MNT_
          {
             GUI_SetColor(BGL_BOAT_COLOR);
             GUI_SetPenSize(1); 
+            
             GUI_DrawCircle(base_x, base_y,pIterator->mntBoat.mntSetting.BGL_Setting.Dist*scale->pixel/scale->minute);            
          } 
     

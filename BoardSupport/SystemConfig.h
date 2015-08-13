@@ -95,8 +95,8 @@ struct _MenuWin_COLOR
   
   GUI_COLOR Menu_Label;           /// Color of string "Main Menu".
   
-  GUI_COLOR Bt_PRESSED;
-  GUI_COLOR Bt_UNPRESSED;
+  GUI_COLOR Bt_Sel;
+  GUI_COLOR Bt_Unsel;
   GUI_COLOR Bt_Text;
   GUI_COLOR Bt_Focus;
 };

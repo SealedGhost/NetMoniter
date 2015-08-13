@@ -50,6 +50,10 @@ extern volatile int myCnt ;
 static volatile int msgCnt  = 0;
 
 extern boat mothership;
+__IO unsigned long SYS_Date  = 0;
+__IO unsigned long SYS_Time  = 0;
+
+
 
 extern int N_monitedBoat;
 
@@ -182,8 +186,7 @@ void Insert_Task(void *p_arg)  //等待接收采集到的数据
  
     tmp  = translate_(s,&text_out,&text_out_24A,&text_out_type_of_ship); 
 
-    OSMutexPend(Refresher, 0, &myErr);  
-printf("insert\n\r");    
+    OSMutexPend(Refresher, 0, &myErr);     
     switch(tmp)
     {
        case 18:
@@ -228,8 +231,10 @@ static int cnt  = 0;
   OSMutexPend(Refresher, 0, &myErr);
 //  OSMutexPend(Updater, 0, &myErr_2);
   updateTimeStamp();
+//INFO("system date:%ld,time:%ld",SYS_Date,SYS_Time);  
+  
 //  OSMutexPost(Updater);
-INFO("xukeke:%d",LPC_recCnt);    
+//INFO("xukeke:%d",LPC_recCnt);    
   OSMutexPost(Refresher);
 #ifdef CODE_CHECK
 //INFO(" DSP check"); 
@@ -248,7 +253,16 @@ printf("check\n\r");
 printf("state:%x",vernier->mntBoat.mntState);       
         
         vernier  = vernier->pNext;
-      }  
+      }
+      else
+      { 
+INFO();      
+        for(i=0;i<N_boat;i++)
+        {
+           if(SimpBerthes[i].pBoat->isInvader)
+              SimpBerthes[i].pBoat->isInvader  = 0;
+        }
+      }      
    }
 
    cnt++;
@@ -286,19 +300,10 @@ void App_TaskStart(void)//初始化UCOS，初始化SysTick节拍，并创建三个任务
 	INT8U err;
   
   int i  = 0;
-//	N_boat = 3;	
 
-//	for(i=BOAT_LIST_SIZE_MAX;i>=0;i--)
-//  {
-//     boat_list[i].user_id  = 0;
-//  }
-
-//   mntSetting_init();
-   
-   
-   mothership.latitude = MOTHERShIP_LA;
-   mothership.longitude = MOTHERShIP_LG;
-   mothership.true_heading  = 0;
+  mothership.latitude = MOTHERShIP_LA;
+  mothership.longitude = MOTHERShIP_LG;
+  mothership.true_heading  = 0;
 
   sysInit();
   
@@ -323,6 +328,7 @@ int translate_(unsigned char *text,message_18 *text_out,message_24_partA *text_o
 {
   int i=0,comma=0;
   int tmp  = 0;
+  unsigned long tempgprmc  = 0;
   
   if((text[0]!='!')&&(text[0]!='$'))
     return 0;
@@ -360,12 +366,40 @@ int translate_(unsigned char *text,message_18 *text_out,message_24_partA *text_o
 	   }
    }
   }
-   else
-   return 0;
-return 0;
-   
-   
 
+	else if((text[1]=='G')&&(text[2]=='P')&&(text[3]=='R')&&(text[4]=='M')&&(text[5]=='C')) //GPS GPRMC
+	{
+
+    tempgprmc = text[6]; mothership.latitude = tempgprmc << 24;
+    tempgprmc = text[7]; mothership.latitude = mothership.latitude + (tempgprmc << 16);
+    tempgprmc = text[8]; mothership.latitude = mothership.latitude + (tempgprmc << 8);
+    mothership.latitude = mothership.latitude + text[9];
+    mothership.latitude = mothership.latitude/10;
+    
+    tempgprmc = text[10]; mothership.longitude = tempgprmc << 24;
+    tempgprmc = text[11]; mothership.longitude = mothership.longitude + (tempgprmc << 16);
+    tempgprmc = text[12]; mothership.longitude = mothership.longitude + (tempgprmc << 8);
+    mothership.longitude = mothership.longitude + text[13];
+    mothership.longitude = mothership.longitude/10;
+    
+    tempgprmc = text[14]; mothership.SOG = mothership.SOG + (tempgprmc << 8);
+    mothership.SOG = mothership.SOG + text[15];
+   
+    tempgprmc = text[16]; mothership.COG = mothership.COG + (tempgprmc << 8);
+    mothership.COG = mothership.COG + text[17];
+
+    tempgprmc = text[18]; SYS_Date = tempgprmc << 24;
+    tempgprmc = text[19]; SYS_Date = SYS_Date + (tempgprmc << 16);
+    tempgprmc = text[20]; SYS_Date = SYS_Date + (tempgprmc << 8);
+    SYS_Date = SYS_Date + text[21];
+   
+    tempgprmc = text[22]; SYS_Time = tempgprmc << 24;
+    tempgprmc = text[23]; SYS_Time = SYS_Time + (tempgprmc << 16);
+    tempgprmc = text[24]; SYS_Time = SYS_Time + (tempgprmc << 8);
+    SYS_Time = SYS_Time + text[25];	
+	}
+
+return 0;
 }
 
 /************************************* End *************************************/

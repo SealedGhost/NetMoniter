@@ -114,25 +114,25 @@ MNT_SETTING mntSetting;
 static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
   { WINDOW_CreateIndirect, "ETWin", ID_WINDOW_0, ETWin_X, SubWin_Y+40, ETWin_WIDHT, ETWin_HEIGHT-40, 0, 0x0, 0 },
 	
-	{ TEXT_CreateIndirect, "监控设置项:",   ID_TEXT_0, 0,    0,                  ETWin_WIDHT,30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "1.消失报警:",   ID_TEXT_1, 0,    LV_MoniteSet_Y,     160,        30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "2.防盗报警:",   ID_TEXT_2, 0,    LV_MoniteSet_Y+40,  200,        30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "报警距离:",     ID_TEXT_3, 30,   LV_MoniteSet_Y+80,  200,         0, 0, 0x0, 0},
- { TEXT_CreateIndirect, "nm",             ID_TEXT_8, 240,  LV_MoniteSet_Y+80,   50,        30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "报警声音:",     ID_TEXT_4, 30,   LV_MoniteSet_Y+120, 200,        30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "3.走锚报警:",   ID_TEXT_5, 0,    LV_MoniteSet_Y+160, 200,        40, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "报警距离:",     ID_TEXT_6, 30,   LV_MoniteSet_Y+200, 200,        40,  0, 0x0, 0},
- { TEXT_CreateIndirect, "nm",             ID_TEXT_9, 240,  LV_MoniteSet_Y+200, 50,         40,  0, 0x0,0},
- { TEXT_CreateIndirect, "报警声音:",     ID_TEXT_7, 30,   LV_MoniteSet_Y+240, 200,        40,  0, 0x0, 0},
+	{ TEXT_CreateIndirect, "监控设置项:",  ID_TEXT_0, 0,    0,                  ETWin_WIDHT,30, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "消失报警:",   ID_TEXT_1, 0,    LV_MoniteSet_Y,     160,        30, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "防盗报警:",   ID_TEXT_2, 0,    LV_MoniteSet_Y+60,  200,        30, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "报警距离:",   ID_TEXT_3, 0,   LV_MoniteSet_Y+100,  200,         0, 0, 0x0, 0},
+ { TEXT_CreateIndirect, "nm",           ID_TEXT_8, 200,  LV_MoniteSet_Y+100,   50,        30, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "报警声音:",   ID_TEXT_4, 0,   LV_MoniteSet_Y+140, 200,        30, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "走锚报警:",   ID_TEXT_5, 0,    LV_MoniteSet_Y+200, 200,        40, 0, 0x0, 0},
+	{ TEXT_CreateIndirect, "报警距离:",   ID_TEXT_6, 0,   LV_MoniteSet_Y+240, 200,        40,  0, 0x0, 0},
+ { TEXT_CreateIndirect, "nm",           ID_TEXT_9, 200,  LV_MoniteSet_Y+240, 50,         40,  0, 0x0,0},
+ { TEXT_CreateIndirect, "报警声音:",   ID_TEXT_7, 0,   LV_MoniteSet_Y+280, 200,        40,  0, 0x0, 0},
 
  
- { EDIT_CreateIndirect, "et_0", ID_EDIT_0, 160, LV_MoniteSet_Y,     80, 30, 0, 0xa,  0 },
- { EDIT_CreateIndirect, "et_1", ID_EDIT_1, 160, LV_MoniteSet_Y+40,  80, 30, 0, 0x64, 0 },
- { EDIT_CreateIndirect, "et_2", ID_EDIT_2, 160, LV_MoniteSet_Y+80,  80, 30, 0, 0x64, 0 },
- { EDIT_CreateIndirect, "et_3", ID_EDIT_3, 160, LV_MoniteSet_Y+120, 80, 30, 0, 0x64, 0 },
- { EDIT_CreateIndirect, "et_4", ID_EDIT_4, 160, LV_MoniteSet_Y+160, 80, 30, 0, 0x64, 0 },
- { EDIT_CreateIndirect, "et_5", ID_EDIT_5, 160, LV_MoniteSet_Y+200, 80, 30, 0, 0x64, 0},
-	{ EDIT_CreateIndirect, "et_6", ID_EDIT_6, 160, LV_MoniteSet_Y+240, 80, 30, 0, 0x64, 0}
+ { EDIT_CreateIndirect, "et_0", ID_EDIT_0, 130, LV_MoniteSet_Y,     70, 30, 0, 0xa,  0 },
+ { EDIT_CreateIndirect, "et_1", ID_EDIT_1, 130, LV_MoniteSet_Y+60,  70, 30, 0, 0x64, 0 },
+ { EDIT_CreateIndirect, "et_2", ID_EDIT_2, 130, LV_MoniteSet_Y+100, 70, 30, 0, 0x64, 0 },
+ { EDIT_CreateIndirect, "et_3", ID_EDIT_3, 130, LV_MoniteSet_Y+140, 70, 30, 0, 0x64, 0 },
+ { EDIT_CreateIndirect, "et_4", ID_EDIT_4, 130, LV_MoniteSet_Y+200, 70, 30, 0, 0x64, 0 },
+ { EDIT_CreateIndirect, "et_5", ID_EDIT_5, 130, LV_MoniteSet_Y+240, 70, 30, 0, 0x64, 0},
+	{ EDIT_CreateIndirect, "et_6", ID_EDIT_6, 130, LV_MoniteSet_Y+280, 70, 30, 0, 0x64, 0}
 	
   // USER START (Optionally insert additional widgets)
   // USER END
@@ -282,7 +282,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     for(i=0;i<7;i++)
     {
        EDIT_SetBkColor(hEts[i], EDIT_CI_ENABLED, pEtWinSkin->EditWin_Text);
-       EDIT_SetTextColor(hEts[i], 0, pEtWinSkin->EditWin_Text);
+       EDIT_SetTextColor(hEts[i], 0, pEtWinSkin->EditWin_Text);     
     }
     // USER START (Optionally insert additional code for further widget initialization)
     // USER END
@@ -598,11 +598,11 @@ static void EtReset(WM_HWIN thisWin)
 {
    EDIT_SetText(hEts[0], mntSetting.DSP_Setting.isEnable>DISABLE?"开启":"关闭");   
    EDIT_SetText(hEts[1], mntSetting.BGL_Setting.isEnable>DISABLE?"开启":"关闭"); 
-   sprintf(pStrBuf, "%d",mntSetting.BGL_Setting.Dist);
+   sprintf(pStrBuf, "%d.%02d", mntSetting.BGL_Setting.Dist/100, mntSetting.BGL_Setting.Dist%100);
    EDIT_SetText(hEts[2], pStrBuf); 
    EDIT_SetText(hEts[3], mntSetting.BGL_Setting.isSndEnable>DISABLE?"开启":"关闭"); 
    EDIT_SetText(hEts[4], mntSetting.DRG_Setting.isEnable>DISABLE?"开启":"关闭"); 
-   sprintf(pStrBuf, "%d",mntSetting.DRG_Setting.Dist);
+   sprintf(pStrBuf, "%d.%02d", mntSetting.DRG_Setting.Dist/100, mntSetting.BGL_Setting.Dist%100);
    EDIT_SetText(hEts[5], pStrBuf);  
    EDIT_SetText(hEts[6], mntSetting.DRG_Setting.isSndEnable>DISABLE?"开启":"关闭");    
 }

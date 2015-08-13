@@ -2,8 +2,7 @@
 #include "Check.h"
 #include <math.h>
 /*----------------- Macro      defines --------------------------*/
-#define MYABS(x)      ( (x)>0?(x):-(x) )
-
+#define MYABS(x)   ((x)>0?(x):(-(x)))
 
 /*----------------- external variables ------------------------*/
 extern SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
@@ -92,10 +91,13 @@ INFO("\aThis boy is gone%09ld",pMntBoat->mmsi);
                                       BGL check
    
    ******************************************************************************/   
-   if(pMntBoat->mntSetting.BGL_Setting.isEnable && (trgState&(0x01<<7)) == 0 )
-   {  
+INFO("BGL"); 
+/// This boat exist & have latitude and longitude.  
+   if(pMntBoat->mntSetting.BGL_Setting.isEnable  &&  pMntBoat->pBoat  && pMntBoat->pBoat->latitude)
+   {   
+INFO("check bgl");
       for(i=0;i<N_boat;i++)
-      {      
+      {    
          /// Closing
          if (    ( (MYABS(SimpBerthes[i].latitude - pMntBoat->pBoat->latitude)) <= pMntBoat->mntSetting.BGL_Setting.Dist) 
              &&  ( (MYABS(SimpBerthes[i].longitude - pMntBoat->pBoat->longitude)) <= pMntBoat->mntSetting.BGL_Setting.Dist )   )
@@ -123,6 +125,19 @@ INFO("\a %09ld Closing:%09ld",SimpBerthes[i].pBoat->user_id,pMntBoat->mmsi);
                SimpBerthes[i].pBoat->isInvader  = 0;
                INVD_deleteById(SimpBerthes[i].pBoat->user_id);
             }
+         }
+      }
+   }
+   /// This boat not exist or have not latitude or longitude.
+   else
+   {
+INFO("--------------");   
+      for(i=0;i<N_boat;i++)
+      {
+         if(SimpBerthes[i].pBoat->isInvader == pMntBoat->mmsi)
+         {
+            SimpBerthes[i].pBoat->isInvader  = 0;
+            INVD_deleteById(SimpBerthes[i].pBoat->user_id);
          }
       }
    }

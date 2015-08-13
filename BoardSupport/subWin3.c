@@ -169,7 +169,17 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 	char    i;
   switch (pMsg->MsgId) 
   {		
- 
+  case WM_SET_FOCUS: 
+       if(pMsg->Data.v)  
+       {
+          myMsg.hWin  = menuWin;
+          myMsg.hWinSrc  = pMsg->hWin;
+          myMsg.MsgId  = USER_MSG_BRING;
+          myMsg.Data.v  = 3;
+          WM_SendMessage(myMsg.hWin, &myMsg);  
+       }
+       WINDOW_Callback(pMsg);     
+       break;
 		case USER_MSG_SKIN:
        pEtWinSkin  = &(EditWinSkins[pMsg->Data.v]);
        
