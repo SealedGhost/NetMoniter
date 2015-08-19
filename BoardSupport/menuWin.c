@@ -196,10 +196,10 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 		//
 		// initialization of subWindow
 		//
-	  	subWins[0]  = sub0WinCreate(); 
-		 	subWins[1]  = sub1WinCreate();
-	 		subWins[2]  = sub2WinCreate();
-	  	subWins[3]  = sub3WinCreate();
+//	  	subWins[0]  = sub0WinCreate(); 
+//		 	subWins[1]  = sub1WinCreate();
+//	 		subWins[2]  = sub2WinCreate();
+//	  	subWins[3]  = sub3WinCreate();
     // USER START (Optionally insert additional code for further widget initialization)
     // USER END
     break;
@@ -362,7 +362,7 @@ static void myButtonListener(WM_MESSAGE * pMsg)
          
 				     break;
 				case GUI_KEY_MENU:       
-
+    case GUI_KEY_BACKSPACE:
 							WM_BringToBottom(menuWin);
 							WM_HideWindow(subWins[0]);
 							WM_HideWindow(subWins[1]);

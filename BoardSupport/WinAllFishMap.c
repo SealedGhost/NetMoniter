@@ -307,7 +307,7 @@ void getWrapPara(long * halfDiff_lg, long * halfDiff_lt, scale_map* wrap_scale)
   }
   
   /// 找到第一个经纬度都不为 0 的 boat
-  for(i=0;i<N_boat;i++)
+  for(i=N_boat-1;i>=0;i--)
   {
      if( (SimpBerthes[i].latitude > 0)  &&  (SimpBerthes[i].longitude > 0) )
      {

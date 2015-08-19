@@ -219,7 +219,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
       switch(Option)   
       {
          case CANCEL_MONITED:         
-              TEXT_SetText(dlgTextContent, "确认删除监控该船舶？");
+              TEXT_SetText(dlgTextContent, "确认取消监控该船舶？");
               break;
           
          case STORE_SETTING:       

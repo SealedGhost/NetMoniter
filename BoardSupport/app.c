@@ -12,6 +12,7 @@
 #include "SystemConfig.h"
 
 
+
 //#ifndef test_test
 //	#define test_test
 //#endif
@@ -24,7 +25,7 @@
 #define Refresh_Task_PRIO        9
 #define Task_Stack_Use_PRIO      10  
 /* 定义任务堆栈大小 */
-#define USER_TASK_STACK_SIZE 384
+#define USER_TASK_STACK_SIZE 2000
 #define TOUCH_TASK_STACK_SIZE 256
 #define KEY_TASK_STACK_SIZE 128
 #define Task_Stack_Use_STACK_SIZE 128
@@ -69,6 +70,9 @@ void mntSetting_init(void);
 
 /*----------------- Global   variables --------------------*/
 ///Insert , Refresh互斥信号量
+int isKeyTrigged  = 0;
+
+
 
 int ReleasedDectSwitch  = 0;
 
@@ -131,26 +135,6 @@ void SysTick_Init(void);
 
 ///* ADDRESS: 0xAC000000  SIZE: 0x400000  */
 
-//_boat boat_list[BOAT_LIST_SIZE_MAX]; // 0x10000: 64K
-//_boat *boat_list_p[BOAT_LIST_SIZE_MAX];
-//_boat_m24A boat_list_24A[BOAT_LIST_SIZE_MAX];
-//_boat_m24A *boat_list_p24A[BOAT_LIST_SIZE_MAX];
-
-//_boat boat_list[BOAT_LIST_SIZE_MAX];
-//_boat *boat_list_p[BOAT_LIST_SIZE_MAX];
-//_boat *boat_start = boat_list;
-//_boat *boat_end = boat_list;
-
-//_boat_m24A boat_list_24A[BOAT_LIST_SIZE_MAX];
-//_boat_m24A *boat_list_p24A[BOAT_LIST_SIZE_MAX];
-//_boat_m24A *boat_start24A = boat_list_24A;
-//_boat_m24A *boat_end24A = boat_list_24A;
-
-//_boat_m24B boat_list_24B[BOAT_LIST_SIZE_MAX];
-//_boat_m24B *boat_lisp_p24B[BOAT_LIST_SIZE_MAX];
-//_boat_m24B *boat_start24B = boat_list_24B;
-//_boat_m24B *boat_end24B = boat_list_24B;
-
 
 
 
@@ -211,63 +195,17 @@ OSMutexPost(Refresher);
 }
 void Refresh_Task(void *p_arg)//任务Refresh_Task
 {
- static int CurMntBoatIndex;
  int i  = 0;
-static int cnt  = 0;
 
-#ifdef CODE_CHECK 
- static MNT_BERTH  * vernier  = NULL;
-#endif 
- 
 	while(1)
 	{
-  
-	
-//		  OSTimeDly(30000); 		/* 延时8000ms */
-// 		if(boat_list_p) free(boat_list_p);
-// 		boat_list_p = (_boat**)malloc(sizeof(_boat*)*max_size);
-//printf("\r\nRefresh task and myCnt = %d",myCnt);		
-//		updateTimeStamp(boat_list);
   OSMutexPend(Refresher, 0, &myErr);
 //  OSMutexPend(Updater, 0, &myErr_2);
   updateTimeStamp();
-//INFO("system date:%ld,time:%ld",SYS_Date,SYS_Time);  
-  
-//  OSMutexPost(Updater);
-//INFO("xukeke:%d",LPC_recCnt);    
-  OSMutexPost(Refresher);
-#ifdef CODE_CHECK
-//INFO(" DSP check"); 
-
-   if(cnt == 0) 
-   {
-printf("check\n\r");   
-      if(vernier == NULL)
-      {
-         vernier  = pMntHeader; 
-      }
-      
-      if(vernier)
-      {
-        check((MNT_BOAT*)(vernier));
-printf("state:%x",vernier->mntBoat.mntState);       
-        
-        vernier  = vernier->pNext;
-      }
-      else
-      { 
-INFO();      
-        for(i=0;i<N_boat;i++)
-        {
-           if(SimpBerthes[i].pBoat->isInvader)
-              SimpBerthes[i].pBoat->isInvader  = 0;
-        }
-      }      
-   }
-
-   cnt++;
    
-   cnt  = cnt%6;
+  OSMutexPost(Refresher);
+#ifdef CODE_CHECK 
+       check();
 #endif 
  
 //  CurMntBoatIndex++;
@@ -284,12 +222,6 @@ void Task_Stack_Use(void *p_arg)
 	while(1)
 	{
 		OSMemQuery(PartitionPt,&MemInfo);
-//		OSTaskStkChk(UI_Task_PRIO ,&UI_Task_Stack_Use);
-// 		OSTaskStkChk(Insert_Task_PRIO,&Insert_Task_Stack_Use);
-//		OSTaskStkChk(Refresh_Task_PRIO,&Refresh_Task_Stack_Use);
-// 		printf("\n\rUI_Task             used/free:%d/%d  usage:%%%d\r\n",UI_Task_Stack_Use.OSUsed,UI_Task_Stack_Use.OSFree,(UI_Task_Stack_Use.OSUsed*100)/(UI_Task_Stack_Use.OSUsed+UI_Task_Stack_Use.OSFree));
-// 		printf("Insert_Task_Stack_Use  used/free:%d/%d  usage:%%%d\r\n",Insert_Task_Stack_Use.OSUsed,Insert_Task_Stack_Use.OSFree,(Insert_Task_Stack_Use.OSUsed*100)/(Insert_Task_Stack_Use.OSUsed+Insert_Task_Stack_Use.OSFree));		
-// 		printf("Refresh_Task_Stack_Use    used/free:%d/%d  usage:%%%d\r\n",Refresh_Task_Stack_Use.OSUsed,Refresh_Task_Stack_Use.OSFree,(Refresh_Task_Stack_Use.OSUsed*100)/(Refresh_Task_Stack_Use.OSUsed+Refresh_Task_Stack_Use.OSFree));		
 		printf("\r\n**********%d----------\n\r",MemInfo.OSNUsed);
 		printf("\r\n**********%d**********\n\r",MemInfo.OSNFree);
 		OSTimeDly(1000); 		/* 延时8000ms */

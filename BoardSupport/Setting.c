@@ -6,9 +6,13 @@
 int N_monitedBoat  = 0;
 MNT_BERTH MNT_Berthes[MNT_NUM_MAX];
 
+
+
  MNT_BERTH * pMntHeader  = NULL;
  MNT_BERTH * Next  = NULL;
-
+ 
+extern int N_boat; 
+extern SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
 extern CONF_SYS  SysConf;
 
 /**@brief  MNT_insert
@@ -190,12 +194,6 @@ INFO("allco mnt berth failed!");
       return FALSE;
    }
    
-   buf->mntBoat.pBoat  = pBoat;
-   buf->mntBoat.mmsi  = pBoat->user_id;
-   buf->mntBoat.lt    = pBoat->latitude;
-   buf->mntBoat.lg    = pBoat->longitude;
-   buf->mntBoat.mntState  = MNTState_Default;
-   buf->mntBoat.pBoat->mntStates  = MNTState_Monited;
    for(i=0;i<20;i++)
    {
       buf->mntBoat.name[i]  = pBoat->name[i];
@@ -204,9 +202,15 @@ INFO("allco mnt berth failed!");
          break;
       }
    }
-   buf->mntBoat.name[19]  = '\0';
+   buf->mntBoat.name[19]  = '\0';  
    
-   i  = 0;
+   buf->mntBoat.pBoat  = pBoat;
+   buf->mntBoat.mmsi  = pBoat->user_id;
+   buf->mntBoat.lt    = pBoat->latitude;
+   buf->mntBoat.lg    = pBoat->longitude;
+   buf->mntBoat.mntState  = MNTState_Default;
+   buf->mntBoat.mntSetting.DSP_Setting.isEnable  = ENABLE;
+   buf->mntBoat.pBoat->mntStates  = MNTState_Monited;
    
    if(pMntHeader != NULL)
    {
@@ -227,40 +231,75 @@ INFO("allco mnt berth failed!");
 }
 
 
+void MNT_clear(long Id)
+{
+   int i  = 0;
+   for(i=N_boat-1;i>=0;i--)
+   {
+      if(SimpBerthes[i].pBoat->isInvader == Id)
+         SimpBerthes[i].pBoat->isInvader  = 0;
+   }
+}
+
+
+Bool MNT_removeById(long Id)
+{
+   MNT_BERTH * pIterator  = pMntHeader;
+   
+   while(pIterator)
+   {
+      if(pIterator->mntBoat.mmsi == Id)
+      {
+         pIterator->mntBoat.mntState  = MNTState_Delete;
+         return TRUE;
+      }
+      else
+      {
+         pIterator  = pIterator->pNext;
+      }
+   } 
+   return  FALSE;
+}
+
+/*
+
 Bool MNT_removeById(long Id)
 {
    MNT_BERTH * pIterator  = NULL;
    MNT_BERTH * pBC        = NULL;
    
+//   MNT_clear(Id);
    if(pMntHeader->mntBoat.mmsi == Id)
    {
       pBC  = pMntHeader;
       pMntHeader  = pMntHeader->pNext;
-      
+
       memset((void*)pBC, 0, sizeof(MNT_BERTH));
       return TRUE;
    }
    else
    {
-      pBC = pMntHeader;
-      pIterator  = pMntHeader->pNext;
-      while(pIterator)
+      pIterator = pMntHeader;
+      pBC  = pMntHeader->pNext;
+      while(pBC)
       {
-         if(pIterator->mntBoat.mmsi == Id)
+         if(pBC->mntBoat.mmsi == Id)
          {
-            pBC->pNext  = pIterator->pNext;
-            memset((void*)pIterator, 0, sizeof(MNT_BERTH));
+            pIterator->pNext  = pBC->pNext;
+            memset((void*)pBC, 0, sizeof(MNT_BERTH));
             return TRUE;
          }
          else
          {
-            pBC  = pIterator;
-            pIterator  = pIterator->pNext;
+            pIterator  = pBC;
+            pBC  = pBC->pNext;
          }
       }
       return FALSE;
    }
 }
+
+*/
 
 //void MNT_resetIterator()
 //{

@@ -182,7 +182,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     HEADER_SetTextColor(hItem,pLVSkin->LV_Header_Text);    
 
     // USER START (Optionally insert additional code for further widget initialization)
-	  	hItem  = btWinCreate();    
+  
     // USER 
     break;
     
@@ -239,8 +239,8 @@ WM_HWIN sub1WinCreate(void) {
   WM_HWIN hWin;
 		
 
-  hWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, menuWin, 0, 0);
-//  hWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, WM_HBKWIN, 0, 0);
+//  hWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, menuWin, 0, 0);
+  hWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, WM_HBKWIN, 0, 0);
   return hWin;
 }
 

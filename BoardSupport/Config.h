@@ -9,7 +9,7 @@
 #define Win_Main_HEIGHT 480
 
 #define MenuLabel_X 0
-#define MenuLabel_WIDTH 120
+#define MenuLabel_WIDTH  120
 #define MenuLabel_Y 40
 #define MenuLabel_HEIGHT 200
 
@@ -103,15 +103,14 @@
 #define MNT_NUM_MAX         20
 #define INVD_NUM_MAX        100
 
-#define TIMESTAMP          600
+#define TIMESTAMP           60
 
-#define MAP_REFRESH_SLOT   500
-#define AUTO_ADAPTER_CNT   3  
+#define MAP_REFRESH_SLOT    500
+#define AUTO_ADAPTER_CNT    3  
 
-#define MSG_QUEUE_TABNUM   20
+#define MSG_QUEUE_TABNUM    20
 
-
-#define CODE_CHECK
+#define CODE_CHECK 
 
 #define __INFO_ENABLE 
 

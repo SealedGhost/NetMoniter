@@ -22,7 +22,12 @@ WM_HWIN menuWin;
 WM_HWIN confirmWin;
 WM_HWIN loadingWin;
 extern WM_HWIN subWins[4];
-
+extern WM_HWIN btWin;
+extern WM_HWIN btWinCreate(void);
+extern WM_HWIN sub0WinCreate(void);
+extern WM_HWIN sub1WinCreate(void);
+extern WM_HWIN sub2WinCreate(void);
+extern WM_HWIN sub3WinCreate(void);
 extern WM_HWIN loadingWinCreate(void);
 extern WM_HWIN menuWinCreate(void);
 extern WM_HWIN subCreateWindow(void);
@@ -64,10 +69,18 @@ void MainTask(void) {
  WIDGET_SetDefaultEffect(&WIDGET_Effect_None);
 	//创建窗口 
 
-	loadingWin  = loadingWinCreate();
+//	loadingWin  = loadingWinCreate();
 
  confirmWin  = confirmWinCreate();
+
+ btWin  = btWinCreate(); 
+ subWins[0]  = sub0WinCreate(); 
+ subWins[1]  = sub1WinCreate();
+ subWins[2]  = sub2WinCreate();
+ subWins[3]  = sub3WinCreate();
  menuWin  = menuWinCreate();
+ 
+ 
  hDlg_FishMap = WM_CreateWindowAsChild (0, 0, 800, 480, WM_HBKWIN, WM_CF_SHOW, &_cbWindowAllFishMap, 0);
  
 

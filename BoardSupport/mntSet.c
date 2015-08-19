@@ -80,7 +80,7 @@ WM_HWIN hBts[7];
 static int fdDist  = 0;
 static int zmDist  = 0;
 static void myButtonListener(WM_MESSAGE* pMsg);
-static void EtReset(WM_HWIN thisWin);
+static void btReset(WM_HWIN thisWin);
 
 MNT_SETTING mntSetting;
 /*------------------- local    functions -------------------------*/
@@ -400,8 +400,8 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 WM_HWIN bttWinCreate(void);
 WM_HWIN btWinCreate(void) {
 
-  btWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, subWins[1], 0, 0);
-//etWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, WM_HBKWIN, 0, 0);
+//  btWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, subWins[1], 0, 0);
+  btWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, WM_HBKWIN, 0, 0);
   return btWin;
 }
 
@@ -529,7 +529,6 @@ static void myButtonListener(WM_MESSAGE* pMsg)
     	
     case GUI_KEY_BACKSPACE:
          myMsg.hWin  = WM_GetClientWindow(confirmWin);
-//         myMsg.hWin  = confirmWin;
          myMsg.hWinSrc  = pMsg->hWin;
          myMsg.MsgId  = USER_MSG_ID_CHOOSE;
          myMsg.Data.v = STORE_SETTING;
@@ -551,7 +550,7 @@ static void myButtonListener(WM_MESSAGE* pMsg)
           case REPLY_OK:
                MNT_makeSettingUp(&mntSetting);  
                MNT_init(&mntSetting);
-               EtReset(btWin);
+               btReset(btWin);
                printMoniteSetting(MNT_Boats);              
                WM_SetFocus(menuWin);
                break;
@@ -575,7 +574,7 @@ INFO("Something err!");
 
 // USER END
 
-static void EtReset(WM_HWIN thisWin)
+static void btReset(WM_HWIN thisWin)
 {
    BUTTON_SetText(hBts[0], mntSetting.DSP_Setting.isEnable>DISABLE?"开启":"关闭");   
    BUTTON_SetText(hBts[1], mntSetting.BGL_Setting.isEnable>DISABLE?"开启":"关闭"); 
@@ -583,7 +582,7 @@ static void EtReset(WM_HWIN thisWin)
    BUTTON_SetText(hBts[2], pStrBuf); 
    BUTTON_SetText(hBts[3], mntSetting.BGL_Setting.isSndEnable>DISABLE?"开启":"关闭"); 
    BUTTON_SetText(hBts[4], mntSetting.DRG_Setting.isEnable>DISABLE?"开启":"关闭"); 
-   sprintf(pStrBuf, "%d.%02d", mntSetting.DRG_Setting.Dist/100, mntSetting.BGL_Setting.Dist%100);
+   sprintf(pStrBuf, "%d.%02d", mntSetting.DRG_Setting.Dist/100, mntSetting.DRG_Setting.Dist%100);
    BUTTON_SetText(hBts[5], pStrBuf);  
    BUTTON_SetText(hBts[6], mntSetting.DRG_Setting.isSndEnable>DISABLE?"开启":"关闭");    
 }

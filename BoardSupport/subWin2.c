@@ -368,8 +368,8 @@ WM_HWIN sub2WinCreate(void) {
   WM_HWIN hWin;
 	
 
-  hWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, menuWin, 0, 0);
-//hWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, WM_HBKWIN, 0, 0);
+//  hWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, menuWin, 0, 0);
+hWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, WM_HBKWIN, 0, 0);
   return hWin;
 }
 
@@ -450,7 +450,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
     
 				case GUI_KEY_BACKSPACE:    
          
-         for(i=0;i<N_boat;i++) 
+         for(i=N_boat-1;i>=0;i--) 
          {
             if(MNTState_Choosen == SimpBerthes[i].pBoat->mntStates)
             {     
@@ -474,7 +474,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
          LISTVIEW_GetItemText(thisListView, LV_AllList_Col_MMSI, selectedRow, pStrBuf, 10);
          Id  = strtoi(pStrBuf);
          
-         for(i=0;i<N_boat;i++)
+         for(i=N_boat-1;i>=0;i--)
          {
      
             if(SimpBerthes[i].pBoat->user_id == Id)
@@ -495,7 +495,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
          LISTVIEW_GetItemText(thisListView, LV_AllList_Col_MMSI, selectedRow, pStrBuf, 10);
          Id  = strtoi(pStrBuf);
          
-         for(i=0;i<N_boat;i++)
+         for(i=N_boat-1;i>=0;i--)
          {
      
             if(SimpBerthes[i].pBoat->user_id == Id)
@@ -537,7 +537,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
          
 
 //         OSMutexPend(Updater, 0, &myErr_2);
-         for(i=0;i<N_boat;i++)
+         for(i=N_boat-1;i>=0;i--)
          {
      
             if(SimpBerthes[i].pBoat->user_id == Id)
@@ -585,9 +585,10 @@ static void myListViewListener(WM_MESSAGE* pMsg)
        switch(pMsg->Data.v)
        {
           case REPLY_OK:
+               LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, LISTVIEW_GetSel(thisListView), "N");
                if(MNT_removeById(MMSI))
                {
-                  for(i=0;i<N_boat;i++)
+                  for(i=N_boat-1;i>=0;i--)
                   {
                      if(SimpBerthes[i].pBoat->user_id == MMSI)
                      {
@@ -595,10 +596,8 @@ static void myListViewListener(WM_MESSAGE* pMsg)
                         break;
                      }
                   }
-                  
-                  LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, LISTVIEW_GetSel(thisListView), "N");
-                  MNT_printSetting();
-//                  WM_SetFocus(menuWin);
+                                 
+//                  MNT_printSetting();
                  WM_SetFocus(subWins[2]);
                }
                else 
@@ -645,7 +644,7 @@ static void updateListViewContent(WM_HWIN thisHandle)
   
 	  NumOfRows  = LISTVIEW_GetNumRows(thisListView);
 	
-   for(i=0;i<N_boat;i++)
+   for(i=N_boat-1;i>=0;i--)
    {
 
       if(i+1 > NumOfRows)

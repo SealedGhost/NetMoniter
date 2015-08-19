@@ -9,6 +9,7 @@ typedef struct _INVADER  INVADER;
 struct _INVADER 
 {
    long MMSI;
+   long targetMMSI;
    INVADER * pNext;
 };
 
@@ -19,9 +20,11 @@ extern INVADER * pInvdHeader;
 
 
 Bool isDisappear(MNT_BOAT * pMntBoat);
-void check(MNT_BOAT * pMntBoat);
+void check();
 
-int INVD_add(long mmsi);
-Bool INVD_deleteById(long mmsi);
+int INVD_add(long MMSI,long targetMMSI);
+Bool INVD_deleteByMMSI(long MMSI);
+static void INVD_deleteByTargetMMSI(long targetMMSI);
+static void INVD_print(void);
 
 #endif

@@ -79,9 +79,9 @@ void MNT_dispInfo( short base_x, short base_y, boat * pBoat)
    GUI_SetColor(pMapSkin->BackGround);
 
    GUI_ClearRect(base_x, base_y, base_x+180,base_y+80);
-   
-   GUI_SetColor(pMapSkin->Boat_Tip_Border);
-   GUI_DrawRect(base_x, base_y, base_x+180,base_y+80);
+//   
+//   GUI_SetColor(pMapSkin->Boat_Tip_Border);
+//   GUI_DrawRect(base_x, base_y, base_x+180,base_y+80);
    
 //   GUI_SetAlpha(0);
    
@@ -99,7 +99,7 @@ void MNT_dispInfo( short base_x, short base_y, boat * pBoat)
    GUI_DispStringAt(pStrBuf, base_x+10, base_y+38);
    
 
-//   GUI_SetFont(&GUI_Font16_1);
+   GUI_SetFont(&GUI_Font16_1);
    sprintf(pStrBuf, "%09ld", pBoat->user_id);
    GUI_DispStringAt(pStrBuf, base_x+10, base_y+62);
 //   GUI_SetFont(&GUI_Font16_1);

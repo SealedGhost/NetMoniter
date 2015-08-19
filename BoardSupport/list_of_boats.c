@@ -77,7 +77,6 @@ int insert_18(struct message_18 * p_msg)
                
                if(update_18(&(Berthes[i]), p_msg))
                {
-//printf("Header:%p,Tail:%p\n\r",pHeader,pTail);
                   return 1;               
                }
 
@@ -116,8 +115,7 @@ int insert_24A(struct message_24_partA * p_msg)
       if(Berthes[i].Boat.user_id == p_msg->user_id)
       {
          if(update_24A(&(Berthes[i]), p_msg))
-         {
-//printf("Header:%p,Tail:%p\n\r",pHeader,pTail);         
+         {        
             return  1;
          }
           else
@@ -128,8 +126,7 @@ int insert_24A(struct message_24_partA * p_msg)
    }
    
    if(add_24A(p_msg))
-   {
-//printf("Header:%p,Tail:%p\n\r",pHeader,pTail);   
+   { 
       return 1;
    }
    return -1;

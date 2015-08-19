@@ -7,22 +7,44 @@
 #include "GUI.h"
 //#include "WM.h"
 #include "MainTask.h"  
+#include "pwm.h"
 
+
+/*---------------------------- Macro defines --------------------------------------*/
 #define DMA_SIZE		3
 
-char Doubleclick;
 
-uint8_t DMADest_Buffer[DMA_SIZE]; 
-GPDMA_Channel_CFG_Type GPDMACfg;
+/*---------------------------- External  variables --------------------------------*/
 extern volatile const void *GPDMA_LUTPerAddr[];
 extern const LPC_GPDMACH_TypeDef *pGPDMACh[8];
 extern const uint8_t GPDMA_LUTPerBurst[];
 extern const uint8_t GPDMA_LUTPerWid[];
-volatile int myCnt = 0;
-__IO uint8_t UART2_RX[50];//
+
 extern OS_EVENT *QSem;//
 extern OS_MEM   *PartitionPt;
 extern uint8_t  Partition[MSG_QUEUE_TABNUM][100];
+
+/// If key pressed , isKeyTrigged will be TRUE. Your apps must set iskeyTrigged FALSe after using it.
+extern int isKeyTrigged;  
+                             
+/*-------------------------- Local Variables --------------------------------------*/
+
+
+/*-------------------------- Global Variables -------------------------------------*/
+
+char Doubleclick;
+uint8_t DMADest_Buffer[DMA_SIZE]; 
+GPDMA_Channel_CFG_Type GPDMACfg;
+
+volatile int myCnt = 0;
+__IO uint8_t UART2_RX[50];//
+
+
+/**
+ *
+ *
+ *
+ */
 void DMA_IRQHandler (void)
 {
 	uint8_t *pt,*pt0,index,err;	
@@ -46,16 +68,16 @@ void DMA_IRQHandler (void)
 										        {printf("a");GUI_StoreKeyMsg(GUI_KEY_LARGE ,1);}    else printf("error 0x4E 0x61 but not 0x81");break;
 									case 0x62://归中
 									          if(DMADest_Buffer[2]==0x80)
-										        {printf("b");/*GUI_StoreKeyMsg(GUI_KEY_LARGE ,1);*/}else printf("error 0x4E 0x62 but not 0x80");break;										
+										        {printf("b");GUI_StoreKeyMsg(GUI_KEY_LARGE ,1);isKeyTrigged  = 1; }else printf("error 0x4E 0x62 but not 0x80");break;										
 									case 0x63://缩小
 										       if(DMADest_Buffer[2]==0x7F)
 										       {printf("c");GUI_StoreKeyMsg(GUI_KEY_REDUCE,1);}     else printf("error 0x4E 0x63 but not 0x7F");break;										
 									case 0x65://PWM++
                            if(DMADest_Buffer[2]==0x7D)
-                           {printf("e");/*BACK_PWM--;if(BACK_PWM==-1)BACK_PWM=0;PWM_SET(BACK_PWM);*/}else printf("error 0x4E 0x65 but not 0x7D");break;													 
+                           {printf("e");PWM_BkBrightness--;if(PWM_BkBrightness==-1)PWM_BkBrightness=0;PWM_SET(PWM_BkBrightness);}else printf("error 0x4E 0x65 but not 0x7D");break;													 
 									case 0x66://PWM--
                            if(DMADest_Buffer[2]==0x7C)
-                           {printf("f");/*BACK_PWM++;if(BACK_PWM==11)BACK_PWM=10;PWM_SET(BACK_PWM);*/}else printf("error 0x4E 0x66 but not 0x7C");break;
+                           {printf("f");PWM_BkBrightness++;if(PWM_BkBrightness==11)PWM_BkBrightness=10;PWM_SET(PWM_BkBrightness);}else printf("error 0x4E 0x66 but not 0x7C");break;
 									case 0x67://航迹关
                            if(DMADest_Buffer[2]==0x7B)
                            {printf("g");/*BACK_PWM--;if(BACK_PWM==-1)BACK_PWM=0;PWM_SET(BACK_PWM);*/}else printf("error 0x4E 0x67 but not 0x7B");break;													 

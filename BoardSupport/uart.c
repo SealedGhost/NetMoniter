@@ -16,17 +16,17 @@ uint8_t Buffer2[23]  = "uart2 init success!\n\r";
 //extern uint8_t Partition[10][128];//[SIZE];
 void lpc1788_Uart_Init(int port)//LPC1788_Uart_Init
 {
-	UART_CFG_Type UARTConfigStruct;	/* UART配置 */
-	UART_FIFO_CFG_Type UARTFIFOConfigStruct;	/* UART FIFO配置 */
-	switch(port)
-	{
-		case 0:
-					PINSEL_ConfigPin(0,2,1);
-					PINSEL_ConfigPin(0,3,1);break;
-		case 2:
-					PINSEL_ConfigPin(0,10,1);
-					PINSEL_ConfigPin(0,11,1);break;
-		default:break;
+   UART_CFG_Type UARTConfigStruct;	/* UART配置 */
+   UART_FIFO_CFG_Type UARTFIFOConfigStruct;	/* UART FIFO配置 */
+   switch(port)
+   {
+    case 0:
+       PINSEL_ConfigPin(0,2,1);
+       PINSEL_ConfigPin(0,3,1);break;
+    case 2:
+       PINSEL_ConfigPin(0,10,1);
+       PINSEL_ConfigPin(0,11,1);break;
+    default:break;
 	}
 	UART_ConfigStructInit(&UARTConfigStruct);/* 初始化UARTConfigStruct结构体为：波特率为115200，8位数据，无奇偶校验，1位停止位 */
 	UARTConfigStruct.Baud_rate = 115200;
@@ -43,25 +43,27 @@ void lpc1788_Uart_Init(int port)//LPC1788_Uart_Init
 	NVIC_DisableIRQ(UART0_IRQn);
 		
 }
+
+
 static void UART_Config(unsigned char channel)
 {
-	UART_CFG_Type UARTConfigStruct1;
-	UART_FIFO_CFG_Type UARTFIFOConfigStruct1;
-	PINSEL_ConfigPin(0,10,1);
-	PINSEL_ConfigPin(0,11,1);
-	UART_ConfigStructInit(&UARTConfigStruct1);
-	UARTConfigStruct1.Baud_rate = 38400;
-	UART_Init((UART_ID_Type)channel, &UARTConfigStruct1);
-	
-	UART_FIFOConfigStructInit(&UARTFIFOConfigStruct1);
-	UARTFIFOConfigStruct1.FIFO_DMAMode = ENABLE;
-	UART_FIFOConfig((UART_ID_Type)channel, &UARTFIFOConfigStruct1);
-	UART_TxCmd((UART_ID_Type)channel, ENABLE);
+   UART_CFG_Type UARTConfigStruct1;
+   UART_FIFO_CFG_Type UARTFIFOConfigStruct1;
+   PINSEL_ConfigPin(0,10,1);
+   PINSEL_ConfigPin(0,11,1);
+   UART_ConfigStructInit(&UARTConfigStruct1);
+   UARTConfigStruct1.Baud_rate = 38400;
+   UART_Init((UART_ID_Type)channel, &UARTConfigStruct1);
+   
+   UART_FIFOConfigStructInit(&UARTFIFOConfigStruct1);
+   UARTFIFOConfigStruct1.FIFO_DMAMode = ENABLE;
+   UART_FIFOConfig((UART_ID_Type)channel, &UARTFIFOConfigStruct1);
+   UART_TxCmd((UART_ID_Type)channel, ENABLE);
 }
 
 // static void DMA_Config(unsigned char channel)
 // {
-// 	GPDMA_Channel_CFG_Type GPDMACfg;
+// 	GPDMA_Channel_CFG_Type GPDMACfg; 
 // // 	GPDMA_Init();
 // 	NVIC_DisableIRQ (DMA_IRQn);
 // 	NVIC_SetPriority(DMA_IRQn, ((0x01<<3)|0x01));
@@ -83,7 +85,7 @@ void USER_Init(void)
 {	
 	GPDMA_Init();
 	lpc1788_Uart_Init(0);/* 初始化串口Uart0 使用DMA通道0*/	
-lpc1788_DMA_Init();  
+ lpc1788_DMA_Init();  
 //	printf("uart0 init success!\n\r\r");	
 	UART_Send((UART_ID_Type)0, Buffer0,sizeof(Buffer0),BLOCKING);
 	
@@ -92,51 +94,6 @@ lpc1788_DMA_Init();
 	UART_Send((UART_ID_Type)2,Buffer2,sizeof(Buffer2),BLOCKING);///* 打印一串字符到串口Uart2 */
 ////	lpc1788_TIMER_Init();
 }
-// void TIMER2_IRQHandler(void)
-// {		
-// 	static unsigned int length_last=sizeof(UART_RX) &0x0fff;
-// 	unsigned int length = LPC_GPDMACH1->CControl & 0x0fff;	
-//   uint8_t *pt,*pt0,index,err;		
-// 	if (TIM_GetIntStatus(LPC_TIM2, TIM_MR0_INT))	/* 判断是否是通道0匹配中断 */	
-// 	{	
-// 		TIM_ClearIntPending(LPC_TIM2, TIM_MR0_INT);/* 清除通道0匹配中断标志 */	
-// 		if((length==length_last && length_last!=(sizeof(UART_RX) &0x0fff)))//说明串口传递结束
-// 		{
-// 			uint8_t uiIIRtemp = sizeof(UART_RX)-length;
-// 			GPDMA_ChannelCmd(1, DISABLE);
-// 			LPC_GPDMACH1->CControl = (LPC_GPDMACH1->CControl & 0xfffff000)|(sizeof(UART_RX) &0x0fff);
-// 			LPC_GPDMACH1->CDestAddr = (uint32_t) &UART_RX;//重置起始地址
-// 			{//中断用户程序
-// 				pt=OSMemGet(PartitionPt,&err);
-// 				pt0=pt;
-//  				for(index=0;index<uiIIRtemp;index++)
-//  				{
-//  					*pt=UART_RX[index];
-// 					pt++;
-//         }
-// 			  OSQPost(QSem,(void *)pt0);
-// 			}
-// 			length_last=sizeof(UART_RX) &0x0fff;
-// 			GPDMA_ChannelCmd(1, ENABLE);
-// 		}
-// 	else if((sizeof(UART_RX)-length)>150)//串口异常
-// 	{
-// 		uint8_t uiIIRtemp = sizeof(UART_RX)-length;
-// 		GPDMA_ChannelCmd(1, DISABLE);
-// 		LPC_GPDMACH1->CControl = (LPC_GPDMACH1->CControl & 0xfffff000)|(sizeof(UART_RX) &0x0fff);
-// 		LPC_GPDMACH1->CDestAddr = (uint32_t) &UART_RX;//重置起始地址
-// 		{//中断用户程序
-// 			unsigned char index;
-// 			for(index=0;index<uiIIRtemp;index++)
-// 				UART_RX[index]=0;
-// 		}
-// 		length_last=sizeof(UART_RX) &0x0fff;
-// 		GPDMA_ChannelCmd(1, ENABLE);
-// 	}
-// 	else
-// 		length_last = length;
-// 	}
-// }
 
 
 
