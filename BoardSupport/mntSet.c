@@ -551,7 +551,7 @@ static void myButtonListener(WM_MESSAGE* pMsg)
                MNT_makeSettingUp(&mntSetting);  
                MNT_init(&mntSetting);
                btReset(btWin);
-               printMoniteSetting(MNT_Boats);              
+//               printMoniteSetting(MNT_Boats);              
                WM_SetFocus(menuWin);
                break;
           case REPLY_CANCEL:         

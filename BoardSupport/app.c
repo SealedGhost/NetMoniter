@@ -202,12 +202,13 @@ void Refresh_Task(void *p_arg)//»ŒŒÒRefresh_Task
   OSMutexPend(Refresher, 0, &myErr);
 //  OSMutexPend(Updater, 0, &myErr_2);
   updateTimeStamp();
-   
-  OSMutexPost(Refresher);
+  OSMutexPost(Refresher); 
+
+//  UART_SendByte(2, 'k');
 #ifdef CODE_CHECK 
        check();
 #endif 
- 
+
 //  CurMntBoatIndex++;
 //  CurMntBoatIndex  = CurMntBoatIndex%N_monitedBoat;
   

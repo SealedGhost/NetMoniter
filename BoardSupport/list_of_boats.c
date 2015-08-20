@@ -26,7 +26,7 @@ extern boat mothership;
 extern BERTH Berthes[BOAT_LIST_SIZE_MAX];
 extern SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
 extern MNT_BERTH * pMntHeader;
-
+extern Bool INVD_deleteByMMSI(long MMSI);
 /*----------------------- external functions -----------------------*/
 
 
@@ -497,7 +497,7 @@ void updateTimeStamp()
          SimpBerthes[i].latitude   = pCur->Boat.latitude;
          SimpBerthes[i].longitude  = pCur->Boat.longitude;
          SimpBerthes[i].Dist       = pCur->Boat.dist;
-         SimpBerthes[i].pBoat      = &(pCur->Boat);
+         SimpBerthes[i].pBerth     = pCur;
          
          pCur->Boat.time_cnt--;                   
          pCur  = pCur->pNext;
@@ -519,7 +519,7 @@ printf("Delete %09ld\n\r", pCur->Boat.user_id);
                pIterator  = pIterator->pNext;
             }
          }
-         
+         INVD_deleteByMMSI(pCur->Boat.user_id);
               
          /// Delete at header
          if(pCur == pHeader)
@@ -550,10 +550,7 @@ printf("Delete %09ld\n\r", pCur->Boat.user_id);
       }
 
    }
-
-   
-
-    N_boat  = i;    
+   N_boat  = i;    
 
 
 //   for(i=0;i<BOAT_LIST_SIZE_MAX;i++)
@@ -607,10 +604,6 @@ static int getSphereDist(long lt_1,long lg_1, long lt_2, long lg_2)
 }
 
 
-
-
-
-
 static BERTH * allocOneBerth()
 {
    int i  = 0;
@@ -623,7 +616,6 @@ static BERTH * allocOneBerth()
    }  
    return NULL;
 }
-
 
 
 

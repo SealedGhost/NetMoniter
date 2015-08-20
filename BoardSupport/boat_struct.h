@@ -27,19 +27,17 @@ typedef _boat boat;
 struct _boat
 {
   //struct _boat *next_boat;
-	
+	 long user_id;
+  long longitude;
+  long latitude;
+  char name[20];
   short SOG;
   short COG;
   short true_heading;
   short time_cnt; 
 
-	 long user_id;
-  long longitude;
-  long latitude;
 	 int dist;
- 	char name[20];
-  unsigned char mntStates;
-	 int isInvader;
+	 long target;
 };
 
 
@@ -47,6 +45,7 @@ typedef struct _BERTH BERTH;
 struct _BERTH
 {
    boat Boat;
+   unsigned char mntState;
    BERTH * pLast;
    BERTH * pNext;
 };
@@ -57,7 +56,7 @@ struct _SIMP_BERTH
    long longitude;
    long latitude;
    int  Dist;
-   boat * pBoat;
+   BERTH * pBerth;
 };
 
 

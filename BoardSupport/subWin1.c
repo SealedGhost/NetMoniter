@@ -311,26 +311,26 @@ static void myListViewListener(WM_MESSAGE* pMsg)
            pIterator  = pIterator->pNext;
          }
          
-         switch(pIterator->mntBoat.mntState)
+         switch(pIterator->chsState)
          {
             case MNTState_Choosen:
-                 pIterator->mntBoat.mntState  = MNTState_Monited;
+                 pIterator->chsState  = MNTState_Monited;
                  LISTVIEW_SetItemText(thisListView, 2, selectedRow, "N");
                  break;
             case MNTState_Default:
-                 pIterator->mntBoat.mntState  = MNTState_None;
+                 pIterator->chsState  = MNTState_None;
                  LISTVIEW_SetItemText(thisListView, 2, selectedRow, "N");
                  break;
 //            case MNTState_Monited:
-//                 pIterator->mntBoat.mntState  = MNTState_Choosen;
+//                 pIterator->chsState  = MNTState_Choosen;
 //                 LISTVIEW_SetItemText(thisListView, 2, selectedRow, "Y");
 //                 break;
             case MNTState_None:
-                 pIterator->mntBoat.mntState  = MNTState_Default;
+                 pIterator->chsState  = MNTState_Default;
                  LISTVIEW_SetItemText(thisListView, 2, selectedRow, "Y");
                  break;
             default:
-                 pIterator->mntBoat.mntState  = MNTState_Choosen;
+                 pIterator->chsState  = MNTState_Choosen;
                  LISTVIEW_SetItemText(thisListView, 2, selectedRow, "Y");
                  break;
          }
@@ -338,7 +338,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 			    		break;
 					
 				case GUI_KEY_BACKSPACE:   
-         while( (MNT_Boats[index].mntState>=MNTState_Monited) ||  (MNT_Boats[index].mmsi==0) )
+         while( (MNT_Berthes[index].chsState>=MNTState_Monited) ||  (MNT_Boats[index].mmsi==0) )
          {
             index++;
             if(index >= MNT_NUM_MAX)
@@ -436,7 +436,7 @@ static void updateListViewContent(WM_HWIN thisHandle)
     sprintf(pStrBuf, "%09ld", pIterator->mntBoat.mmsi);
     LISTVIEW_SetItemText(thisListView, 1, Cnt-1, pStrBuf);
     
-    LISTVIEW_SetItemText(thisListView, 2, Cnt-1, (MNTState_Default==pIterator->mntBoat.mntState)?"Y":"N");  
+    LISTVIEW_SetItemText(thisListView, 2, Cnt-1, (MNTState_Default==pIterator->chsState)?"Y":"N");  
     
     pIterator  = pIterator->pNext;
  }

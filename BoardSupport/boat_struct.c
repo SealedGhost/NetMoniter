@@ -178,13 +178,13 @@ void disp_fish_boat(const scale_map * scale,long center_longitude, long center_l
     base_x  = (MAP_LEFT/2 + MAP_RIGHT/2) + base_x;
     base_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - base_y;    
 //				draw_ship(pSimpBerth[i].pBoat,base_x,base_y,aPoints, 3);	
-    if(pSimpBerth[i].pBoat->isInvader)
+    if(pSimpBerth[i].pBerth->Boat.target)
     {
-       drawColrofulBoat(pSimpBerth[i].pBoat, base_x, base_y, Points_boat,  3, GUI_RED);
+       drawColrofulBoat(&(pSimpBerth[i].pBerth->Boat), base_x, base_y, Points_boat,  3, GUI_RED);
        
        if( MYABS(__cursor.x-base_x)<=10 && MYABS(__cursor.y-base_y)<=10 )
        {
-          MNT_dispInfo(base_x, base_y, pSimpBerth[i].pBoat);        
+          MNT_dispInfo(base_x, base_y, &(pSimpBerth[i].pBerth->Boat));        
        }
     }
 //		}
@@ -226,7 +226,7 @@ void MNT_dispBoat(const scale_map * scale,  long center_lg, long center_lt, MNT_
          GUI_SetPenSize(2); 
          
 ///   DSP boat conf.      
-         if(pIterator->mntBoat.mntSetting.DSP_Setting.isEnable == ENABLE) 
+         if(pIterator->mntSetting.DSP_Setting.isEnable == ENABLE) 
          {
             GUI_SetColor(GUI_LIGHTCYAN);    
          }
@@ -234,16 +234,16 @@ void MNT_dispBoat(const scale_map * scale,  long center_lg, long center_lt, MNT_
          draw_ship(pIterator->mntBoat.pBoat, base_x, base_y,pPoints, PointNum);
     
 ///   BGL circle conf.
-         if(pIterator->mntBoat.mntSetting.BGL_Setting.isEnable == ENABLE)
+         if(pIterator->mntSetting.BGL_Setting.isEnable == ENABLE)
          {
             GUI_SetColor(BGL_BOAT_COLOR);
             GUI_SetPenSize(1); 
             
-            GUI_DrawCircle(base_x, base_y,pIterator->mntBoat.mntSetting.BGL_Setting.Dist*scale->pixel/scale->minute);            
+            GUI_DrawCircle(base_x, base_y,pIterator->mntSetting.BGL_Setting.Dist*scale->pixel/scale->minute);            
          } 
     
 ///   Drg circle conf. 
-         if(pIterator->mntBoat.mntSetting.DRG_Setting.isEnable == ENABLE)
+         if(pIterator->mntSetting.DRG_Setting.isEnable == ENABLE)
          {
             base_x  = 1.0*scale->pixel * (pIterator->mntBoat.lg - center_lg) / scale->minute;
             base_y  = 1.0*scale->pixel * (pIterator->mntBoat.lt - center_lt) / scale->minute;
@@ -253,7 +253,7 @@ void MNT_dispBoat(const scale_map * scale,  long center_lg, long center_lt, MNT_
             
             GUI_SetColor(DRG_BOAT_COLOR);
             GUI_SetPenSize(DRG_PENSIZE);        
-            GUI_DrawCircle(base_x, base_y, pIterator->mntBoat.mntSetting.DRG_Setting.Dist*scale->pixel/scale->minute);
+            GUI_DrawCircle(base_x, base_y, pIterator->mntSetting.DRG_Setting.Dist*scale->pixel/scale->minute);
          }
       }
       else
@@ -278,28 +278,9 @@ void MNT_dispBoat(const scale_map * scale,  long center_lg, long center_lt, MNT_
    
     disp_fish_boat(scale, center_lg, center_lt, SimpBerthes, N_boat);
     
-//GUI_SetColor(GUI_BLACK);
-//GUI_DispStringHCenterAt("Alphablending", 45, 41);
-//GUI_SetColor((0x40uL << 24) | GUI_RED);
-//GUI_FillRect(0, 50, 49, 49);
-//GUI_SetColor((0x80uL << 24) | GUI_GREEN);
-//GUI_FillRect(20, 70, 69, 69);
-//GUI_SetColor((0xC0uL << 24) | GUI_BLUE);
-//GUI_FillRect(40, 90, 89, 89);
-//    GUI_SetAlpha(0);
-//    GUI_EnableAlpha(0);   
+ 
 }
 
 
-//void MNT_dispInvader(const scale_map * scale, long center_lg, long center_lt, SIMP_BERTH * pSimpBerth)
-//{
-//   int i  = 0;
-//   for(i=0;i<BOAT_LIST_SIZE_MAX;i++)
-//   {
-//      if(pSimpBerth[i].pBoat->isInvader)
-//      {
-//         
-//      }
-//   }
-//}
+
 

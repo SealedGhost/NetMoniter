@@ -21,26 +21,25 @@ INVADER InvdMaskCursor = {0};
 
 
 /*--------------------- Local functions -----------------------*/
-
-
-
-float UnitScale  = 1.0;
-
-  
 static Bool removeById(long Id);
-static void func(void);
+static void MNT_filter(void);
+
+
 
 void check()
 {
+   static int Cnt  = 0;
+   static int Num  = 0;   
+   
    int i  = 0;
-   unsigned char isGood = 0;
    unsigned char trgState  = 0;
+   
    float r   = 0.0;
    long diff_lt  = 0;
    long diff_lg  = 0;
    MNT_BERTH * pMntBerth  = NULL;
-   static int Cnt  = 0;
-   static int Num  = 0;
+   MNT_BERTH * pIterator  = NULL;
+
    
    int isDSP  = 0;
    int isBGL  = 0;
@@ -48,14 +47,42 @@ void check()
    
    /// Delete all MNTState_Delete .
 
-   func();
+   MNT_filter();
   
+   if(isKeyTrigged)
+   {
+INFO("key trigged");   
+      isKeyTrigged   = 0;
+     
+      /// 将所有触发态掩盖
+      pIterator  = pMntHeader;
+      while(pIterator)
+      {
+         if( (pIterator->trgState & 0x1f) == MNTState_Triggered )
+         {
+            pIterator->trgState  =  (pIterator->trgState & 0xe0) | MNTState_Masked;
+         }
+         
+         pIterator  = pIterator->pNext;
+      } 
+    
+     /// 更新掩码游标
+      if(pInvdTail)
+      {
+INFO("mask cursor move"); 
+         InvdMaskCursor.pNext  = pInvdTail;     
+         InvdMaskCursor.MMSI  = pInvdTail->MMSI;
+      }
+    }
+  
+  
+  
+/// 找寻本次应该check哪条监控船舶 
    if(pMntHeader == NULL)
    {
       return;
    }
    
-  
    pMntBerth  = pMntHeader;
    
    if(Cnt==0)
@@ -82,35 +109,31 @@ INFO("check %09ld",pMntBerth->mntBoat.mmsi);
    
                                       DSP check
    
-   ******************************************************************************/   
+   ******************************************************************************/  
+   trgState  = (0x01<<7);   
    isDSP  = 1;
    for(i=N_boat-1; i>=0; i--)   
    {  
       /// Not disappear.
-      if(SimpBerthes[i].pBoat->user_id == pMntBerth->mntBoat.mmsi)
+      if(SimpBerthes[i].pBerth->Boat.user_id == pMntBerth->mntBoat.mmsi)
       {
+         trgState  = 0;
          isDSP  = 0;
          /// This boat had been gone but come back now.      
-         if(SimpBerthes[i].pBoat->mntStates == MNTState_None)
+         if(SimpBerthes[i].pBerth->mntState == MNTState_None)
          {
 INFO("come back");            
-            pMntBerth->mntBoat.pBoat  = SimpBerthes[i].pBoat;
-            SimpBerthes[i].pBoat->mntStates  = MNTState_Monited;
-            
-            if(pMntBerth->mntBoat.mntState != MNTState_Default)
-            {
-               pMntBerth->mntBoat.mntState  = MNTState_Monited;
-            }
-         }
-         
+            pMntBerth->mntBoat.pBoat  = &(SimpBerthes[i].pBerth->Boat);
+            SimpBerthes[i].pBerth->mntState  = MNTState_Monited;  
+         }         
          break;
       }
    }
-   /// Disappear.
-   if(isDSP)
+
+   if(trgState)
    {
       pMntBerth->mntBoat.pBoat  = NULL;
-INFO("\a This boy is gone %09ld",pMntBerth->mntBoat.mmsi);      
+INFO("This boy is gone %09ld",pMntBerth->mntBoat.mmsi);      
    }
   
    /*****************************************************************************
@@ -118,32 +141,32 @@ INFO("\a This boy is gone %09ld",pMntBerth->mntBoat.mmsi);
                                       BGL check
    
    ******************************************************************************/      
-   if(   pMntBerth->mntBoat.mntSetting.BGL_Setting.isEnable  
-      && isDSP==FALSE 
+   if(   pMntBerth->mntSetting.BGL_Setting.isEnable  
+      && (!trgState)
       && pMntBerth->mntBoat.pBoat->latitude  )
    {
       for(i=N_boat-1; i>=0; i--)
       {
-         if(  SimpBerthes[i].pBoat->mntStates == MNTState_None )
+         if(  SimpBerthes[i].pBerth->mntState == MNTState_None )
          {
             /// Closing.
-            if(   (MYABS(SimpBerthes[i].latitude - pMntBerth->mntBoat.pBoat->latitude) <= pMntBerth->mntBoat.mntSetting.BGL_Setting.Dist)
-               && (MYABS(SimpBerthes[i].longitude- pMntBerth->mntBoat.pBoat->longitude)<= pMntBerth->mntBoat.mntSetting.BGL_Setting.Dist)  )
+            if(   (MYABS(SimpBerthes[i].latitude - pMntBerth->mntBoat.pBoat->latitude) <= pMntBerth->mntSetting.BGL_Setting.Dist)
+               && (MYABS(SimpBerthes[i].longitude- pMntBerth->mntBoat.pBoat->longitude)<= pMntBerth->mntSetting.BGL_Setting.Dist)  )
             {
 //INFO("\a%09ld invader %09ld", SimpBerthes[i].pBoat->user_id, pMntBerth->mntBoat.mmsi);            
                isBGL  = TRUE;
-               SimpBerthes[i].pBoat->isInvader  = pMntBerth->mntBoat.mmsi;
-               INVD_add(SimpBerthes[i].pBoat->user_id, pMntBerth->mntBoat.mmsi);
+               SimpBerthes[i].pBerth->Boat.target  = pMntBerth->mntBoat.mmsi;
+               INVD_add(SimpBerthes[i].pBerth->Boat.user_id, pMntBerth->mntBoat.mmsi);
             }
             else
             {          
                /// Black --> Whiit.
-               if(SimpBerthes[i].pBoat->isInvader  == pMntBerth->mntBoat.mmsi)
+               if(SimpBerthes[i].pBerth->Boat.target  == pMntBerth->mntBoat.mmsi)
                {
-INFO("%09ld --> White",SimpBerthes[i].pBoat->user_id);                
+INFO("%09ld --> White",SimpBerthes[i].pBerth->Boat.user_id);                
                   /// INVD_delete.
-                  SimpBerthes[i].pBoat->isInvader  = 0;
-                  INVD_deleteByMMSI(SimpBerthes[i].pBoat->user_id);
+                  SimpBerthes[i].pBerth->Boat.target  = 0;
+                  INVD_deleteByMMSI(SimpBerthes[i].pBerth->Boat.user_id);
                }
             }
          }
@@ -151,11 +174,11 @@ INFO("%09ld --> White",SimpBerthes[i].pBoat->user_id);
          {
         
             /// INVD_delete.
-            if(SimpBerthes[i].pBoat->isInvader)
+            if(SimpBerthes[i].pBerth->Boat.target)
             {
-INFO("invader %09ld become mnt",SimpBerthes[i].pBoat->user_id);  
-              INVD_deleteByMMSI(SimpBerthes[i].pBoat->user_id);           
-              SimpBerthes[i].pBoat->isInvader  = 0;
+INFO("invader %09ld become mnt",SimpBerthes[i].pBerth->Boat.user_id);  
+              INVD_deleteByMMSI(SimpBerthes[i].pBerth->Boat.user_id);           
+              SimpBerthes[i].pBerth->Boat.target  = 0;
             }
          }
       }
@@ -165,12 +188,19 @@ INFO("invader %09ld become mnt",SimpBerthes[i].pBoat->user_id);
 INVD_deleteByTargetMMSI(pMntBerth->mntBoat.mmsi);   
       for(i=N_boat-1; i>=0; i--)
       {
-         if(SimpBerthes[i].pBoat->isInvader == pMntBerth->mntBoat.mmsi)
+         if(SimpBerthes[i].pBerth->Boat.target == pMntBerth->mntBoat.mmsi)
          {
-INFO("clear follower:%09ld",SimpBerthes[i].pBoat->user_id);         
-            SimpBerthes[i].pBoat->isInvader  = 0;
+INFO("clear follower:%09ld",SimpBerthes[i].pBerth->Boat.user_id);         
+            SimpBerthes[i].pBerth->Boat.target  = 0;
          }
       }
+   }
+   
+   if(InvdMaskCursor.pNext != pInvdTail)
+   {
+INFO("bgl ");   
+      trgState  |= (0x01<<6);
+      pMntBerth->trgState  = (pMntBerth->trgState & 0xe0) | MNTState_Triggered;
    }
    
  
@@ -179,8 +209,8 @@ INFO("clear follower:%09ld",SimpBerthes[i].pBoat->user_id);
                                       DRG check 
                                       
    ******************************************************************************/   
-   if(   pMntBerth->mntBoat.mntSetting.DRG_Setting.isEnable  
-      && isDSP==FALSE 
+   if(   pMntBerth->mntSetting.DRG_Setting.isEnable  
+      && (!trgState)
       && pMntBerth->mntBoat.pBoat->latitude  )
    {
       diff_lt  = pMntBerth->mntBoat.pBoat->latitude - pMntBerth->mntBoat.lt;
@@ -189,38 +219,62 @@ INFO("clear follower:%09ld",SimpBerthes[i].pBoat->user_id);
       diff_lt  = MYABS(diff_lt);
       diff_lg  = MYABS(diff_lg);
       
-      if(   diff_lt+2*diff_lt/5 > pMntBerth->mntBoat.mntSetting.DRG_Setting.Dist
-          ||diff_lg+2*diff_lg/5 > pMntBerth->mntBoat.mntSetting.DRG_Setting.Dist)
+      if(   diff_lt+2*diff_lt/5 > pMntBerth->mntSetting.DRG_Setting.Dist
+          ||diff_lg+2*diff_lg/5 > pMntBerth->mntSetting.DRG_Setting.Dist)
       {
          r  = sqrt(diff_lt*diff_lt + diff_lg*diff_lg);
       }
       
-      if(r >= pMntBerth->mntBoat.mntSetting.DRG_Setting.Dist)
+      if(r >= pMntBerth->mntSetting.DRG_Setting.Dist)
       {
-INFO("\aThis boy offset");      
+INFO("This boy offset");  
+         trgState  |= (0x01<<5);    
          isDRG  = TRUE;
       }
    }
    
-   if(isKeyTrigged)
+   if(pMntBerth->mntSetting.DSP_Setting.isEnable == DISABLE)
    {
-      isKeyTrigged   = 0;
-    
-      InvdMaskCursor.pNext  = pInvdTail;
-      if(pInvdTail)
-      {
-         InvdMaskCursor.MMSI  = pInvdTail->MMSI;
-      }
+      trgState  &= (~(0x01<<7));
    }
+   
+   /// 全 0 恢复监控状态
+   if(trgState == 0)
+   {  
+      pMntBerth->trgState  = MNTState_None;
+   }
+   ///多出来 1 触发报警
+   else if( ((trgState ^ pMntBerth->trgState) & trgState) >> 5)
+   {
+      pMntBerth->trgState  = (pMntBerth->trgState & 0xe0) | MNTState_Triggered;
+   }
+
+   /// 其他情况，很淡定的更新监控状态就中了
+   else
+   {
+      pMntBerth->trgState  = trgState | (pMntBerth->trgState & 0x1f);
+   }
+   
+   pIterator  = pMntHeader;
+   while(pIterator)
+   {
+      if( (pIterator->trgState & 0x1f)  ==  MNTState_Triggered )
+      {
+INFO("\aFBI Warning");   
+          break;      
+      }  
+      else
+      {
+         pIterator  = pIterator->pNext;
+      }      
+   }
+   
    
    INVD_print();
    
  }
    Cnt++;
    Cnt  = Cnt%2;
-   
-   
-
 }
 
 
@@ -258,23 +312,20 @@ int INVD_add(long MMSI, long targetMMSI)
    if(pInvdHeader != NULL)
    {
       pIterator  = pInvdHeader;
-//      while(pIterator->pNext)
-       while(pIterator != pInvdTail)
+      
+      while(pIterator)
       {
-         /// Find mmsi 
          if(pIterator->MMSI == MMSI)
          {
-             pIterator->targetMMSI  = targetMMSI;
-             return 0;
+            pIterator->targetMMSI  = targetMMSI;
+            return 0;
          }
-         pIterator  = pIterator->pNext;
+         else
+         {
+            pIterator  = pIterator->pNext;
+         }
       }
-//      if(pIterator->MMSI == MMSI)
-      if(pInvdTail->MMSI == MMSI)
-      {
-         pIterator->targetMMSI  = targetMMSI;
-         return 0;
-      }
+      
       
       /// Add at new tail.
       buf  = INVD_allocOneInvader();
@@ -303,9 +354,6 @@ INFO("alloc invd failed!");
       buf->targetMMSI  = targetMMSI;    
       pInvdHeader  = buf;
       pInvdTail  = buf;
-      
-      InvdMaskCursor.MMSI   = 0;
-      InvdMaskCursor.pNext  = NULL;
       return 1;
    } 
 }
@@ -369,7 +417,7 @@ INFO("invd delete");
                InvdMaskCursor.MMSI   = pIterator->MMSI;
             }
             
-            memset((void*)pBC, 0, sizeof(pBC));
+            memset((void*)pBC, 0, sizeof(INVADER));
             return TRUE;
          }
          else
@@ -388,7 +436,7 @@ INFO("invd delete");
  *  @dscrp Delete all invaderes which of target equal targetMMSI.   
  *
  */
- static void INVD_deleteByTargetMMSI(long targetMMSI)
+void INVD_deleteByTargetMMSI(long targetMMSI)
 {
    INVADER * pIterator  = NULL;
    INVADER * pBC        = NULL;
@@ -396,6 +444,7 @@ INFO("invd delete");
    
    while(pInvdHeader && pInvdHeader->targetMMSI==targetMMSI)
    {
+INFO("delete invd at header");   
       if(pInvdHeader == pInvdTail)
       {
          pInvdTail  = NULL;
@@ -418,7 +467,8 @@ INFO("invader %09ld delete,target:%09ld",pBC->MMSI,pBC->targetMMSI);
 	  
       while( pIterator && (pIterator!=pInvdTail) )
       {
-         if(pIterator->pNext->MMSI == targetMMSI)
+INFO("reach");      
+         if(pIterator->pNext->targetMMSI == targetMMSI)
          {
              pBC  = pIterator->pNext;
              pIterator->pNext  = pBC->pNext;
@@ -433,7 +483,7 @@ INFO("invader %09ld delete,target:%09ld",pBC->MMSI,pBC->targetMMSI);
                 InvdMaskCursor.MMSI   = pIterator->MMSI;
              }
 INFO("invader %09ld delete,target:%09ld",pBC->MMSI,pBC->targetMMSI);             
-             memset((void*)pBC, 0, sizeof(pBC));
+             memset((void*)pBC, 0, sizeof(INVADER));
          }
          else
          {
@@ -546,22 +596,24 @@ static Bool removeById(long Id)
 
 
 
-static void func()
+//static void func()
+static void MNT_filter()
 {
    MNT_BERTH * pIterator  = NULL;
    MNT_BERTH * pBC        = NULL;
    int i  = 0;
    
-   while(pMntHeader && pMntHeader->mntBoat.mntState == MNTState_Delete)
+   while(pMntHeader && pMntHeader->chsState == MNTState_Delete)
    {
 INFO("delete at header");   
       pBC  = pMntHeader;
       pMntHeader  = pMntHeader->pNext;
-
+      
+      
       for(i=N_boat-1;i>=0;i--)
       {
-         if(SimpBerthes[i].pBoat->isInvader == pBC->mntBoat.mmsi)
-            SimpBerthes[i].pBoat->isInvader  = 0;
+         if(SimpBerthes[i].pBerth->Boat.target == pBC->mntBoat.mmsi)
+            SimpBerthes[i].pBerth->Boat.target  = 0;
       } 
       INVD_deleteByTargetMMSI(pBC->mntBoat.mmsi);      
       memset((void*)pBC, 0, sizeof(MNT_BERTH)); 
@@ -576,14 +628,14 @@ INFO("delete at header");
    pBC        = pMntHeader->pNext; 
    while(pBC)
    {
-      if(pBC->mntBoat.mntState == MNTState_Delete)
+      if(pBC->chsState == MNTState_Delete)
       {
 INFO("delete at body");      
          pIterator->pNext  = pBC->pNext;
          for(i=N_boat-1;i>=0;i--)
          {
-            if(SimpBerthes[i].pBoat->isInvader == pBC->mntBoat.mmsi)
-               SimpBerthes[i].pBoat->isInvader  = 0;
+            if(SimpBerthes[i].pBerth->Boat.target == pBC->mntBoat.mmsi)
+               SimpBerthes[i].pBerth->Boat.target  = 0;
          } 
          INVD_deleteByTargetMMSI(pBC->mntBoat.mmsi);  
          memset((void*)pBC, 0, sizeof(MNT_BERTH));
@@ -591,11 +643,9 @@ INFO("delete at body");
       else
       {
         pIterator  = pIterator->pNext;
-      }
-      
+      }     
       pBC  = pIterator->pNext;
-   }
-   
+   }  
 }
 
 
@@ -619,4 +669,6 @@ static void INVD_print()
       pIterator  = pIterator->pNext;
    }
    printf("\n\r");
+   
+
 }

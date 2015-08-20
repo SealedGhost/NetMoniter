@@ -306,16 +306,16 @@ case WM_PAINT:
 
      GUI_DispStringAt(pStrBuf,LV_AllList_WIDTH-100,LV_AllList_Y-30);
     
-     GUI_DispStringAt(SimpBerthes[SelectedRow].pBoat->name,LV_AllList_WIDTH+80,85);       
+     GUI_DispStringAt(SimpBerthes[SelectedRow].pBerth->Boat.name,LV_AllList_WIDTH+80,85);       
     
-     lltostr(SimpBerthes[SelectedRow].pBoat->latitude,pStrBuf);    
+     lltostr(SimpBerthes[SelectedRow].latitude,pStrBuf);    
      GUI_DispStringAt(pStrBuf,LV_AllList_WIDTH+80,125);
      
-     lltostr(SimpBerthes[SelectedRow].pBoat->longitude,pStrBuf);  
+     lltostr(SimpBerthes[SelectedRow].longitude,pStrBuf);  
      GUI_DispStringAt(pStrBuf,LV_AllList_WIDTH+80,165);
      
-     GUI_DispDecAt(SimpBerthes[SelectedRow].pBoat->SOG,LV_AllList_WIDTH+80,205,3); 
-     GUI_DispDecAt(SimpBerthes[SelectedRow].pBoat->COG,LV_AllList_WIDTH+80,245,3);     
+     GUI_DispDecAt(SimpBerthes[SelectedRow].pBerth->Boat.SOG,LV_AllList_WIDTH+80,205,3); 
+     GUI_DispDecAt(SimpBerthes[SelectedRow].pBerth->Boat.COG,LV_AllList_WIDTH+80,245,3);     
 	   	break;		
 		
   case WM_NOTIFY_PARENT:
@@ -452,12 +452,12 @@ static void myListViewListener(WM_MESSAGE* pMsg)
          
          for(i=N_boat-1;i>=0;i--) 
          {
-            if(MNTState_Choosen == SimpBerthes[i].pBoat->mntStates)
+            if(MNTState_Choosen == SimpBerthes[i].pBerth->mntState)
             {     
-               isAdded  = MNT_add(SimpBerthes[i].pBoat);
+               isAdded  = MNT_add(&SimpBerthes[i].pBerth->Boat);
                if( isAdded )
                {         
-                  SimpBerthes[i].pBoat->mntStates  = MNTState_Monited;   
+                  SimpBerthes[i].pBerth->mntState  = MNTState_Monited;   
                }
                else
                {
@@ -477,15 +477,15 @@ static void myListViewListener(WM_MESSAGE* pMsg)
          for(i=N_boat-1;i>=0;i--)
          {
      
-            if(SimpBerthes[i].pBoat->user_id == Id)
+            if(SimpBerthes[i].pBerth->Boat.user_id == Id)
             {          
                break;
             }
          }
               
-         if(SimpBerthes[i].pBoat->mntStates == MNTState_None)     
+         if(SimpBerthes[i].pBerth->mntState == MNTState_None)     
          {
-            SimpBerthes[i].pBoat->mntStates  = MNTState_Choosen;
+            SimpBerthes[i].pBerth->mntState  = MNTState_Choosen;
             LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, selectedRow, "Y");
          }
          break;
@@ -498,22 +498,22 @@ static void myListViewListener(WM_MESSAGE* pMsg)
          for(i=N_boat-1;i>=0;i--)
          {
      
-            if(SimpBerthes[i].pBoat->user_id == Id)
+            if(SimpBerthes[i].pBerth->Boat.user_id == Id)
             {          
                break;
             }
          }
 
-         if(MNTState_Choosen  == SimpBerthes[i].pBoat->mntStates)
+         if(MNTState_Choosen  == SimpBerthes[i].pBerth->mntState)
          {
      
-            SimpBerthes[i].pBoat->mntStates  = MNTState_None;
+            SimpBerthes[i].pBerth->mntState  = MNTState_None;
             LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, selectedRow, "N");
          }
          
-         else if(MNTState_Monited  <= SimpBerthes[i].pBoat->mntStates)
+         else if(MNTState_Monited  <= SimpBerthes[i].pBerth->mntState)
          {  
-            MMSI  = SimpBerthes[i].pBoat->user_id;
+            MMSI  = SimpBerthes[i].pBerth->Boat.user_id;
             myMsg.hWin     = WM_GetClientWindow(confirmWin);
             myMsg.hWinSrc  = thisListView;
             myMsg.MsgId    = USER_MSG_ID_CHOOSE;
@@ -540,29 +540,29 @@ static void myListViewListener(WM_MESSAGE* pMsg)
          for(i=N_boat-1;i>=0;i--)
          {
      
-            if(SimpBerthes[i].pBoat->user_id == Id)
+            if(SimpBerthes[i].pBerth->Boat.user_id == Id)
             {          
                break;
             }
          }
                  
          
-         if(MNTState_None == SimpBerthes[i].pBoat->mntStates)
+         if(MNTState_None == SimpBerthes[i].pBerth->mntState)
          {
        
-            SimpBerthes[i].pBoat->mntStates  = MNTState_Choosen;
+            SimpBerthes[i].pBerth->mntState  = MNTState_Choosen;
             LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, selectedRow, "Y");
          }
-         else if(MNTState_Choosen  == SimpBerthes[i].pBoat->mntStates)
+         else if(MNTState_Choosen  == SimpBerthes[i].pBerth->mntState)
          {
      
-            SimpBerthes[i].pBoat->mntStates  = MNTState_None;
+            SimpBerthes[i].pBerth->mntState  = MNTState_None;
             LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, selectedRow, "N");
          }
          
-         else if(MNTState_Monited  <= SimpBerthes[i].pBoat->mntStates)
+         else if(MNTState_Monited  == SimpBerthes[i].pBerth->mntState)
          {  
-            MMSI  = SimpBerthes[i].pBoat->user_id;
+            MMSI  = SimpBerthes[i].pBerth->Boat.user_id;
             myMsg.hWin     = WM_GetClientWindow(confirmWin);
             myMsg.hWinSrc  = thisListView;
             myMsg.MsgId    = USER_MSG_ID_CHOOSE;
@@ -590,9 +590,9 @@ static void myListViewListener(WM_MESSAGE* pMsg)
                {
                   for(i=N_boat-1;i>=0;i--)
                   {
-                     if(SimpBerthes[i].pBoat->user_id == MMSI)
+                     if(SimpBerthes[i].pBerth->Boat.user_id == MMSI)
                      {
-                        SimpBerthes[i].pBoat->mntStates  = MNTState_None;
+                        SimpBerthes[i].pBerth->mntState  = MNTState_None;
                         break;
                      }
                   }
@@ -652,7 +652,8 @@ static void updateListViewContent(WM_HWIN thisHandle)
          LISTVIEW_AddRow(thisListView, NULL);
          NumOfRows  = LISTVIEW_GetNumRows(thisListView);
       }
-      if(SimpBerthes[i].pBoat->user_id == Id)
+//      if(SimpBerthes[i].pBoat->user_id == Id)
+       if(SimpBerthes[i].pBerth->Boat.user_id == Id)
        {
       
           SelectedRow  = i;      
@@ -663,10 +664,10 @@ static void updateListViewContent(WM_HWIN thisHandle)
       disttostr(pStrBuf, SimpBerthes[i].Dist);
       LISTVIEW_SetItemText(thisListView, LV_AllList_Col_DIST, i, pStrBuf);
       
-      sprintf(pStrBuf, "%09ld", SimpBerthes[i].pBoat->user_id);
+      sprintf(pStrBuf, "%09ld", SimpBerthes[i].pBerth->Boat.user_id);
       LISTVIEW_SetItemText(thisListView, LV_AllList_Col_MMSI, i, pStrBuf);
       
-      if(MNTState_None == SimpBerthes[i].pBoat->mntStates)
+      if(MNTState_None == SimpBerthes[i].pBerth->mntState)
       {
          LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, i, "N");
       }
@@ -749,7 +750,7 @@ int getSelectedIndex(WM_HWIN thisListView,  int col)
    i  = strtoi(pStrBuf);
    for(Index=0;Index<N_boat;Index++)
    {
-      if(SimpBerthes[i].pBoat->user_id == Id)
+      if(SimpBerthes[i].pBerth->Boat.user_id == Id)
       {
          return i;      
       }

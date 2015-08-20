@@ -254,8 +254,8 @@ void getMntWrapPara(long *halfDiff_lg, long* halfDiff_lt, scale_map* wrap_scale)
       pIterator  = pIterator->pNext;
    }
    
-   maxDiff_lg  = max_lg - min_lg;
-   maxDiff_lt  = max_lt - min_lt;
+   maxDiff_lg  = max_lg - min_lg + 1000;
+   maxDiff_lt  = max_lt - min_lt + 1000;
    
    *halfDiff_lg  = max_lg/2 + min_lg/2;
    *halfDiff_lt  = max_lt/2 + min_lt/2;

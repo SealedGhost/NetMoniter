@@ -295,14 +295,14 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
         GUI_DispDecAt(pIterator->mntBoat.pBoat->COG, LV_MoniteList_WIDTH+300, 200, 3);
      }
      
-     if(pIterator->mntBoat.mntSetting.DSP_Setting.isEnable == DISABLE)
+     if(pIterator->mntSetting.DSP_Setting.isEnable == DISABLE)
         GUI_DispStringAt("关闭", LV_MoniteList_WIDTH+60,240);
      else
         GUI_DispStringAt("开启",  LV_MoniteList_WIDTH+60,240);
         
-     GUI_DispDecAt(pIterator->mntBoat.mntSetting.BGL_Setting.Dist,
+     GUI_DispDecAt(pIterator->mntSetting.BGL_Setting.Dist,
                LV_MoniteList_WIDTH+110,280,3);
-     GUI_DispDecAt(pIterator->mntBoat.mntSetting.DRG_Setting.Dist,
+     GUI_DispDecAt(pIterator->mntSetting.DRG_Setting.Dist,
                  LV_MoniteList_WIDTH+110,320,3);   
      break;
 

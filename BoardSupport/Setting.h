@@ -43,18 +43,17 @@ struct _MNT_BOAT
    long mmsi;
    long lg;
    long lt;
-   boat * pBoat;
-   
-   char name[20];
-   MNT_States  mntState;
-   MNT_SETTING mntSetting;
-   
+   boat * pBoat;   
+   char name[20];   
 };
 
 typedef struct _MNT_BERTH MNT_BERTH;
 struct _MNT_BERTH
 {
   MNT_BOAT mntBoat;
+  MNT_SETTING mntSetting;
+  unsigned char chsState;
+  unsigned char trgState;
   MNT_BERTH * pNext;
 };
 

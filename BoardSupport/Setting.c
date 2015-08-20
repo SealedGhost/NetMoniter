@@ -15,72 +15,7 @@ extern int N_boat;
 extern SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
 extern CONF_SYS  SysConf;
 
-/**@brief  MNT_insert
- *
- * @func   Put choosen boats on AllListView  into MNT_Boats[]
- * @input  pMNT_Boat  Store array(MNT_Boats[]).
- *         mmsi       Choosen boat's mmsi
-           name       Choosen boat's name
- * @output 
- * @return The position index of boat been inserted.
- */
-int MNT_insert(MNT_BOAT * pMNT_Boat, boat * pBoat, long mmsi, char * name)
-{
-   int i  = 0;
-   int k  = 0; 
-   for(i=0;i<MNT_NUM_MAX;i++)
-   {
-      if(pMNT_Boat[i].mmsi == 0)
-      {
-         pMNT_Boat[i].mmsi  = mmsi;
-         pMNT_Boat[i].pBoat  = pBoat;
-         pMNT_Boat[i].mntState  = MNTState_Default;
-         pMNT_Boat[i].pBoat->mntStates  = MNTState_Monited;
-         for(k=0;k<20;k++)
-         {
-            pMNT_Boat[i].name[k]  = name[k];
-            if(name[k] == '\0')
-            {
-               break;
-            }
-         }
-         pMNT_Boat[i].name[19]  = '\0';     
-         N_monitedBoat++;
-         return i;
-      }
-   }
-   
-   return -1;
-}
 
-int MNT_deleteByIndex(MNT_BOAT * pMNT_Boat,int index, long id)
-{
-   if(pMNT_Boat[index].mmsi != id)
-   {
-      return -1;
-   }
-   memset(pMNT_Boat+index,0, sizeof(MNT_BOAT));
-   N_monitedBoat--;
-   return 0;
-}
-
-
-int MNT_deleteById(MNT_BOAT * pMNT_Boat, long id)
-{
-   int i  = 0;
-   for(i=0;i<N_monitedBoat;i++)
-   {
-      if(pMNT_Boat[i].mmsi == id)
-      {
-         pMNT_Boat[i].pBoat->mntStates  = MNTState_None;
-         memset(pMNT_Boat+i, 0, sizeof(MNT_BOAT));
-         N_monitedBoat--;
-         return i;
-      }
-   }
-   
-   return -1;
-}
 
 /**@brief  MNT_makeSettingUp
  * 
@@ -91,7 +26,6 @@ int MNT_deleteById(MNT_BOAT * pMNT_Boat, long id)
  * @Outpu 
  * @return Times of copy. 
  */
-
 void MNT_makeSettingUp (MNT_SETTING * pMNT_Setting)
 {
    int i  = 0;
@@ -99,46 +33,47 @@ void MNT_makeSettingUp (MNT_SETTING * pMNT_Setting)
    
    while(pIterator)
    {    
-      if(   (pIterator->mntBoat.mntState == MNTState_Choosen)
-          ||(pIterator->mntBoat.mntState == MNTState_Default)  )
+      if(   (pIterator->chsState == MNTState_Choosen)
+          ||(pIterator->chsState == MNTState_Default)  )
       {
-         pIterator->mntBoat.mntState  = MNTState_Monited;
+         pIterator->chsState  = MNTState_Monited;
+         pIterator->trgState  = 0;
          
-         pIterator->mntBoat.mntSetting.DSP_Setting.isEnable  = 
+         pIterator->mntSetting.DSP_Setting.isEnable  = 
                    pMNT_Setting->DSP_Setting.isEnable;
          
-         pIterator->mntBoat.mntSetting.BGL_Setting.isEnable  = 
+         pIterator->mntSetting.BGL_Setting.isEnable  = 
                    pMNT_Setting->BGL_Setting.isEnable;
-         pIterator->mntBoat.mntSetting.BGL_Setting.isSndEnable  = 
+         pIterator->mntSetting.BGL_Setting.isSndEnable  = 
                    pMNT_Setting->BGL_Setting.isSndEnable;
                    
-         pIterator->mntBoat.mntSetting.DRG_Setting.isEnable  = 
+         pIterator->mntSetting.DRG_Setting.isEnable  = 
                    pMNT_Setting->DRG_Setting.isEnable;
-         pIterator->mntBoat.mntSetting.DRG_Setting.isSndEnable  = 
+         pIterator->mntSetting.DRG_Setting.isSndEnable  = 
                    pMNT_Setting->DRG_Setting.isSndEnable;  
                  
                    
          if(SysConf.Unit == UNIT_nm)
          {
-            pIterator->mntBoat.mntSetting.BGL_Setting.Dist  = 
+            pIterator->mntSetting.BGL_Setting.Dist  = 
                       pMNT_Setting->BGL_Setting.Dist*10;
-            pIterator->mntBoat.mntSetting.DRG_Setting.Dist  = 
+            pIterator->mntSetting.DRG_Setting.Dist  = 
                       pMNT_Setting->DRG_Setting.Dist*10;                       
          }
          else if(SysConf.Unit == UNIT_km)
          {
-            pIterator->mntBoat.mntSetting.BGL_Setting.Dist  =
+            pIterator->mntSetting.BGL_Setting.Dist  =
                       pMNT_Setting->BGL_Setting.Dist*54/10;
-            pIterator->mntBoat.mntSetting.DRG_Setting.Dist  = 
+            pIterator->mntSetting.DRG_Setting.Dist  = 
                       pMNT_Setting->DRG_Setting.Dist*54/10; 
          }                    
       }
       
-      else if(pIterator->mntBoat.mntState == MNTState_None)
+      else if(pIterator->chsState == MNTState_None)
       {
-         pIterator->mntBoat.mntState  = MNTState_Default;
+         pIterator->chsState  = MNTState_Default;
          
-         pIterator->mntBoat.mntSetting.DSP_Setting.isEnable  = ENABLE;
+         pIterator->mntSetting.DSP_Setting.isEnable  = ENABLE;
       }
       
       pIterator  = pIterator->pNext;
@@ -175,6 +110,8 @@ Bool MNT_add(boat * pBoat)
    MNT_BERTH * pIterator  = NULL; 
    
    pIterator  = pMntHeader;
+   
+   /// If exist ,none
    while(pIterator)
    {
       if(pIterator->mntBoat.mmsi == pBoat->user_id)
@@ -202,15 +139,14 @@ INFO("allco mnt berth failed!");
          break;
       }
    }
-   buf->mntBoat.name[19]  = '\0';  
    
+   buf->mntBoat.name[19]  = '\0';  
    buf->mntBoat.pBoat  = pBoat;
    buf->mntBoat.mmsi  = pBoat->user_id;
    buf->mntBoat.lt    = pBoat->latitude;
    buf->mntBoat.lg    = pBoat->longitude;
-   buf->mntBoat.mntState  = MNTState_Default;
-   buf->mntBoat.mntSetting.DSP_Setting.isEnable  = ENABLE;
-   buf->mntBoat.pBoat->mntStates  = MNTState_Monited;
+   buf->chsState      = MNTState_Default;
+   buf->mntSetting.DSP_Setting.isEnable  = ENABLE;
    
    if(pMntHeader != NULL)
    {
@@ -236,8 +172,12 @@ void MNT_clear(long Id)
    int i  = 0;
    for(i=N_boat-1;i>=0;i--)
    {
-      if(SimpBerthes[i].pBoat->isInvader == Id)
-         SimpBerthes[i].pBoat->isInvader  = 0;
+//      if(SimpBerthes[i].pBoat->isInvader == Id)
+//         SimpBerthes[i].pBoat->isInvader  = 0;
+      if(SimpBerthes[i].pBerth->Boat.target == Id)
+      {
+         SimpBerthes[i].pBerth->Boat.target  = 0;
+      }
    }
 }
 
@@ -248,9 +188,11 @@ Bool MNT_removeById(long Id)
    
    while(pIterator)
    {
+//      if(pIterator->mntBoat.mmsi == Id)
       if(pIterator->mntBoat.mmsi == Id)
       {
-         pIterator->mntBoat.mntState  = MNTState_Delete;
+//         pIterator->mntBoat.mntState  = MNTState_Delete;
+         pIterator->chsState  = MNTState_Delete;
          return TRUE;
       }
       else
@@ -351,35 +293,6 @@ void printSetting(MNT_SETTING * p_setting)
 }
 
 
-
-void printMoniteSetting(MNT_BOAT * pMNT_Boat)
-{
-   int i  = 0;
-   int cnt  = 0;
-   for(i=0;i<N_monitedBoat;i++)
-   {
-      if(pMNT_Boat[i].mmsi > 0)
-      {
-         if(pMNT_Boat[i].mntState == MNTState_Default)
-            cnt++;
-         printf("\r\n");
-         printf("%d-mmsi %ld\r\n",i,pMNT_Boat[i].mmsi);
-         printf("%d-name %s\r\n", i,pMNT_Boat[i].name);
-   //      printf("   DSP     %s\r\n",mntBoats[i].MNTSetting.DSP_Setting.isEnable>DISABLE?"Enable":"Disable");
-   //      printf("   BGL     %s\r\n",mntBoats[i].MNTSetting.BGL_Setting.isEnable>DISABLE?"Enable":"Disable");
-   //      printf("       snd %s\r\n",mntBoats[i].MNTSetting.BGL_Setting.isSndEnable>DISABLE?"Enable":"Disable");
-   //      printf("      dist %d\r\n",mntBoats[i].MNTSetting.BGL_Setting.dist);
-   //      printf("   DRG     %s\r\n",mntBoats[i].MNTSetting.DRG_Setting.isEnable>DISABLE?"Enable":"Disable");
-   //      printf("       snd %s\r\n",mntBoats[i].MNTSetting.DRG_Setting.isSndEnable>DISABLE?"Enable":"Disable");
-   //      printf("      dist %d\r\n",mntBoats[i].MNTSetting.DRG_Setting.dist);
-         printSetting(&(pMNT_Boat[i].mntSetting));
-         printf("/r/nState:%d",pMNT_Boat[i].mntState);
-         printf("still hava %d is default\r\n",cnt);
-      }
-   } 
-}
-
-
 void MNT_printSetting()
 {
    MNT_BERTH * pIterator  = pMntHeader;
@@ -387,7 +300,7 @@ void MNT_printSetting()
    int i  = 0;
    while(pIterator)
    {
-         if(pIterator->mntBoat.mntState == MNTState_Default)
+         if(pIterator->chsState == MNTState_Default)
             cnt++;
          printf("\r\n");
          printf("%d-mmsi %ld\r\n",i,pIterator->mntBoat.mmsi);
@@ -399,8 +312,8 @@ void MNT_printSetting()
    //      printf("   DRG     %s\r\n",mntBoats[i].MNTSetting.DRG_Setting.isEnable>DISABLE?"Enable":"Disable");
    //      printf("       snd %s\r\n",mntBoats[i].MNTSetting.DRG_Setting.isSndEnable>DISABLE?"Enable":"Disable");
    //      printf("      dist %d\r\n",mntBoats[i].MNTSetting.DRG_Setting.dist);
-         printSetting(&(pIterator->mntBoat.mntSetting));
-         printf("/r/n State:%d,%d",pIterator->mntBoat.mntState,pIterator->mntBoat.pBoat->mntStates);
+         printSetting(&(pIterator->mntSetting));
+         printf("/r/n State:%d",pIterator->chsState);
          printf("still hava %d is default\r\n",cnt);
          pIterator  = pIterator->pNext;
          i++;
