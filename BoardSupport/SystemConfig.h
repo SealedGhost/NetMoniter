@@ -12,12 +12,16 @@
  */
 #include "GUI.h"
 #include "uart.h"
+#include "lpc177x_8x_eeprom.h"
+
+#define OFFSETOF(x) ((uint8_t*)x-(uint8_t*)MNT_Berthes)
+
 
 typedef enum _SKINS SKINS;
 enum _SKINS {SKIN_Night=0, SKIN_Day};
 
 typedef enum _UNITS   UNITS;
-enum _UNITS{UNIT_km=1, UNIT_nm};
+enum _UNITS{UNIT_km=0, UNIT_nm};
 
 typedef enum _BOAT_SHAPES   BOAT_SHAPES;
 enum _BOAT_SHAPES{SHAPE_Fish=0, SHAPE_Boat};
@@ -28,9 +32,9 @@ enum _BOAT_SHAPES{SHAPE_Fish=0, SHAPE_Boat};
 typedef struct _CONF_SND CONF_SND;
 struct _CONF_SND
 {
-   short Vol;       ///  Volumn.
-   short ArmSnd;
-   short KeySnd;  
+   char Vol;       ///  Volumn.
+   char ArmSnd;
+   char KeySnd;  
 };
 
 
@@ -38,7 +42,7 @@ struct _CONF_SND
 typedef struct _CONF_LIGHT CONF_LIGHT;
 struct _CONF_LIGHT
 {
-   short Brightness;
+   unsigned char Brightness;
 };
 
 
@@ -187,7 +191,7 @@ struct _CONF_SYS
 {
   SKINS                Skin;        /// Skin  config.
  	CONF_SND             Snd;         /// Sound config.
-	 short                Brt;  /// Light config.
+	 char                 Brt;          /// Light config.
   UNITS                Unit;        /// Unit  config.
   BOAT_SHAPES          Shape;       /// Shape config.
 };
@@ -201,7 +205,7 @@ extern MntSetWin_COLOR * pMntSetWinSkin;
 
 
 void sysInit(void);
-void sysLoad(void);
+Bool sysLoad(void);
 void sysStore(void);
 
 #endif

@@ -52,9 +52,9 @@ extern  char* pStrBuf;
 extern MNT_SETTING mntSetting;           // Struct contains etWin  content.
 
 extern MNT_BERTH MNT_Berthes[MNT_NUM_MAX];
-extern MNT_BERTH * pMntHeader;
+//extern MNT_BERTH * pMntHeader;
 //extern MNT_BOAT mntBoats[MNT_BOAT_NUM_MAX];
-
+extern CONF_SYS SysConf;
 
 /*----------------- external functions --------------------------*/
 extern int getSelectedBoatIndex(WM_HWIN thisHandle, int col, int row);
@@ -147,6 +147,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
   
   
   case WM_INIT_DIALOG:
+    pLVSkin  = &(lvWinSkins[SysConf.Skin]);
     //
     // Initialization of 'Window'
     //
@@ -338,7 +339,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 			    		break;
 					
 				case GUI_KEY_BACKSPACE:   
-         while( (MNT_Berthes[index].chsState>=MNTState_Monited) ||  (MNT_Boats[index].mmsi==0) )
+         while( MNT_Berthes[index].chsState>=MNTState_Monited )
          {
             index++;
             if(index >= MNT_NUM_MAX)

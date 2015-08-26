@@ -59,12 +59,12 @@ static BERTH * allocOneBerth(void);
 int insert_18(struct message_18 * p_msg)
 {
    int i  = 0; 
+   
    /// Give up berthes out of range .
    if( (p_msg->longitude < mothership.longitude-30000)  ||  (p_msg->longitude > mothership.longitude+30000) ) 
         return 0;
    if( (p_msg->latitude < mothership.latitude-30000)  ||  (p_msg->latitude > mothership.latitude+30000) )
-        return 0;
-   
+        return 0; 
    /// Update existent berth
    for(i=0;i<BOAT_LIST_SIZE_MAX;i++)
    {
@@ -93,7 +93,6 @@ int insert_18(struct message_18 * p_msg)
    /// Add non-existent berth
    if(add_18(p_msg))
    {
-//printf("Header:%p,Tail:%p\n\r",pHeader,pTail);
       return 1;
    }
    return -1;
@@ -106,8 +105,7 @@ int insert_24A(struct message_24_partA * p_msg)
    int i  = 0;
    
    if(0 == p_msg->user_id)
-      return 0;
-      
+      return 0;     
    /// This Id exist
    for(i=0;i<BOAT_LIST_SIZE_MAX;i++)
    {
@@ -511,7 +509,7 @@ printf("Delete %09ld\n\r", pCur->Boat.user_id);
          {
             if(pIterator->mntBoat.mmsi == pCur->Boat.user_id)
             {
-               pIterator->mntBoat.pBoat  = NULL;
+               pIterator->pBoat  = NULL;
                break;
             }
             else

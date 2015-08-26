@@ -10,6 +10,7 @@
 #include "DMA.h"
 #include "Check.h"
 #include "SystemConfig.h"
+#include "uart.h"
 
 
 
@@ -93,21 +94,16 @@ int list_endIndex  = -1;
 
 ///* ADDRESS: 0xAC000000  SIZE: 0x400000  */
 #pragma arm section rwdata = "SD_RAM1", zidata = "SD_RAM1"
-//_boat boat_list[BOAT_LIST_SIZE_MAX];  0x10000: 64K
-//_boat *boat_list_p[BOAT_LIST_SIZE_MAX];
+BERTH Berthes[BOAT_LIST_SIZE_MAX];
 SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
 _boat_m24A boat_list_24A[BOAT_LIST_SIZE_MAX];
 _boat_m24A *boat_list_p24A[BOAT_LIST_SIZE_MAX];
-BERTH Berthes[BOAT_LIST_SIZE_MAX];
+
 
 #pragma arm section rwdata
 
-//_boat boat_list[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1C00000)));
+
 BERTH Berthes[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1D00000)));
-
-//_boat boat_list[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1D00000)));
-
-//_boat *boat_list_p[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1E00000)));
 SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1E00000)));
 
 _boat_m24A boat_list_24A[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1F00000)));;
@@ -117,7 +113,6 @@ _boat_m24A *boat_list_p24A[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1F80000)));
 _boat_m24B boat_list_24B[BOAT_LIST_SIZE_MAX];
 _boat_m24B *boat_lisp_p24B[BOAT_LIST_SIZE_MAX];
 
-MNT_BOAT MNT_Boats[MNT_NUM_MAX];
 
 struct message_18 msg_18;
 
@@ -158,9 +153,7 @@ void Insert_Task(void *p_arg)  //等待接收采集到的数据
 	message_18 text_out;
 	message_24_partA text_out_24A;
 	type_of_ship text_out_type_of_ship; 
-
- USER_Init();
- 
+// USER_Init();
 	while(1)
 	{	
 
@@ -169,7 +162,6 @@ void Insert_Task(void *p_arg)  //等待接收采集到的数据
   LPC_recCnt++; 
  
     tmp  = translate_(s,&text_out,&text_out_24A,&text_out_type_of_ship); 
-
     OSMutexPend(Refresher, 0, &myErr);     
     switch(tmp)
     {
@@ -237,10 +229,12 @@ void App_TaskStart(void)//初始化UCOS，初始化SysTick节拍，并创建三个任务
   mothership.latitude = MOTHERShIP_LA;
   mothership.longitude = MOTHERShIP_LG;
   mothership.true_heading  = 0;
-
-  sysInit();
+ 
+ sysInit();
+	UART_Config(2);	
+	DMA_Config(1); 
   
-	OSInit();
+	OSInit();  
 	SysTick_Init();/* 初始化SysTick定时器 */
  Refresher  = OSMutexCreate(6,&myErr);
  Updater    = OSMutexCreate(6,&myErr_2);
@@ -253,6 +247,7 @@ void App_TaskStart(void)//初始化UCOS，初始化SysTick节拍，并创建三个任务
 //	OSTaskCreate(Task_Stack_Use,(void *)0,(OS_STK *)&Task_Stack_Use_Stack[Task_Stack_Use_STACK_SIZE-1],  Task_Stack_Use_PRIO);/* 创建任务 Refresh_Task */
 //lpc1788_DMA_Init();  
 //	DMA_Config(1);
+
 	OSStart();
 }
 
@@ -262,6 +257,7 @@ int translate_(unsigned char *text,message_18 *text_out,message_24_partA *text_o
   int i=0,comma=0;
   int tmp  = 0;
   unsigned long tempgprmc  = 0;
+  unsigned long shiftReg  = 0;
   
   if((text[0]!='!')&&(text[0]!='$'))
     return 0;
@@ -303,33 +299,68 @@ int translate_(unsigned char *text,message_18 *text_out,message_24_partA *text_o
 	else if((text[1]=='G')&&(text[2]=='P')&&(text[3]=='R')&&(text[4]=='M')&&(text[5]=='C')) //GPS GPRMC
 	{
 
-    tempgprmc = text[6]; mothership.latitude = tempgprmc << 24;
-    tempgprmc = text[7]; mothership.latitude = mothership.latitude + (tempgprmc << 16);
-    tempgprmc = text[8]; mothership.latitude = mothership.latitude + (tempgprmc << 8);
-    mothership.latitude = mothership.latitude + text[9];
-    mothership.latitude = mothership.latitude/10;
+//    tempgprmc = text[6]; mothership.latitude = tempgprmc << 24;
+//    tempgprmc = text[7]; mothership.latitude = mothership.latitude + (tempgprmc << 16);
+//    tempgprmc = text[8]; mothership.latitude = mothership.latitude + (tempgprmc << 8);
+//    mothership.latitude = mothership.latitude + text[9];
+//    mothership.latitude = mothership.latitude/10;
     
-    tempgprmc = text[10]; mothership.longitude = tempgprmc << 24;
-    tempgprmc = text[11]; mothership.longitude = mothership.longitude + (tempgprmc << 16);
-    tempgprmc = text[12]; mothership.longitude = mothership.longitude + (tempgprmc << 8);
-    mothership.longitude = mothership.longitude + text[13];
-    mothership.longitude = mothership.longitude/10;
+    shiftReg   = text[6];
+    shiftReg   = (shiftReg << 8) | text[7];
+    shiftReg   = (shiftReg << 8) | text[8];
+    shiftReg   = (shiftReg << 8) | text[9];
+    if(shiftReg)
+       mothership.latitude  = shiftReg / 10;
     
-    tempgprmc = text[14]; mothership.SOG = mothership.SOG + (tempgprmc << 8);
-    mothership.SOG = mothership.SOG + text[15];
-   
-    tempgprmc = text[16]; mothership.COG = mothership.COG + (tempgprmc << 8);
-    mothership.COG = mothership.COG + text[17];
+    
+//    tempgprmc = text[10]; mothership.longitude = tempgprmc << 24;
+//    tempgprmc = text[11]; mothership.longitude = mothership.longitude + (tempgprmc << 16);
+//    tempgprmc = text[12]; mothership.longitude = mothership.longitude + (tempgprmc << 8);
+//    mothership.longitude = mothership.longitude + text[13];
+//    mothership.longitude = mothership.longitude/10;
+      
+    shiftReg   = text[10];
+    shiftReg   = (shiftReg << 8) | text[11];
+    shiftReg   = (shiftReg << 8) | text[12];
+    shiftReg   = (shiftReg << 8) | text[13];
+    if(shiftReg)
+       mothership.longitude  = shiftReg / 10;
+    
+//    tempgprmc = text[14]; mothership.SOG = mothership.SOG + (tempgprmc << 8);
+//    mothership.SOG = mothership.SOG + text[15];
 
-    tempgprmc = text[18]; SYS_Date = tempgprmc << 24;
-    tempgprmc = text[19]; SYS_Date = SYS_Date + (tempgprmc << 16);
-    tempgprmc = text[20]; SYS_Date = SYS_Date + (tempgprmc << 8);
-    SYS_Date = SYS_Date + text[21];
+      shiftReg   = text[14];
+      shiftReg   = (shiftReg << 8) | text[15];
+      mothership.SOG  = shiftReg;
    
-    tempgprmc = text[22]; SYS_Time = tempgprmc << 24;
-    tempgprmc = text[23]; SYS_Time = SYS_Time + (tempgprmc << 16);
-    tempgprmc = text[24]; SYS_Time = SYS_Time + (tempgprmc << 8);
-    SYS_Time = SYS_Time + text[25];	
+//    tempgprmc = text[16]; mothership.COG = mothership.COG + (tempgprmc << 8);
+//    mothership.COG = mothership.COG + text[17];
+
+      shiftReg   = text[16];
+      shiftReg   = (shiftReg << 8) | text[17];
+      mothership.COG  = shiftReg;
+
+//    tempgprmc = text[18]; SYS_Date = tempgprmc << 24;
+//    tempgprmc = text[19]; SYS_Date = SYS_Date + (tempgprmc << 16);
+//    tempgprmc = text[20]; SYS_Date = SYS_Date + (tempgprmc << 8);
+//    SYS_Date = SYS_Date + text[21];
+
+      shiftReg   = text[18];
+      shiftReg   = (shiftReg << 8) | text[19];
+      shiftReg   = (shiftReg << 8) | text[20];
+      shiftReg   = (shiftReg << 8) | text[21];
+      SYS_Date   = shiftReg;
+   
+//    tempgprmc = text[22]; SYS_Time = tempgprmc << 24;
+//    tempgprmc = text[23]; SYS_Time = SYS_Time + (tempgprmc << 16);
+//    tempgprmc = text[24]; SYS_Time = SYS_Time + (tempgprmc << 8);
+//    SYS_Time = SYS_Time + text[25];	
+
+      shiftReg   = text[22];
+      shiftReg   = (shiftReg << 8) | text[23];
+      shiftReg   = (shiftReg << 8) | text[24];
+      shiftReg   = (shiftReg << 8) | text[25];
+      SYS_Time   = shiftReg;
 	}
 
 return 0;

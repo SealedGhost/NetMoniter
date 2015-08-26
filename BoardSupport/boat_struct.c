@@ -213,10 +213,10 @@ void MNT_dispBoat(const scale_map * scale,  long center_lg, long center_lt, MNT_
    
    while(pIterator)
    {
-      if(pIterator->mntBoat.pBoat)
+      if(pIterator->pBoat)
       {
-         base_x  = 1.0*scale->pixel * (pIterator->mntBoat.pBoat->longitude - center_lg) / scale->minute;
-         base_y  = 1.0*scale->pixel * (pIterator->mntBoat.pBoat->latitude - center_lt) / scale->minute;
+         base_x  = 1.0*scale->pixel * (pIterator->pBoat->longitude - center_lg) / scale->minute;
+         base_y  = 1.0*scale->pixel * (pIterator->pBoat->latitude - center_lt) / scale->minute;
          
          base_x  = (MAP_LEFT/2 + MAP_RIGHT/2) + base_x;
          base_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - base_y;
@@ -226,24 +226,24 @@ void MNT_dispBoat(const scale_map * scale,  long center_lg, long center_lt, MNT_
          GUI_SetPenSize(2); 
          
 ///   DSP boat conf.      
-         if(pIterator->mntSetting.DSP_Setting.isEnable == ENABLE) 
+         if(pIterator->mntBoat.mntSetting.DSP_Setting.isEnable == ENABLE) 
          {
             GUI_SetColor(GUI_LIGHTCYAN);    
          }
          
-         draw_ship(pIterator->mntBoat.pBoat, base_x, base_y,pPoints, PointNum);
+         draw_ship(pIterator->pBoat, base_x, base_y,pPoints, PointNum);
     
 ///   BGL circle conf.
-         if(pIterator->mntSetting.BGL_Setting.isEnable == ENABLE)
+         if(pIterator->mntBoat.mntSetting.BGL_Setting.isEnable == ENABLE)
          {
             GUI_SetColor(BGL_BOAT_COLOR);
             GUI_SetPenSize(1); 
             
-            GUI_DrawCircle(base_x, base_y,pIterator->mntSetting.BGL_Setting.Dist*scale->pixel/scale->minute);            
+            GUI_DrawCircle(base_x, base_y,pIterator->mntBoat.mntSetting.BGL_Setting.Dist*scale->pixel/scale->minute);            
          } 
     
 ///   Drg circle conf. 
-         if(pIterator->mntSetting.DRG_Setting.isEnable == ENABLE)
+         if(pIterator->mntBoat.mntSetting.DRG_Setting.isEnable == ENABLE)
          {
             base_x  = 1.0*scale->pixel * (pIterator->mntBoat.lg - center_lg) / scale->minute;
             base_y  = 1.0*scale->pixel * (pIterator->mntBoat.lt - center_lt) / scale->minute;
@@ -253,7 +253,7 @@ void MNT_dispBoat(const scale_map * scale,  long center_lg, long center_lt, MNT_
             
             GUI_SetColor(DRG_BOAT_COLOR);
             GUI_SetPenSize(DRG_PENSIZE);        
-            GUI_DrawCircle(base_x, base_y, pIterator->mntSetting.DRG_Setting.Dist*scale->pixel/scale->minute);
+            GUI_DrawCircle(base_x, base_y, pIterator->mntBoat.mntSetting.DRG_Setting.Dist*scale->pixel/scale->minute);
          }
       }
       else

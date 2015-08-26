@@ -45,7 +45,6 @@ extern short N_monitedBoat;
 extern WM_HWIN menuWin;
 extern WM_HWIN subWins[4];
 extern WM_HWIN confirmWin;
-extern MNT_BOAT MNT_Boats[MNT_NUM_MAX];
 extern MNT_SETTING mntSetting;
 
 extern SIMP_BERTH Simp_Berthes[BOAT_LIST_SIZE_MAX];
@@ -134,11 +133,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        break;  
 	
   case WM_INIT_DIALOG:
-    //
-    // Initialization of 'text'
-    //
-
-    
+       
     //
     // Initialization of 'bt_OK'
     //

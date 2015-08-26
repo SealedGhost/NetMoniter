@@ -64,7 +64,7 @@
 extern WM_HWIN menuWin;
 extern WM_HWIN confirmWin;
 extern WM_HWIN subWins[4];
-extern WM_HWIN etWin;
+extern WM_HWIN btWin;
 
 /// 
 extern CONF_SYS SysConf;
@@ -197,9 +197,11 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        break;
 			
   case WM_INIT_DIALOG:
+       pMntSetWinSkin  = &(MntSetWinSkins[SysConf.Skin]);
 //     //
 //     // Initialization of 'Button'
 //     //
+     
      Buttons[0]  = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_NIGHT);
      if(SysConf.Skin == SKIN_Night)
         BUTTON_SetText(Buttons[0], "关闭");
@@ -299,7 +301,15 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
              myMsg.MsgId  = USER_MSG_SHAPE;
              myMsg.Data.v = agentConf.Shape;
              WM_SendMessage(myMsg.hWin, &myMsg);
-          }          
+          }  
+
+          if(agentConf.Unit != SysConf.Unit)          
+          {
+             myMsg.MsgId  = USER_MSG_UNIT;
+             myMsg.Data.v  = agentConf.Unit;
+             WM_SendMessage(hDlg_FishMap, &myMsg);
+             WM_SendMessage(btWin, &myMsg);
+          }
              SysConf.Brt  = agentConf.Brt;
              SysConf.Shape  = agentConf.Shape;
              SysConf.Skin   = agentConf.Skin;
@@ -320,11 +330,39 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
           agentConf.Snd.ArmSnd  = SysConf.Snd.ArmSnd;
           agentConf.Snd.KeySnd  = SysConf.Snd.KeySnd;
           agentConf.Unit        = SysConf.Unit;
-          agentConf.Shape       = SysConf.Shape;          
-       }
+          agentConf.Shape       = SysConf.Shape;    
+          
+          if(SysConf.Skin == SKIN_Night)
+             BUTTON_SetText(Buttons[0], "关闭");
+          else
+             BUTTON_SetText(Buttons[0], "开启");
        
-
-       
+          sprintf(pStrBuf, "%d", SysConf.Snd.Vol);
+          BUTTON_SetText(Buttons[1], pStrBuf); 
+        
+          sprintf(pStrBuf, "%d", SysConf.Brt);
+          BUTTON_SetText(Buttons[2], pStrBuf); 
+            
+          sprintf(pStrBuf, "%d", SysConf.Snd.ArmSnd);
+          BUTTON_SetText(Buttons[3], pStrBuf);   
+        
+          sprintf(pStrBuf, "%d", SysConf.Snd.KeySnd);
+          BUTTON_SetText(Buttons[4], pStrBuf);
+              
+          if(SysConf.Unit == UNIT_nm)
+             BUTTON_SetText(Buttons[5], "nm");      
+          else 
+             BUTTON_SetText(Buttons[5], "km");
+         
+          if(SysConf.Shape == SHAPE_Fish)
+             BUTTON_SetText(Buttons[6], "fish");
+          else 
+             BUTTON_SetText(Buttons[6], "boat");          
+          
+          myMsg.Data.v  = SysConf.Skin;
+          myMsg.MsgId  = USER_MSG_SKIN;          
+          WM_SendMessage(pMsg->hWin, &myMsg);
+       }      
        
        WM_SetFocus(menuWin);
        break;
@@ -483,12 +521,12 @@ INFO("KeySnd: %d", agentConf.Snd.KeySnd);
                            if(agentConf.Unit == UNIT_nm)
                            {
                               agentConf.Unit  = UNIT_km;
-                              BUTTON_SetText(thisButton, "nm");
+                              BUTTON_SetText(thisButton, "km");
                            }
-                           else 
+                           else if(agentConf.Unit == UNIT_km)
                            {
                               agentConf.Unit  = UNIT_nm;
-                              BUTTON_SetText(thisButton, "km");
+                              BUTTON_SetText(thisButton, "nm");
                            }
                            break;
                       case ID_BUTTON_SHAPE:

@@ -4,11 +4,8 @@
 #include "uart.h"
 #include "Drawinformation.h"
 #include "WinAllFishMap.h"
-#include "WinAllList.h"
-#include "WinMonitorList.h"
-#include "WinMonitorMap.h"
-#include "WinSetting.h"
-#include "WinMonitSet.h"
+
+
 #include "lpc177x_8x_uart.h"
 #include "boat_struct.h"
 #include "map_draw.h"
@@ -19,7 +16,8 @@
 #define USER_MSG_ID_REPLY  (WM_USER + 0x02)
 #define USER_MSG_SKIN      (WM_USER + 0x03)
 #define USER_MSG_SHAPE     (WM_USER + 0x04)
-#define USER_MSG_BRING     (WM_USER + 0x05)
+#define USER_MSG_UNIT      (WM_USER + 0x05)
+#define USER_MSG_BRING     (WM_USER + 0x06)
 
 #define STORE_SETTING   1
 #define CANCEL_MONITED  2

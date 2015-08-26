@@ -1,10 +1,9 @@
 #ifndef _SETTING_H
 #define _SETTING_H
 
-
+#include "Config.h"
 #include "boat_struct.h"
 #include "lpc_types.h"
-
 
 
 typedef struct _DSP_SETTING DSP_SETTING;
@@ -43,40 +42,33 @@ struct _MNT_BOAT
    long mmsi;
    long lg;
    long lt;
-   boat * pBoat;   
-   char name[20];   
+ 
+   char name[20]; 
+  MNT_SETTING mntSetting;   
 };
 
 typedef struct _MNT_BERTH MNT_BERTH;
 struct _MNT_BERTH
 {
   MNT_BOAT mntBoat;
-  MNT_SETTING mntSetting;
+
   unsigned char chsState;
   unsigned char trgState;
+  boat * pBoat;  
   MNT_BERTH * pNext;
 };
 
 
-//static MNT_BERTH * pMntHeader  = NULL;
-//static MNT_BERTH * Next  = NULL;
+extern MNT_BERTH * pMntHeader;
 
-
-
-
-int MNT_insert(MNT_BOAT * pMNT_Boat, boat * pBoat, long mmsi, char * name);
-void MNT_makeSettingUp(MNT_SETTING * pMNT_Setting);
-int MNT_deleteByIndex(MNT_BOAT * pMNT_Boat,int index, long id);
-int MNT_deleteById(MNT_BOAT * pMNT_Boat, long id);
-void MNT_init(MNT_SETTING * pMntSetting);
-void printMoniteSetting(MNT_BOAT * pMNT_Boat);
-void printSetting(MNT_SETTING * p_setting);
-void MNT_printSetting(void);
+int MNT_getAddrOffset(uint8_t * addr);
 Bool MNT_add(boat * pBoat);
+void MNT_initSetting(MNT_SETTING * pMntSetting);
+void MNT_load(void);
+void MNT_makeSettingUp(MNT_SETTING * pMNT_Setting);
+void MNT_printSetting(void);
 Bool MNT_removeById(long Id);
-void MNT_testReset(void);
-//void MNT_resetIterator(void);
-MNT_BERTH * MNT_getNext(void);
+
 
 //__inline void MNT_resetIterator()
 //{

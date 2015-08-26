@@ -4,7 +4,12 @@
 #define MOTHERShIP_LA    1927265
 #define MOTHERShIP_LG    7128663
 
-/// UI --- main menu window
+
+
+/********************************************************************
+ *
+ *               UI config
+ */
 #define Win_Main_WIDTH 800
 #define Win_Main_HEIGHT 480
 
@@ -81,10 +86,11 @@
 #define Win_SysSet_Text_WIDTH    120
 #define Win_SysSet_txOrg         40
 #define Win_SysSet_txGrap        2
-//#define INFO(format,...) printf("FILE: "__FILE__", LINE: %d: "format"\r\n", __LINE__, ##__VA_ARGS__)
 
-
-//
+/********************************************************************
+ *
+ *               boat drawing config
+ */
 #define DSP_BOAT_COLOR   GUI_BLACK
 
 #define BGL_BOAT_COLOR   GUI_GREEN
@@ -99,19 +105,49 @@
 
 
 
-#define BOAT_LIST_SIZE_MAX  500
-#define MNT_NUM_MAX         20
-#define INVD_NUM_MAX        100
 
+
+/********************************************************************
+ *
+ *               timer counter config
+ */
 #define TIMESTAMP           60
 
 #define MAP_REFRESH_SLOT    500
 #define AUTO_ADAPTER_CNT    3  
 
-#define MSG_QUEUE_TABNUM    20
 
+
+/********************************************************************
+ *
+ *              array size config
+ */
+#define MSG_QUEUE_TABNUM    20
+#define BOAT_LIST_SIZE_MAX  500
+#define MNT_NUM_MAX         20
+#define INVD_NUM_MAX        100
+
+
+/********************************************************************
+ *
+ *              EEPROM address config
+ */
+#define SYSCONF_ADDR     0                        
+
+#define MNT_PAGE_ID_HEADER  (uint8_t)1
+#define MNT_PAGE_ID         (uint8_t)2       
+
+
+/********************************************************************
+ *
+ *              code switch config
+ */
 #define CODE_CHECK 
 
+/********************************************************************
+ *
+ *               printf config.
+ */
 #define __INFO_ENABLE 
 
 #ifndef __INFO_ENABLE

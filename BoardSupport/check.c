@@ -1,14 +1,15 @@
 
 #include "Check.h"
 #include <math.h>
+
 /*----------------- Macro      defines --------------------------*/
 #define MYABS(x)   ((x)>0?(x):(-(x)))
 
 /*----------------- external variables ------------------------*/
 extern SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
-extern MNT_BOAT   MNT_Boats[MNT_NUM_MAX];
 extern int N_boat;
 extern MNT_BERTH * pMntHeader;
+extern MNT_BERTH MNT_Berthes[MNT_NUM_MAX];
 
 /// If key pressed , isKeyTrigged will be TRUE. Your apps must set iskeyTrigged FALSe after using it.
 extern int isKeyTrigged;
@@ -24,6 +25,8 @@ INVADER InvdMaskCursor = {0};
 static Bool removeById(long Id);
 static void MNT_filter(void);
 
+
+MNT_BERTH NULL_Berth  = {0};
 
 
 void check()
@@ -123,8 +126,13 @@ INFO("check %09ld",pMntBerth->mntBoat.mmsi);
          if(SimpBerthes[i].pBerth->mntState == MNTState_None)
          {
 INFO("come back");            
-            pMntBerth->mntBoat.pBoat  = &(SimpBerthes[i].pBerth->Boat);
-            SimpBerthes[i].pBerth->mntState  = MNTState_Monited;  
+            pMntBerth->pBoat  = &(SimpBerthes[i].pBerth->Boat);
+            SimpBerthes[i].pBerth->mntState  = MNTState_Monited;
+            if(pMntBerth->chsState == MNTState_Init)            
+            {
+               pMntBerth->chsState  = MNTState_Monited;
+               pMntBerth->trgState  = MNTState_None;
+            }
          }         
          break;
       }
@@ -132,7 +140,7 @@ INFO("come back");
 
    if(trgState)
    {
-      pMntBerth->mntBoat.pBoat  = NULL;
+      pMntBerth->pBoat  = NULL;
 INFO("This boy is gone %09ld",pMntBerth->mntBoat.mmsi);      
    }
   
@@ -141,17 +149,17 @@ INFO("This boy is gone %09ld",pMntBerth->mntBoat.mmsi);
                                       BGL check
    
    ******************************************************************************/      
-   if(   pMntBerth->mntSetting.BGL_Setting.isEnable  
+   if(   pMntBerth->mntBoat.mntSetting.BGL_Setting.isEnable  
       && (!trgState)
-      && pMntBerth->mntBoat.pBoat->latitude  )
+      && pMntBerth->pBoat->latitude  )
    {
       for(i=N_boat-1; i>=0; i--)
       {
          if(  SimpBerthes[i].pBerth->mntState == MNTState_None )
          {
             /// Closing.
-            if(   (MYABS(SimpBerthes[i].latitude - pMntBerth->mntBoat.pBoat->latitude) <= pMntBerth->mntSetting.BGL_Setting.Dist)
-               && (MYABS(SimpBerthes[i].longitude- pMntBerth->mntBoat.pBoat->longitude)<= pMntBerth->mntSetting.BGL_Setting.Dist)  )
+            if(   (MYABS(SimpBerthes[i].latitude - pMntBerth->pBoat->latitude) <= pMntBerth->mntBoat.mntSetting.BGL_Setting.Dist)
+               && (MYABS(SimpBerthes[i].longitude- pMntBerth->pBoat->longitude)<= pMntBerth->mntBoat.mntSetting.BGL_Setting.Dist)  )
             {
 //INFO("\a%09ld invader %09ld", SimpBerthes[i].pBoat->user_id, pMntBerth->mntBoat.mmsi);            
                isBGL  = TRUE;
@@ -209,51 +217,63 @@ INFO("bgl ");
                                       DRG check 
                                       
    ******************************************************************************/   
-   if(   pMntBerth->mntSetting.DRG_Setting.isEnable  
-      && (!trgState)
-      && pMntBerth->mntBoat.pBoat->latitude  )
+   if(   pMntBerth->mntBoat.mntSetting.DRG_Setting.isEnable  
+      && (!(trgState&0x80))
+      && pMntBerth->pBoat->latitude  )
    {
-      diff_lt  = pMntBerth->mntBoat.pBoat->latitude - pMntBerth->mntBoat.lt;
-      diff_lg  = pMntBerth->mntBoat.pBoat->longitude- pMntBerth->mntBoat.lg;
+      diff_lt  = pMntBerth->pBoat->latitude - pMntBerth->mntBoat.lt;
+      diff_lg  = pMntBerth->pBoat->longitude- pMntBerth->mntBoat.lg;
       
       diff_lt  = MYABS(diff_lt);
       diff_lg  = MYABS(diff_lg);
       
-      if(   diff_lt+2*diff_lt/5 > pMntBerth->mntSetting.DRG_Setting.Dist
-          ||diff_lg+2*diff_lg/5 > pMntBerth->mntSetting.DRG_Setting.Dist)
+ /*          
+
+              
+ */       
+      
+      
+      if(   diff_lt+2*diff_lt/5 > pMntBerth->mntBoat.mntSetting.DRG_Setting.Dist
+          ||diff_lg+2*diff_lg/5 > pMntBerth->mntBoat.mntSetting.DRG_Setting.Dist)
       {
          r  = sqrt(diff_lt*diff_lt + diff_lg*diff_lg);
       }
       
-      if(r >= pMntBerth->mntSetting.DRG_Setting.Dist)
+      if(r >= pMntBerth->mntBoat.mntSetting.DRG_Setting.Dist)
       {
 INFO("This boy offset");  
          trgState  |= (0x01<<5);    
          isDRG  = TRUE;
       }
    }
+
    
-   if(pMntBerth->mntSetting.DSP_Setting.isEnable == DISABLE)
+   if(pMntBerth->mntBoat.mntSetting.DSP_Setting.isEnable == DISABLE)
    {
       trgState  &= (~(0x01<<7));
    }
    
-   /// 全 0 恢复监控状态
-   if(trgState == 0)
-   {  
-      pMntBerth->trgState  = MNTState_None;
-   }
-   ///多出来 1 触发报警
-   else if( ((trgState ^ pMntBerth->trgState) & trgState) >> 5)
+   if(pMntBerth->trgState != MNTState_Init)
    {
-      pMntBerth->trgState  = (pMntBerth->trgState & 0xe0) | MNTState_Triggered;
-   }
+      /// 全 0 恢复监控状态
+      if(trgState == 0)
+      {    
+         pMntBerth->trgState  = MNTState_None;
+      }
+      ///多出来 1 触发报警
+      else if( ((trgState ^ pMntBerth->trgState) & trgState) >> 5)
+      {  
+         pMntBerth->trgState  = (trgState & 0xe0) | MNTState_Triggered;      
+      }
 
-   /// 其他情况，很淡定的更新监控状态就中了
-   else
-   {
-      pMntBerth->trgState  = trgState | (pMntBerth->trgState & 0x1f);
+      /// 其他情况，很淡定的更新监控状态就中了
+      else
+      { 
+         pMntBerth->trgState  = trgState | (pMntBerth->trgState & 0x1f);
+      }   
    }
+   
+
    
    pIterator  = pMntHeader;
    while(pIterator)
@@ -609,15 +629,19 @@ INFO("delete at header");
       pBC  = pMntHeader;
       pMntHeader  = pMntHeader->pNext;
       
-      
       for(i=N_boat-1;i>=0;i--)
       {
          if(SimpBerthes[i].pBerth->Boat.target == pBC->mntBoat.mmsi)
             SimpBerthes[i].pBerth->Boat.target  = 0;
       } 
-      INVD_deleteByTargetMMSI(pBC->mntBoat.mmsi);      
-      memset((void*)pBC, 0, sizeof(MNT_BERTH)); 
+      INVD_deleteByTargetMMSI(pBC->mntBoat.mmsi);    
+
+//EEPROM_Write(MNT_PAGE_ID, MNT_getAddrOffset((uint8_t*)pBC), NULL, sizeof(MNT_BERTH));      
+      EEPROM_Write(0 , MNT_PAGE_ID+pBC-MNT_Berthes,
+                  &(NULL_Berth.mntBoat), MODE_8_BIT, sizeof(MNT_BOAT));
+      memset((void*)pBC, 0, sizeof(MNT_BERTH));    
    }
+//EEPROM_Write(MNT_PAGE_ID_HEADER, 0, (uint8_t*)&pMntHeader, sizeof(pMntHeader));   
    
    if(pMntHeader == NULL)
    {
@@ -638,6 +662,10 @@ INFO("delete at body");
                SimpBerthes[i].pBerth->Boat.target  = 0;
          } 
          INVD_deleteByTargetMMSI(pBC->mntBoat.mmsi);  
+         
+//EEPROM_Write(MNT_PAGE_ID, MNT_getAddrOffset((uint8_t*)pBC), NULL, sizeof(MNT_BERTH));            
+         EEPROM_Write(0 , MNT_PAGE_ID+pBC-MNT_Berthes,
+                      &(NULL_Berth.mntBoat), MODE_8_BIT, sizeof(MNT_BOAT));         
          memset((void*)pBC, 0, sizeof(MNT_BERTH));
       }
       else
@@ -645,7 +673,7 @@ INFO("delete at body");
         pIterator  = pIterator->pNext;
       }     
       pBC  = pIterator->pNext;
-   }  
+   } 
 }
 
 

@@ -2,7 +2,6 @@
 #include "lpc177x_8x_clkpwr.h"
 #include "lpc177x_8x_pinsel.h"
 #include "lpc177x_8x_lcd.h"
-
 #include "uart.h"
 #include "dma.h"
 #include "timer.h"
@@ -11,8 +10,7 @@
 #include "pwm.h"
 #include <ucos_ii.h>
 // #include "exfuns.h"
-
-
+#include "lpc177x_8x_eeprom.h"
 
 ////////
 ///////
@@ -53,9 +51,10 @@ int main(void)
 	USER_Init();
 	lpc1788_Lcd_Init();	  /* ≥ı ºªØLCD */	
  lpc1788_PWM_Init();
+ EEPROM_Init();
+ 
 //	LCD_test();
   //fs_test();
-//  	W25QXX_Init();
 //  	exfuns_init();
 //  	load_font(); //º”‘ÿflash◊÷ø‚
 	

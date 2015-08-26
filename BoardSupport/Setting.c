@@ -1,19 +1,50 @@
 #include "Setting.h"
-#include "Config.h"
 #include <string.h>
 #include "SystemConfig.h"
+
+
+
+#define MNT_BERTH_SIZE  sizeof(MNT_BERTH)
 
 int N_monitedBoat  = 0;
 MNT_BERTH MNT_Berthes[MNT_NUM_MAX];
 
 
-
- MNT_BERTH * pMntHeader  = NULL;
- MNT_BERTH * Next  = NULL;
+MNT_BERTH * pMntHeader  = NULL;
  
 extern int N_boat; 
 extern SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
 extern CONF_SYS  SysConf;
+
+
+
+/** @brief  MNT_addrCalculate
+ *
+ *  @dscrp  Calculate flash address based on memory address.
+ *  @input  Address in memory.
+ *  @output 
+ *  @return Address in flash.
+ */
+int MNT_getAddrOffset(uint8_t * addr)
+{
+   int offset  = 0;
+   
+   offset  = addr - (uint8_t*)MNT_Berthes;
+   return offset;
+}
+
+
+/** @brief MNT_load
+ *
+ *  @dscrp Copy mnt array in flash to memory.
+ *  @input 
+ *  @output
+ *  @return 
+ */
+void MNT_load()
+{
+;
+}
 
 
 
@@ -23,57 +54,65 @@ extern CONF_SYS  SysConf;
  * @input  Monited boat array.
  *         Number of monited boat.
  *         Setting in etWin.
- * @Outpu 
+ * @Output 
  * @return Times of copy. 
  */
 void MNT_makeSettingUp (MNT_SETTING * pMNT_Setting)
 {
    int i  = 0;
    MNT_BERTH * pIterator  = pMntHeader;
-   
    while(pIterator)
    {    
       if(   (pIterator->chsState == MNTState_Choosen)
           ||(pIterator->chsState == MNTState_Default)  )
       {
          pIterator->chsState  = MNTState_Monited;
-         pIterator->trgState  = 0;
+         pIterator->trgState  = MNTState_None;
          
-         pIterator->mntSetting.DSP_Setting.isEnable  = 
+         pIterator->mntBoat.mntSetting.DSP_Setting.isEnable  = 
                    pMNT_Setting->DSP_Setting.isEnable;
          
-         pIterator->mntSetting.BGL_Setting.isEnable  = 
+         pIterator->mntBoat.mntSetting.BGL_Setting.isEnable  = 
                    pMNT_Setting->BGL_Setting.isEnable;
-         pIterator->mntSetting.BGL_Setting.isSndEnable  = 
+         pIterator->mntBoat.mntSetting.BGL_Setting.isSndEnable  = 
                    pMNT_Setting->BGL_Setting.isSndEnable;
                    
-         pIterator->mntSetting.DRG_Setting.isEnable  = 
+         pIterator->mntBoat.mntSetting.DRG_Setting.isEnable  = 
                    pMNT_Setting->DRG_Setting.isEnable;
-         pIterator->mntSetting.DRG_Setting.isSndEnable  = 
+         pIterator->mntBoat.mntSetting.DRG_Setting.isSndEnable  = 
                    pMNT_Setting->DRG_Setting.isSndEnable;  
                  
                    
          if(SysConf.Unit == UNIT_nm)
-         {
-            pIterator->mntSetting.BGL_Setting.Dist  = 
+         { 
+INFO("Unit:nm");         
+            pIterator->mntBoat.mntSetting.BGL_Setting.Dist  = 
                       pMNT_Setting->BGL_Setting.Dist*10;
-            pIterator->mntSetting.DRG_Setting.Dist  = 
+            pIterator->mntBoat.mntSetting.DRG_Setting.Dist  = 
                       pMNT_Setting->DRG_Setting.Dist*10;                       
          }
          else if(SysConf.Unit == UNIT_km)
-         {
-            pIterator->mntSetting.BGL_Setting.Dist  =
+         {   
+INFO("Unit:km");         
+            pIterator->mntBoat.mntSetting.BGL_Setting.Dist  =
                       pMNT_Setting->BGL_Setting.Dist*54/10;
-            pIterator->mntSetting.DRG_Setting.Dist  = 
+            pIterator->mntBoat.mntSetting.DRG_Setting.Dist  = 
                       pMNT_Setting->DRG_Setting.Dist*54/10; 
-         }                    
+         }  
+         else
+         {
+INFO("Error!");
+         } 
+
+                   
       }
       
       else if(pIterator->chsState == MNTState_None)
       {
          pIterator->chsState  = MNTState_Default;
          
-         pIterator->mntSetting.DSP_Setting.isEnable  = ENABLE;
+         pIterator->mntBoat.mntSetting.DSP_Setting.isEnable  = ENABLE;     
+
       }
       
       pIterator  = pIterator->pNext;
@@ -83,7 +122,15 @@ void MNT_makeSettingUp (MNT_SETTING * pMNT_Setting)
 }
 
 
-MNT_BERTH * MNT_allocOneBerth(MNT_BERTH * mntBerthes)
+/** @brief   MNT_allocOneBerth
+ *
+ *  @dscrp   Alloc a node for MNT_BERTH link list
+ *  @input 
+ *  @output
+ *  @return  The pointer of new memory. 
+ *
+ */
+static MNT_BERTH * MNT_allocOneBerth(MNT_BERTH * mntBerthes)
 {
    int i  = 0;
    for(i=0;i<MNT_NUM_MAX;i++)
@@ -97,12 +144,14 @@ MNT_BERTH * MNT_allocOneBerth(MNT_BERTH * mntBerthes)
 }
 
 
-//void MNT_freeOneBerth(MNT_BERTH * pMntBerth)
-//{
-//   memset((void*)pMntBerth, 0, sizeof(MNT_BERTH));
-//}
-
-
+/** @brief   MNT_add
+ *
+ *  @dscrp   Add new boat to mnt link list
+ *  @input 
+ *  @output
+ *  @return   
+ *
+ */
 Bool MNT_add(boat * pBoat)
 {
    int i  = 0;
@@ -141,12 +190,12 @@ INFO("allco mnt berth failed!");
    }
    
    buf->mntBoat.name[19]  = '\0';  
-   buf->mntBoat.pBoat  = pBoat;
+   buf->pBoat  = pBoat;
    buf->mntBoat.mmsi  = pBoat->user_id;
    buf->mntBoat.lt    = pBoat->latitude;
    buf->mntBoat.lg    = pBoat->longitude;
    buf->chsState      = MNTState_Default;
-   buf->mntSetting.DSP_Setting.isEnable  = ENABLE;
+   buf->mntBoat.mntSetting.DSP_Setting.isEnable  = ENABLE;
    
    if(pMntHeader != NULL)
    {
@@ -157,31 +206,28 @@ INFO("allco mnt berth failed!");
          pIterator  = pIterator->pNext;
       }
       
-      pIterator->pNext  = buf;
+      pIterator->pNext  = buf;                     
    }
    else
    {
-      pMntHeader  = buf;      
+      pMntHeader  = buf;  
    }
+INFO("offset of buf:%d",OFFSETOF(buf));   
+//   EEPROM_Write( 0,MNT_PAGE_ID+(buf-MNT_Berthes),
+//               buf, MODE_8_BIT, sizeof(MNT_BERTH));   
+   EEPROM_Write( 0, MNT_PAGE_ID+(buf-MNT_Berthes),
+                 &(buf->mntBoat),MODE_8_BIT,sizeof(MNT_BOAT));
    return TRUE;
 }
 
 
-void MNT_clear(long Id)
-{
-   int i  = 0;
-   for(i=N_boat-1;i>=0;i--)
-   {
-//      if(SimpBerthes[i].pBoat->isInvader == Id)
-//         SimpBerthes[i].pBoat->isInvader  = 0;
-      if(SimpBerthes[i].pBerth->Boat.target == Id)
-      {
-         SimpBerthes[i].pBerth->Boat.target  = 0;
-      }
-   }
-}
 
-
+/** @brief  MNT_removeById
+ *
+ *  @dscrp  Remove a mnt record.
+ *  @input  The MMSI of mnt boat which is going to removed.
+ *  @output TRUE if successful , or FALSE.
+ */
 Bool MNT_removeById(long Id)
 {
    MNT_BERTH * pIterator  = pMntHeader;
@@ -203,75 +249,15 @@ Bool MNT_removeById(long Id)
    return  FALSE;
 }
 
-/*
 
-Bool MNT_removeById(long Id)
-{
-   MNT_BERTH * pIterator  = NULL;
-   MNT_BERTH * pBC        = NULL;
-   
-//   MNT_clear(Id);
-   if(pMntHeader->mntBoat.mmsi == Id)
-   {
-      pBC  = pMntHeader;
-      pMntHeader  = pMntHeader->pNext;
-
-      memset((void*)pBC, 0, sizeof(MNT_BERTH));
-      return TRUE;
-   }
-   else
-   {
-      pIterator = pMntHeader;
-      pBC  = pMntHeader->pNext;
-      while(pBC)
-      {
-         if(pBC->mntBoat.mmsi == Id)
-         {
-            pIterator->pNext  = pBC->pNext;
-            memset((void*)pBC, 0, sizeof(MNT_BERTH));
-            return TRUE;
-         }
-         else
-         {
-            pIterator  = pBC;
-            pBC  = pBC->pNext;
-         }
-      }
-      return FALSE;
-   }
-}
-
-*/
-
-//void MNT_resetIterator()
-//{
-//   Next  = pMntHeader;
-//}
-
-void MNT_testReset()
-{
-   Next  = pMntHeader;
-}
-
-
-MNT_BERTH * MNT_getNext()
-{
-   if(Next  == pMntHeader)
-   {
-   }
-   if(Next != NULL)
-   {
-      Next  = Next->pNext;
-   }
-//   else
-//   {
-//      Next  = pMntHeader;
-//   }
-   
-   return Next;
-}
-
-void MNT_init(MNT_SETTING * pMntSetting)
+/** @brief  MNT_initSetting
+ *
+ *  @dscrp  Initialize a mntSetting.
+ *  @input  The pointer pointing mntSetting.
+ *  @output
+ *  @return 
+ */
+void MNT_initSetting(MNT_SETTING * pMntSetting)
 {
    memset((void*)pMntSetting, 0, sizeof(MNT_SETTING));
    pMntSetting->DSP_Setting.isEnable  = ENABLE; 
@@ -281,7 +267,14 @@ void MNT_init(MNT_SETTING * pMntSetting)
 }
 
 
-void printSetting(MNT_SETTING * p_setting)
+/** @brief   printSetting
+ *
+ *  @dscrp   Print a mntSetting to terminal.
+ *  @input   The pointer pointing mntSetting.
+ *  @output
+ *  @return 
+ */
+static void printSetting(MNT_SETTING * p_setting)
 {
       printf("   DSP     %s\r\n",p_setting->DSP_Setting.isEnable>DISABLE?"Enable":"Disable");
       printf("   BGL     %s\r\n",p_setting->BGL_Setting.isEnable>DISABLE?"Enable":"Disable");
@@ -293,6 +286,14 @@ void printSetting(MNT_SETTING * p_setting)
 }
 
 
+
+/** @brief  MNT_printSetting
+ *
+ *  @dscrp  Print all mntBoat's mntSetting.
+ *  @input  
+ *  @output
+ *  @return 
+ */
 void MNT_printSetting()
 {
    MNT_BERTH * pIterator  = pMntHeader;
@@ -304,15 +305,7 @@ void MNT_printSetting()
             cnt++;
          printf("\r\n");
          printf("%d-mmsi %ld\r\n",i,pIterator->mntBoat.mmsi);
-         printf("%d-name %s\r\n", i,pIterator->mntBoat.name);
-   //      printf("   DSP     %s\r\n",mntBoats[i].MNTSetting.DSP_Setting.isEnable>DISABLE?"Enable":"Disable");
-   //      printf("   BGL     %s\r\n",mntBoats[i].MNTSetting.BGL_Setting.isEnable>DISABLE?"Enable":"Disable");
-   //      printf("       snd %s\r\n",mntBoats[i].MNTSetting.BGL_Setting.isSndEnable>DISABLE?"Enable":"Disable");
-   //      printf("      dist %d\r\n",mntBoats[i].MNTSetting.BGL_Setting.dist);
-   //      printf("   DRG     %s\r\n",mntBoats[i].MNTSetting.DRG_Setting.isEnable>DISABLE?"Enable":"Disable");
-   //      printf("       snd %s\r\n",mntBoats[i].MNTSetting.DRG_Setting.isSndEnable>DISABLE?"Enable":"Disable");
-   //      printf("      dist %d\r\n",mntBoats[i].MNTSetting.DRG_Setting.dist);
-         printSetting(&(pIterator->mntSetting));
+         printSetting(&(pIterator->mntBoat.mntSetting));
          printf("/r/n State:%d",pIterator->chsState);
          printf("still hava %d is default\r\n",cnt);
          pIterator  = pIterator->pNext;

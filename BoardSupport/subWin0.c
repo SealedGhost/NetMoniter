@@ -55,6 +55,8 @@ extern WM_HWIN subWins[4];
 extern int N_monitedBoat;
 extern MNT_BOAT MNT_Boats[MNT_NUM_MAX];
 extern MNT_BERTH * pMntHeader;
+
+extern CONF_SYS SysConf;
 /*----------------- externa   function ---------------------*/
 extern void disttostr( char * str, int num);
 
@@ -192,6 +194,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        break;
   
   case WM_INIT_DIALOG:	
+    pLVSkin  = &(lvWinSkins[SysConf.Skin]);
     //
     // Initialization of 'Window'
     //
@@ -283,26 +286,26 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
   
      GUI_DispStringAt(pIterator->mntBoat.name, LV_MoniteList_WIDTH+80, 80);         
      
-     if(pIterator->mntBoat.pBoat)
+     if(pIterator->pBoat)
      {
-        lltostr(pIterator->mntBoat.pBoat->latitude, pStrBuf);
+        lltostr(pIterator->pBoat->latitude, pStrBuf);
         GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH+100, 120);
         
-        lltostr(pIterator->mntBoat.pBoat->longitude, pStrBuf);
+        lltostr(pIterator->pBoat->longitude, pStrBuf);
         GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH+100, 160);
         
-        GUI_DispDecAt(pIterator->mntBoat.pBoat->SOG, LV_MoniteList_WIDTH+80, 200, 3);
-        GUI_DispDecAt(pIterator->mntBoat.pBoat->COG, LV_MoniteList_WIDTH+300, 200, 3);
+        GUI_DispDecAt(pIterator->pBoat->SOG, LV_MoniteList_WIDTH+80, 200, 3);
+        GUI_DispDecAt(pIterator->pBoat->COG, LV_MoniteList_WIDTH+300, 200, 3);
      }
      
-     if(pIterator->mntSetting.DSP_Setting.isEnable == DISABLE)
+     if(pIterator->mntBoat.mntSetting.DSP_Setting.isEnable == DISABLE)
         GUI_DispStringAt("关闭", LV_MoniteList_WIDTH+60,240);
      else
         GUI_DispStringAt("开启",  LV_MoniteList_WIDTH+60,240);
         
-     GUI_DispDecAt(pIterator->mntSetting.BGL_Setting.Dist,
+     GUI_DispDecAt(pIterator->mntBoat.mntSetting.BGL_Setting.Dist,
                LV_MoniteList_WIDTH+110,280,3);
-     GUI_DispDecAt(pIterator->mntSetting.DRG_Setting.Dist,
+     GUI_DispDecAt(pIterator->mntBoat.mntSetting.DRG_Setting.Dist,
                  LV_MoniteList_WIDTH+110,320,3);   
      break;
 
@@ -476,9 +479,9 @@ static void updateListViewContent(WM_HWIN thisHandle)
        NumOfRows  = LISTVIEW_GetNumRows(thisListView);
     }
     
-    if(pIterator->mntBoat.pBoat)
+    if(pIterator->pBoat)
     {
-       disttostr(pStrBuf, pIterator->mntBoat.pBoat->dist);
+       disttostr(pStrBuf, pIterator->pBoat->dist);
        LISTVIEW_SetItemText(thisListView, 0, Cnt-1, pStrBuf);     
     }      
     else

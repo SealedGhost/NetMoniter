@@ -40,6 +40,8 @@ extern WM_HWIN confirmWin;
 extern MNT_BOAT MNT_Boats[MNT_NUM_MAX];
 extern MNT_SETTING mntSetting;
 
+extern CONF_SYS SysConf;
+
 /*--- external functions ---*/
 //extern boat* boat_list_p[BOAT_LIST_SIZE_MAX];
 
@@ -220,6 +222,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        break; 
   
   case WM_INIT_DIALOG:
+    pLVSkin  = &(lvWinSkins[SysConf.Skin]);
     //
     // Initialization of 'Window'
     //
@@ -409,8 +412,13 @@ static void myListViewListener(WM_MESSAGE* pMsg)
        LISTVIEW_Callback(pMsg);
        WM_InvalidateRect(subWins[2],&lvRect);
        WM_InvalidateRect(subWins[2],&lvIndicate); 
-       break;	    
-    
+       break;	
+       
+   case WM_PAINT:
+        LISTVIEW_Callback(pMsg);
+        
+        break;   
+        
     case WM_KEY:
 			pInfo  = (WM_KEY_INFO*)pMsg->Data.p; 
 		  switch(pInfo->Key)
@@ -526,7 +534,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
      
     case GUI_KEY_ENTER:
          selectedRow  = LISTVIEW_GetSel(thisListView);
-         
+INFO("sel:%d",selectedRow);         
          if(selectedRow < 0)
          {
             break;
@@ -644,7 +652,7 @@ static void updateListViewContent(WM_HWIN thisHandle)
   
 	  NumOfRows  = LISTVIEW_GetNumRows(thisListView);
 	
-   for(i=N_boat-1;i>=0;i--)
+   for(i=0; i<N_boat; i++)
    {
 
       if(i+1 > NumOfRows)
@@ -757,18 +765,6 @@ int getSelectedIndex(WM_HWIN thisListView,  int col)
    }
    return -1;
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 /*************************** End of file ****************************/

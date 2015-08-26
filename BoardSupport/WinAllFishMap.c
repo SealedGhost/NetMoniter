@@ -5,6 +5,7 @@
 
 
 /*-------------------------- external variables ------------------------------*/
+extern CONF_SYS SysConf;
 extern WM_HWIN confirmWin;
 extern WM_HWIN  menuWin;
 extern WM_HWIN  subWins[4];
@@ -18,7 +19,7 @@ extern unsigned long SYS_Time ;
 extern int N_boat;
 
 extern SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
-extern MNT_BOAT MNT_Boats[MNT_NUM_MAX];
+extern MNT_BERTH MNT_Berthes[MNT_NUM_MAX];
 extern BERTH * pHeader;
 extern MNT_BERTH * pMntHeader;
 /*--------------------- external function ----------------------------------*/
@@ -82,579 +83,12 @@ short i_cursor;
 long flip_lttude = 10000*(flip_speed_lat)/120;
 long flip_lngtude = 10000*(flip_speed_long)/120;
 
-void map_draw(long longitude,  long latitude, scale_map scale);
+static void map_draw(long longitude,  long latitude, scale_map scale);
+static void setWrapedView(void);
 
 WM_MESSAGE * pUpdateMsg;
 
 
-static void Draw_WinMapTitle()
-{
-		GUI_SetBkColor (GUI_GRAY);
-		GUI_Clear();
-	  GUI_SetColor (GUI_WHITE);
-		GUI_SetFont (&GUI_Font28);
-		GUI_SetPenSize(2);
-		GUI_DrawLine(0,35,800,35);
-		GUI_DispStringAt ("航速:", 340, 1);
-		GUI_DispStringAt ("航向:", 490, 1);
-		GUI_PNG_Draw(&acCompass,sizeof (acCompass),350,40);	
-}
-
-
-
-
-//void display_longitude_latitude(unsigned long l_o_l,short x, short y)
-//{
-//  long degree;
-//  float minute;
-//  
-//  degree = l_o_l/(distance<<1);
-//  minute = (l_o_l%(distance<<1))/mul_pow;
-//  
-//	 GUI_SetFont (&GUI_Font16B_ASCII);
-//  lltostr();
-//}
-
-
-
-
-/**@brief 画map中的网格线
-*
-*
-*/
-void draw_map_grid(mapping gridAnchor,scale_map scale)
-{
-   short x = 0;
-   short y = 0;
-
-   x  = gridAnchor.x;
-   y  = gridAnchor.y;
-   
-   GUI_SetLineStyle(GUI_LS_DASH);
-   GUI_SetColor(pMapSkin->Map_Grid);
-   
-   
-   
-//   GUI_SetColor(GUI_WHITE);
-   while(x<MAP_LEFT)
-   {
-      x  += scale.pixel;
-   }
-   while(x<MAP_RIGHT)
-   {
-      GUI_DrawLine(x, MAP_TOP, x, MAP_BOTTOM);
-      x  += scale.pixel;
-   }
-   
-   while(y<MAP_TOP)
-   {
-      y  += scale.pixel;
-   }
-   while(y<MAP_BOTTOM)
-   {
-      GUI_DrawLine(MAP_LEFT, y, MAP_RIGHT, y);
-      y  += scale.pixel;
-   }
-}
-
-unsigned int getFishingAreaId(long longitude, long latitude )
-{
-	int index  = 0;
-	volatile int counterAreaNum  = 0;
-	volatile int originalAreaNum  = 0;
-	unsigned int fishingAreaId  = 0;
-  volatile	unsigned int exp_id  = 0;
-		
-  volatile int row  = 0;
-  volatile int col  = 0;
-	
-	if(fishing_area[index].latitude_fish < latitude)
-		return 0;
-	
-	for(index=0;index < num_fish;)
-	{
-		if(fishing_area[index].latitude_fish<latitude)
-		{
-			index--;
-			
-			if(longitude < fishing_area[index].longitude_fish)
-				return 0;
-
-			///不含拓展渔区的渔区数量,即原有渔区数量
-			counterAreaNum  = (longitude-fishing_area[index].longitude_fish ) / distance;
-			originalAreaNum  = fishing_area[index+1].fish_number - fishing_area[index].fish_number;
-	   
-      if(counterAreaNum < originalAreaNum)			
-				fishingAreaId = fishing_area[index].fish_number + counterAreaNum;
-		  else if(counterAreaNum < originalAreaNum+fishing_area[index].exp_num)
-				fishingAreaId  = (fishing_area[index].fish_number+originalAreaNum-1)*10 + counterAreaNum-originalAreaNum+1;
-			else
-				fishingAreaId  = 0;
-			
-			if( (scale_choose==1) && (fishingAreaId!=0))
-			{
-				row  = (fishing_area[index].latitude_fish-latitude)/10000 ;
-				col  = (longitude-fishing_area[index].longitude_fish)%30000 /10000 + 1;
-//				exp_id  = (latitude-fishing_area[index].latitude_fish)/10000 * 3 + ((longitude-fishing_area[index].longitude_fish)%distance)/10000+1;
-				exp_id  = row*3+col;
-				exp_id  = exp_id<<(sizeof(int)-4);
-				fishingAreaId  = fishingAreaId | exp_id<<(8*sizeof(int)-4);
-			}
-			return fishingAreaId;
-
-		}
-		else
-		{
-			index++;
-		}
-	}
-	return 0;
-	
-}
-
-void getMntWrapPara(long *halfDiff_lg, long* halfDiff_lt, scale_map* wrap_scale)
-{
-   
-   long min_lg  = mothership.longitude;
-   long max_lg  = mothership.longitude;
-   long min_lt  = mothership.latitude;
-   long max_lt  = mothership.latitude;
-   
-   long maxDiff_lg  = 0;
-   long maxDiff_lt  = 0;
-   
-   
-   MNT_BERTH * pIterator  = pMntHeader;
-   
-   
-   while(pIterator)
-   {
-      if( pIterator->mntBoat.pBoat && (pIterator->mntBoat.pBoat->latitude) && (pIterator->mntBoat.pBoat->longitude) )
-      {
-         if(pIterator->mntBoat.pBoat->latitude < min_lt)
-         {
-            min_lt  = pIterator->mntBoat.pBoat->latitude;
-         }
-         else if(pIterator->mntBoat.pBoat->latitude > max_lt)
-         {
-            max_lt  = pIterator->mntBoat.pBoat->latitude;
-         }
-         
-         if(pIterator->mntBoat.pBoat->longitude < min_lg)
-         {
-            min_lg  = pIterator->mntBoat.pBoat->longitude;
-         }
-         else if(pIterator->mntBoat.pBoat->longitude > max_lg)
-         {
-            max_lg  = pIterator->mntBoat.pBoat->longitude;
-         }
-         
-
-      }
-      pIterator  = pIterator->pNext;
-   }
-   
-   maxDiff_lg  = max_lg - min_lg + 1000;
-   maxDiff_lt  = max_lt - min_lt + 1000;
-   
-   *halfDiff_lg  = max_lg/2 + min_lg/2;
-   *halfDiff_lt  = max_lt/2 + min_lt/2;
-   
-   
-   ///map的宽为800pix，高为400pix，判断在适配上述区域时以map的宽来适配还是高来适配
-   
-   ///若适配区域的宽度大于高度的两倍，则以map的宽来适配
-    if(( maxDiff_lg/2) > maxDiff_lt)
-    {
-       wrap_scale->minute  = ( maxDiff_lg/(8*100) + 1)*100;  ///这种写法保证所得到的scale.minute为100的整数倍
-    }
-    ///否则以map的高来适配
-    else
-    {
-       wrap_scale->minute  = ( maxDiff_lt/(4*100) + 1)*100;
-    }
-}
-
-
-/**    getWrapPara()
-*    
-*    @Description:  通过查找最大和最小的经纬度，确定船舶分布的区域，再计算所需的scale
-*    @inputs     :   halfDiff_lg,分布区域的中点经度；halfDiff_lt，中点纬度；
-                     wrap_scale 能够满足屏幕切包含这块区域的scale
-*    @outputs    :
-*    @return     :
-*/
-
-void getWrapPara(long * halfDiff_lg, long * halfDiff_lt, scale_map* wrap_scale)
-{
-  int i  = 0;
-  int min_lg_index  = 0;
-  int max_lg_index  = 0;
-  int min_lt_index  = 0;
-  int max_lt_index  = 0;
-  
-  long maxDiff_lg  = 0;
-  long maxDiff_lt  = 0;
-  
-  long minute  = 0;
-  
-  if(N_boat <= 0)
-  {
-     *halfDiff_lg  = mothership.longitude;
-     *halfDiff_lt  = mothership.latitude;
-     
-     return;
-  }
-  
-  /// 找到第一个经纬度都不为 0 的 boat
-  for(i=N_boat-1;i>=0;i--)
-  {
-     if( (SimpBerthes[i].latitude > 0)  &&  (SimpBerthes[i].longitude > 0) )
-     {
-        min_lg_index  = i;
-        min_lt_index  = i;
-        max_lg_index  = i;
-        max_lt_index  = i;
-        break;
-     }
-  }
-  
-  ///分别查找最大最小经纬度的船的索引
-  for(;i<N_boat;i++)
-  {
-     if( (SimpBerthes[i].longitude < SimpBerthes[min_lg_index].longitude)  
-         &&  (SimpBerthes[i].longitude > 0)  &&  (SimpBerthes[i].latitude > 0) )
-       min_lg_index  = i;
-//     if( SimpBerthes[i].longitude < SimpBerthes[min_lg_index].longitude )
-//         min_lg_index  = i;
-//         
-     else if(SimpBerthes[i].longitude > SimpBerthes[max_lg_index].longitude)
-        max_lg_index  = i;
-     
-     if( (SimpBerthes[i].latitude < SimpBerthes[min_lt_index].latitude)  
-         &&  (SimpBerthes[i].latitude >0)  &&  (SimpBerthes[i].longitude > 0) )
-       min_lt_index  = i;
-//     if( SimpBerthes[i].latitude < SimpBerthes[min_lt_index].latitude )
-//         min_lt_index  = i;
-//         
-     else if(SimpBerthes[i].latitude  > SimpBerthes[max_lt_index].latitude)
-       max_lt_index  = i;     
-  }
-  
-
-
-
-
- ///将母船考虑在内后，计算要适配的区域的三个参数：
- ///   maxDiff_lg:表示适配区域的经度差（宽度）
- ///   maxDiff_lt:  ......      纬度差（高度） 
- ///   halfDiff_lg,halfDiff_lt: 适配区域中心点的经纬度坐标
-  if(mothership.longitude > SimpBerthes[max_lg_index].longitude)
-  {
-     maxDiff_lg  = mothership.longitude - SimpBerthes[min_lg_index].longitude;  
-     *halfDiff_lg = mothership.longitude/2 + SimpBerthes[min_lg_index].longitude/2;
-   
-  }
-  else if(mothership.longitude < SimpBerthes[min_lg_index].longitude)
-  {
-     maxDiff_lg  = SimpBerthes[max_lg_index].longitude - mothership.longitude;
-     *halfDiff_lg = mothership.longitude/2 + SimpBerthes[max_lg_index].longitude/2;
-   
-  }
-  else  
-  {
-     maxDiff_lg  = SimpBerthes[max_lg_index].longitude - SimpBerthes[min_lg_index].longitude;
-     *halfDiff_lg = SimpBerthes[max_lg_index].longitude/2 + SimpBerthes[min_lg_index].longitude/2;
-     
-  }
-     
-     
-  if(mothership.latitude > SimpBerthes[max_lt_index].latitude)
-  {
-     maxDiff_lt  = mothership.latitude - SimpBerthes[min_lt_index].latitude;
-     *halfDiff_lt = mothership.latitude/2 + SimpBerthes[min_lt_index].latitude/2;
-    
-  }
-     
-  else if(mothership.latitude < SimpBerthes[min_lt_index].latitude)
-  {
-     maxDiff_lt  = SimpBerthes[max_lt_index].latitude - mothership.latitude;
-     *halfDiff_lt = mothership.latitude/2 + SimpBerthes[max_lt_index].latitude/2;
-    
-  }
-     
-  else
-  {
-     maxDiff_lt  = SimpBerthes[max_lt_index].latitude  - SimpBerthes[min_lt_index].latitude;
-     *halfDiff_lt = SimpBerthes[max_lt_index].latitude/2 + SimpBerthes[min_lt_index].latitude/2;
-    
-  }
-  
-   
-   ///map的宽为800pix，高为400pix，判断在适配上述区域时以map的宽来适配还是高来适配
-   
-   ///若适配区域的宽度大于高度的两倍，则以map的宽来适配
-  if(( maxDiff_lg/2) > maxDiff_lt)
-  {
-     wrap_scale->minute  = ( maxDiff_lg/(8*100) + 1)*100;  ///这种写法保证所得到的scale.minute为100的整数倍
-  }
-  ///否则以map的高来适配
-  else
-  {
-     wrap_scale->minute  = ( maxDiff_lt/(4*100) + 1)*100;
-  }
-}
-
-
-/**    SetWrapedView()
-*
-*   @Description:  得到适配渔区的参数后，以所得scale显示
-*
-*/
-
-void setWrapedView()
-{
-   ///若没有boat，则以母船为中心，用最小scale来显示
-   long lg  = mothership.longitude;
-   long lt  = mothership.latitude;
-   
-   scale_map wrapScale ={100,100};
-   
-//   if(N_boat > 0)
-//      getWrapPara(&lg, &lt, &wrapScale);
-   
-//  if(pMntHeader->mntBoat.pBoat->latitude)
-//  {
-     getMntWrapPara(&lg, &lt, &wrapScale);
-//  }
-   
-   map_draw(lg, lt, wrapScale);
-   
-  center.x=(MAP_LEFT+MAP_RIGHT)/2;
-	 center.y=(MAP_TOP+MAP_BOTTOM)/2;
-						
-	 GUI_SetLineStyle(GUI_LS_SOLID);
-	 GUI_SetColor(GUI_BLUE);
-//printf("Wrap para lg:%ld\n\r",lg);   
-//printf("          lt:%ld\n\r",lt);
-//printf("          minute:%ld\n\r",wrapScale.minute);
-//   disp_fish_boat(&wrapScale, lg, lt, SimpBerthes, N_boat);
-  MNT_dispBoat(&wrapScale, lg, lt, pMntHeader);
-  Draw_ScaleRuler(wrapScale);
-}
-
-
-
-void map_draw(long longitude,  long latitude, scale_map scale)
-{
-	  int i = 0;
-	  short count_fr_fsh_ara = 0;
-	  short num_fr_fsh_ara   = 0;
-	
-	 short tmp_x = 0;
-	 short tmp_y = 0;
-//   short tmp_user  = 0;
-	 
-	 long tmp_lttude  = 0;
-	 long tmp_lgtude  = 0;
-	
-	unsigned int fishingAreaId  = 0;
-	
-	///画map的锚点
-	 mapping  anchor;
-	
-	 display disp_fsh_ara; 
-	 
-	 shift_x  = (scale.pixel>>1) - 16;
-	 shift_y  = (scale.pixel>>1)- 8;
-	 
-	 anchor.lgtude  = longitude;
-	 anchor.lttude  = latitude;
-	
-	 
-		 do
-		 {
-      if(fishing_area[i+1].latitude_fish<latitude && fishing_area[i].latitude_fish>=latitude)
-      {
-         count_fr_fsh_ara  = (longitude - fishing_area[i].longitude_fish)/scale.minute;
-         num_fr_fsh_ara    = fishing_area[i].fish_number + count_fr_fsh_ara;
-         break;
-      }
-      else
-      {
-         i++;
-      }
-		 }while(i<num_fish-1);
-		 
-		 anchor.y  = (MAP_TOP+MAP_BOTTOM)/2 - \
-		                 (fishing_area[i].latitude_fish-latitude)*scale.pixel \
-		                 / scale.minute;
-		 anchor.x  = (MAP_LEFT+MAP_RIGHT)/2  - \
-		                 (longitude-fishing_area[i].longitude_fish)%scale.minute \
-		                 * scale.pixel / scale.minute;
-		 
-		 anchor.lttude  = fishing_area[i].latitude_fish;
-		 anchor.lgtude  = fishing_area[i].longitude_fish + count_fr_fsh_ara * scale.minute;
-
-		 
-	   while(anchor.x  >= MAP_LEFT+(scale.pixel-shift_x))
-		 {
-			   anchor.x  -= scale.pixel;
-			   anchor.lgtude -= scale.minute;
-		 }
-		 while(anchor.y  > MAP_TOP+(scale.pixel-shift_y))
-		 {
-			   anchor.y  -= scale.pixel;
-			   anchor.lttude  += scale.minute;
-		 }
-		  
-		 draw_map_grid(anchor, scale);
-		 
-		 tmp_x  = anchor.x;
-		 tmp_y  = anchor.y;
-		 tmp_lgtude  = anchor.lgtude;
-		 tmp_lttude  = anchor.lttude;
-
-		 GUI_SetColor (pMapSkin->Map_Text);  
-   GUI_SetFont(&GUI_Font16B_1);
-   
-   for(tmp_y=anchor.y;tmp_y<=MAP_BOTTOM;)			 
-		 {				 
-				 if(scale_choose <=  1)
-				{
-					 tmp_x  = anchor.x;
-					 tmp_lgtude  = anchor.lgtude ;
-					 
-					 for(tmp_x=anchor.x; tmp_x<=MAP_RIGHT-(scale.pixel - shift_x);)
-					 {
-							 fishingAreaId  = getFishingAreaId(tmp_lgtude, tmp_lttude);
-							 
-							 if(measuring_scale[1].minute == scale.minute  && (0 != fishingAreaId))
-							 {
-									 if( 1000 > (fishingAreaId&0x0fffffff))
-									 {
-										 GUI_DispDecAt(fishingAreaId & 0x0fffffff, tmp_x+shift_x, tmp_y+shift_y, 3);							 
-									 }
-									 else
-									 {
-										 GUI_DispDecAt(fishingAreaId & 0x0fffffff, tmp_x+shift_x, tmp_y+shift_y, 4);
-									 }
-									 
-									GUI_DispChar('_' );
-									GUI_DispDec(fishingAreaId>>(8*sizeof(int)-4), 1);							 
-							 
-						 }
-						 else if((measuring_scale[0].minute == scale.minute) && (0 != fishingAreaId))
-						 {
-								 if(1000 > fishingAreaId)
-								 {
-									 GUI_DispDecAt(fishingAreaId, tmp_x+shift_x+10, tmp_y+shift_y, 3);							 
-								 }
-								 else
-								 {
-									 GUI_DispDecAt(fishingAreaId, tmp_x+shift_x+10, tmp_y+shift_y, 4);
-								 }
-
-						 }
-						 
-						 tmp_x  += scale.pixel;
-						 tmp_lgtude  += scale.minute;
-					 }					 
-				 }
-         if( (tmp_y+latitude_display_y_shift) >= MAP_TOP )
-         {
-           lltostr(tmp_lttude,pStrBuf);
-           GUI_DispStringAt(pStrBuf, MAP_RIGHT+latitude_display_x_shift,tmp_y+latitude_display_y_shift);         
-         }
-
-//	         display_longitude_latitude(tmp_lttude,MAP_RIGHT + latitude_display_x_shift,tmp_y + latitude_display_y_shift);						 
-				 
-				 tmp_y  += scale.pixel;
-				 tmp_lttude  -= scale.minute;
-			 }
-}
-
-
-static void _PaintFrame(void) 
-{
-//	GUI_RECT r;
-//	WM_GetClientRect(&r);
-	GUI_SetBkColor(GUI_GRAY);
-	GUI_SetColor(GUI_WHITE);
-	GUI_SetLineStyle(GUI_LS_DASH);
-	GUI_SetPenSize(1);
-	//GUI_SetFont(GUI_Font16);
-	GUI_SetTextMode(GUI_TEXTMODE_NORMAL);
-//	GUI_ClearRectEx(&r);
-	GUI_ClearRectEx(pRect);
-//  	GUI_CURSOR_Select(&GUI_CursorCrossS);
-//  	GUI_CURSOR_Show();
-
-}
-
-//void _DeleteFrame(void) 
-//{
-//	WM_DeleteWindow(_hLastFrame);
-//	_hLastFrame = 0;
-//}
-
-void _CB_WM(WM_MESSAGE* pMsg)
-{
-	GUI_RECT Rect;
-	switch(pMsg->MsgId)
-	{
-	case WM_PAINT:
-		WM_GetInsideRect(&Rect);
-		GUI_SetBkColor(GUI_GREEN);
-		GUI_SetColor(GUI_YELLOW);
-	 	GUI_SetFont (&GUI_Font24_ASCII);
-		GUI_ClearRectEx(&Rect);
-		GUI_DrawRectEx(&Rect);
-
-
-		break;
-	default:
-		WM_DefaultProc(pMsg);
-	}
-}
-
-/*****************************************************************
-*  @brief   根据当前光标位置计算Tip框的坐标
-* 
-*  @details Function:       updateTipLoc()
-*           Description:   根据当前光标位置计算Tip框的坐标
-*           Calls:         
-*           CalledBy:       _cbWindowAllFishMap()
-*           Table Accessed:
-*           Table Updated:
-*           Input:          x(x location of cursor)
-*                           y(y location of cursor)
-*           Output:         void
-*           Return:         void
-*           Others:
-*
-****************************************************************/
-
-static void updateTipLoc(short x, short y)
-{
-	if(x > MAP_RIGHT-tip_width)
-	{
-		tip_loc_x  = x-tip_width;
-	}
-	else if(x > MAP_LEFT)
-	{
-		tip_loc_x  = x;
-	}
-	
-	if(y > MAP_BOTTOM-tip_height)
-	{
-		tip_loc_y  = y-tip_height;
-	}
-	else if(y > MAP_TOP)
-	{
-		tip_loc_y  = y;
-	}
-}
 
 void _cbWindowAllFishMap(WM_MESSAGE* pMsg) 
 {	
@@ -674,9 +108,12 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 				WM_SetFocus(hWin);
 				GUI_CURSOR_Select(&GUI_CursorCrossS);
 //				GUI_CURSOR_Show();
+    
+    pMapSkin  = &(mapSkins[SysConf.Skin]);
+   
     for(i=0;i<MNT_NUM_MAX;i++)
     {
-       if(MNT_Boats[i].mmsi > 0)
+       if(MNT_Berthes[i].mntBoat.mmsi > 0)
           break;
     }
     /// Do not exist monited boat.
@@ -699,7 +136,7 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
   case USER_MSG_SHAPE:
        changeShape(pMsg->Data.v);
        break;
-
+       
   case USER_MSG_ID_REPLY:
        switch(pMsg->Data.v)
        {
@@ -1071,10 +508,9 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 /// Draw  map grid     
    GUI_SetBkColor(pMapSkin->BackGround);
    GUI_ClearRect(0,40, 800, 480);
-   drawMapSwitch  = 0;
+//   drawMapSwitch  = 0;
    if(drawMapSwitch)
    {
-      /// 设置虚线样式
       
 			   map_draw(__cursor.longitude,__cursor.latitude,measuring_scale[scale_choose]);
 
@@ -1144,4 +580,556 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 	}
 }
 
+
+static void Draw_WinMapTitle()
+{
+		GUI_SetBkColor (GUI_GRAY);
+		GUI_Clear();
+	  GUI_SetColor (GUI_WHITE);
+		GUI_SetFont (&GUI_Font28);
+		GUI_SetPenSize(2);
+		GUI_DrawLine(0,35,800,35);
+		GUI_DispStringAt ("航速:", 340, 1);
+		GUI_DispStringAt ("航向:", 490, 1);
+		GUI_PNG_Draw(&acCompass,sizeof (acCompass),350,40);	
+}
+
+
+/**@brief 画map中的网格线
+*
+*
+*/
+void draw_map_grid(mapping gridAnchor,scale_map scale)
+{
+   short x = 0;
+   short y = 0;
+
+   x  = gridAnchor.x;
+   y  = gridAnchor.y;
+   
+   GUI_SetLineStyle(GUI_LS_DASH);
+   GUI_SetColor(pMapSkin->Map_Grid);
+   
+   
+   
+//   GUI_SetColor(GUI_WHITE);
+   while(x<MAP_LEFT)
+   {
+      x  += scale.pixel;
+   }
+   while(x<MAP_RIGHT)
+   {
+      GUI_DrawLine(x, MAP_TOP, x, MAP_BOTTOM);
+      x  += scale.pixel;
+   }
+   
+   while(y<MAP_TOP)
+   {
+      y  += scale.pixel;
+   }
+   while(y<MAP_BOTTOM)
+   {
+      GUI_DrawLine(MAP_LEFT, y, MAP_RIGHT, y);
+      y  += scale.pixel;
+   }
+}
+
+unsigned int getFishingAreaId(long longitude, long latitude )
+{
+	int index  = 0;
+	volatile int counterAreaNum  = 0;
+	volatile int originalAreaNum  = 0;
+	unsigned int fishingAreaId  = 0;
+  volatile	unsigned int exp_id  = 0;
+		
+  volatile int row  = 0;
+  volatile int col  = 0;
+	
+	if(fishing_area[index].latitude_fish < latitude)
+		return 0;
+	
+	for(index=0;index < num_fish;)
+	{
+		if(fishing_area[index].latitude_fish<latitude)
+		{
+			index--;
+			
+			if(longitude < fishing_area[index].longitude_fish)
+				return 0;
+
+			///不含拓展渔区的渔区数量,即原有渔区数量
+			counterAreaNum  = (longitude-fishing_area[index].longitude_fish ) / distance;
+			originalAreaNum  = fishing_area[index+1].fish_number - fishing_area[index].fish_number;
+	   
+      if(counterAreaNum < originalAreaNum)			
+				fishingAreaId = fishing_area[index].fish_number + counterAreaNum;
+		  else if(counterAreaNum < originalAreaNum+fishing_area[index].exp_num)
+				fishingAreaId  = (fishing_area[index].fish_number+originalAreaNum-1)*10 + counterAreaNum-originalAreaNum+1;
+			else
+				fishingAreaId  = 0;
+			
+			if( (scale_choose==1) && (fishingAreaId!=0))
+			{
+				row  = (fishing_area[index].latitude_fish-latitude)/10000 ;
+				col  = (longitude-fishing_area[index].longitude_fish)%30000 /10000 + 1;
+//				exp_id  = (latitude-fishing_area[index].latitude_fish)/10000 * 3 + ((longitude-fishing_area[index].longitude_fish)%distance)/10000+1;
+				exp_id  = row*3+col;
+				exp_id  = exp_id<<(sizeof(int)-4);
+				fishingAreaId  = fishingAreaId | exp_id<<(8*sizeof(int)-4);
+			}
+			return fishingAreaId;
+
+		}
+		else
+		{
+			index++;
+		}
+	}
+	return 0;
+	
+}
+
+void getMntWrapPara(long *halfDiff_lg, long* halfDiff_lt, scale_map* wrap_scale)
+{
+   
+   long min_lg  = mothership.longitude;
+   long max_lg  = mothership.longitude;
+   long min_lt  = mothership.latitude;
+   long max_lt  = mothership.latitude;
+   
+   long maxDiff_lg  = 0;
+   long maxDiff_lt  = 0;
+   
+   
+   MNT_BERTH * pIterator  = pMntHeader;
+   
+   
+   while(pIterator)
+   {
+      if( pIterator->pBoat && (pIterator->pBoat->latitude) && (pIterator->pBoat->longitude) )
+      {
+         if(pIterator->pBoat->latitude < min_lt)
+         {
+            min_lt  = pIterator->pBoat->latitude;
+         }
+         else if(pIterator->pBoat->latitude > max_lt)
+         {
+            max_lt  = pIterator->pBoat->latitude;
+         }
+         
+         if(pIterator->pBoat->longitude < min_lg)
+         {
+            min_lg  = pIterator->pBoat->longitude;
+         }
+         else if(pIterator->pBoat->longitude > max_lg)
+         {
+            max_lg  = pIterator->pBoat->longitude;
+         }
+         
+
+      }
+      pIterator  = pIterator->pNext;
+   }
+   
+   maxDiff_lg  = max_lg - min_lg + 1000;
+   maxDiff_lt  = max_lt - min_lt + 1000;
+   
+   *halfDiff_lg  = max_lg/2 + min_lg/2;
+   *halfDiff_lt  = max_lt/2 + min_lt/2;
+   
+   
+   ///map的宽为800pix，高为400pix，判断在适配上述区域时以map的宽来适配还是高来适配
+   
+   ///若适配区域的宽度大于高度的两倍，则以map的宽来适配
+    if(( maxDiff_lg/2) > maxDiff_lt)
+    {
+       wrap_scale->minute  = ( maxDiff_lg/(8*100) + 1)*100;  ///这种写法保证所得到的scale.minute为100的整数倍
+    }
+    ///否则以map的高来适配
+    else
+    {
+       wrap_scale->minute  = ( maxDiff_lt/(4*100) + 1)*100;
+    }
+}
+
+
+/**    getWrapPara()
+*    
+*    @Description:  通过查找最大和最小的经纬度，确定船舶分布的区域，再计算所需的scale
+*    @inputs     :   halfDiff_lg,分布区域的中点经度；halfDiff_lt，中点纬度；
+                     wrap_scale 能够满足屏幕切包含这块区域的scale
+*    @outputs    :
+*    @return     :
+*/
+
+void getWrapPara(long * halfDiff_lg, long * halfDiff_lt, scale_map* wrap_scale)
+{
+  int i  = 0;
+  int min_lg_index  = 0;
+  int max_lg_index  = 0;
+  int min_lt_index  = 0;
+  int max_lt_index  = 0;
+  
+  long maxDiff_lg  = 0;
+  long maxDiff_lt  = 0;
+  
+  long minute  = 0;
+  
+  if(N_boat <= 0)
+  {
+     *halfDiff_lg  = mothership.longitude;
+     *halfDiff_lt  = mothership.latitude;
+     
+     return;
+  }
+  
+  /// 找到第一个经纬度都不为 0 的 boat
+  for(i=N_boat-1;i>=0;i--)
+  {
+     if( (SimpBerthes[i].latitude > 0)  &&  (SimpBerthes[i].longitude > 0) )
+     {
+        min_lg_index  = i;
+        min_lt_index  = i;
+        max_lg_index  = i;
+        max_lt_index  = i;
+        break;
+     }
+  }
+  
+  ///分别查找最大最小经纬度的船的索引
+  for(;i<N_boat;i++)
+  {
+     if( (SimpBerthes[i].longitude < SimpBerthes[min_lg_index].longitude)  
+         &&  (SimpBerthes[i].longitude > 0)  &&  (SimpBerthes[i].latitude > 0) )
+       min_lg_index  = i;
+//     if( SimpBerthes[i].longitude < SimpBerthes[min_lg_index].longitude )
+//         min_lg_index  = i;
+//         
+     else if(SimpBerthes[i].longitude > SimpBerthes[max_lg_index].longitude)
+        max_lg_index  = i;
+     
+     if( (SimpBerthes[i].latitude < SimpBerthes[min_lt_index].latitude)  
+         &&  (SimpBerthes[i].latitude >0)  &&  (SimpBerthes[i].longitude > 0) )
+       min_lt_index  = i;
+//     if( SimpBerthes[i].latitude < SimpBerthes[min_lt_index].latitude )
+//         min_lt_index  = i;
+//         
+     else if(SimpBerthes[i].latitude  > SimpBerthes[max_lt_index].latitude)
+       max_lt_index  = i;     
+  }
+  
+
+
+
+
+ ///将母船考虑在内后，计算要适配的区域的三个参数：
+ ///   maxDiff_lg:表示适配区域的经度差（宽度）
+ ///   maxDiff_lt:  ......      纬度差（高度） 
+ ///   halfDiff_lg,halfDiff_lt: 适配区域中心点的经纬度坐标
+  if(mothership.longitude > SimpBerthes[max_lg_index].longitude)
+  {
+     maxDiff_lg  = mothership.longitude - SimpBerthes[min_lg_index].longitude;  
+     *halfDiff_lg = mothership.longitude/2 + SimpBerthes[min_lg_index].longitude/2;
+   
+  }
+  else if(mothership.longitude < SimpBerthes[min_lg_index].longitude)
+  {
+     maxDiff_lg  = SimpBerthes[max_lg_index].longitude - mothership.longitude;
+     *halfDiff_lg = mothership.longitude/2 + SimpBerthes[max_lg_index].longitude/2;
+   
+  }
+  else  
+  {
+     maxDiff_lg  = SimpBerthes[max_lg_index].longitude - SimpBerthes[min_lg_index].longitude;
+     *halfDiff_lg = SimpBerthes[max_lg_index].longitude/2 + SimpBerthes[min_lg_index].longitude/2;
+     
+  }
+     
+     
+  if(mothership.latitude > SimpBerthes[max_lt_index].latitude)
+  {
+     maxDiff_lt  = mothership.latitude - SimpBerthes[min_lt_index].latitude;
+     *halfDiff_lt = mothership.latitude/2 + SimpBerthes[min_lt_index].latitude/2;
+    
+  }
+     
+  else if(mothership.latitude < SimpBerthes[min_lt_index].latitude)
+  {
+     maxDiff_lt  = SimpBerthes[max_lt_index].latitude - mothership.latitude;
+     *halfDiff_lt = mothership.latitude/2 + SimpBerthes[max_lt_index].latitude/2;
+    
+  }
+     
+  else
+  {
+     maxDiff_lt  = SimpBerthes[max_lt_index].latitude  - SimpBerthes[min_lt_index].latitude;
+     *halfDiff_lt = SimpBerthes[max_lt_index].latitude/2 + SimpBerthes[min_lt_index].latitude/2;   
+  }
+  
+   
+   ///map的宽为800pix，高为400pix，判断在适配上述区域时以map的宽来适配还是高来适配
+   
+   ///若适配区域的宽度大于高度的两倍，则以map的宽来适配
+  if(( maxDiff_lg/2) > maxDiff_lt)
+  {
+     wrap_scale->minute  = ( maxDiff_lg/(8*100) + 1)*100;  ///这种写法保证所得到的scale.minute为100的整数倍
+  }
+  ///否则以map的高来适配
+  else
+  {
+     wrap_scale->minute  = ( maxDiff_lt/(4*100) + 1)*100;
+  }
+}
+
+
+/**    SetWrapedView()
+*
+*   @Description:  得到适配渔区的参数后，以所得scale显示
+*
+*/
+
+static void setWrapedView()
+{
+   ///若没有boat，则以母船为中心，用最小scale来显示
+   long lg  = mothership.longitude;
+   long lt  = mothership.latitude;
+   
+   scale_map wrapScale ={100,100};
+   
+//   if(N_boat > 0)
+//      getWrapPara(&lg, &lt, &wrapScale);
+   
+//  if(pMntHeader->pBoat->latitude)
+//  {
+     getMntWrapPara(&lg, &lt, &wrapScale);
+//  }
+   
+   map_draw(lg, lt, wrapScale);
+   
+  center.x=(MAP_LEFT+MAP_RIGHT)/2;
+	 center.y=(MAP_TOP+MAP_BOTTOM)/2;
+						
+	 GUI_SetLineStyle(GUI_LS_SOLID);
+	 GUI_SetColor(GUI_BLUE);
+//printf("Wrap para lg:%ld\n\r",lg);   
+//printf("          lt:%ld\n\r",lt);
+//printf("          minute:%ld\n\r",wrapScale.minute);
+//   disp_fish_boat(&wrapScale, lg, lt, SimpBerthes, N_boat);
+  MNT_dispBoat(&wrapScale, lg, lt, pMntHeader);
+  Draw_ScaleRuler(wrapScale);
+}
+
+
+
+static void map_draw(long longitude,  long latitude, scale_map scale)
+{
+	  int i = 0;
+	  short count_fr_fsh_ara = 0;
+	  short num_fr_fsh_ara   = 0;
+	
+	 short tmp_x = 0;
+	 short tmp_y = 0;
+//   short tmp_user  = 0;
+	 
+	 long tmp_lttude  = 0;
+	 long tmp_lgtude  = 0;
+	
+	unsigned int fishingAreaId  = 0;
+	
+	///画map的锚点
+	 mapping  anchor;
+	
+	 display disp_fsh_ara; 
+	 
+	 shift_x  = (scale.pixel>>1) - 16;
+	 shift_y  = (scale.pixel>>1)- 8;
+	 
+	 anchor.lgtude  = longitude;
+	 anchor.lttude  = latitude;
+	
+	 
+		 do
+		 {
+      if(fishing_area[i+1].latitude_fish<latitude && fishing_area[i].latitude_fish>=latitude)
+      {
+         count_fr_fsh_ara  = (longitude - fishing_area[i].longitude_fish)/scale.minute;
+         num_fr_fsh_ara    = fishing_area[i].fish_number + count_fr_fsh_ara;
+         break;
+      }
+      else
+      {
+         i++;
+      }
+		 }while(i<num_fish-1);
+		 
+		 anchor.y  = (MAP_TOP+MAP_BOTTOM)/2 - \
+		                 (fishing_area[i].latitude_fish-latitude)*scale.pixel \
+		                 / scale.minute;
+		 anchor.x  = (MAP_LEFT+MAP_RIGHT)/2  - \
+		                 (longitude-fishing_area[i].longitude_fish)%scale.minute \
+		                 * scale.pixel / scale.minute;
+		 
+		 anchor.lttude  = fishing_area[i].latitude_fish;
+		 anchor.lgtude  = fishing_area[i].longitude_fish + count_fr_fsh_ara * scale.minute;
+
+		 
+	   while(anchor.x  >= MAP_LEFT+(scale.pixel-shift_x))
+		 {
+			   anchor.x  -= scale.pixel;
+			   anchor.lgtude -= scale.minute;
+		 }
+		 while(anchor.y  > MAP_TOP+(scale.pixel-shift_y))
+		 {
+			   anchor.y  -= scale.pixel;
+			   anchor.lttude  += scale.minute;
+		 }
+		  
+		 draw_map_grid(anchor, scale);
+		 
+		 tmp_x  = anchor.x;
+		 tmp_y  = anchor.y;
+		 tmp_lgtude  = anchor.lgtude;
+		 tmp_lttude  = anchor.lttude;
+
+		 GUI_SetColor (pMapSkin->Map_Text);  
+   GUI_SetFont(&GUI_Font16B_1);
+   
+   for(tmp_y=anchor.y;tmp_y<=MAP_BOTTOM;)			 
+		 {				 
+				 if(scale_choose <=  1)
+				{
+					 tmp_x  = anchor.x;
+					 tmp_lgtude  = anchor.lgtude ;
+					 
+					 for(tmp_x=anchor.x; tmp_x<=MAP_RIGHT-(scale.pixel - shift_x);)
+					 {
+							 fishingAreaId  = getFishingAreaId(tmp_lgtude, tmp_lttude);
+							 
+							 if(measuring_scale[1].minute == scale.minute  && (0 != fishingAreaId))
+							 {
+									 if( 1000 > (fishingAreaId&0x0fffffff))
+									 {
+										 GUI_DispDecAt(fishingAreaId & 0x0fffffff, tmp_x+shift_x, tmp_y+shift_y, 3);							 
+									 }
+									 else
+									 {
+										 GUI_DispDecAt(fishingAreaId & 0x0fffffff, tmp_x+shift_x, tmp_y+shift_y, 4);
+									 }
+									 
+									GUI_DispChar('_' );
+									GUI_DispDec(fishingAreaId>>(8*sizeof(int)-4), 1);							 
+							 
+						 }
+						 else if((measuring_scale[0].minute == scale.minute) && (0 != fishingAreaId))
+						 {
+								 if(1000 > fishingAreaId)
+								 {
+									 GUI_DispDecAt(fishingAreaId, tmp_x+shift_x+10, tmp_y+shift_y, 3);							 
+								 }
+								 else
+								 {
+									 GUI_DispDecAt(fishingAreaId, tmp_x+shift_x+10, tmp_y+shift_y, 4);
+								 }
+
+						 }
+						 
+						 tmp_x  += scale.pixel;
+						 tmp_lgtude  += scale.minute;
+					 }					 
+				 }
+         if( (tmp_y+latitude_display_y_shift) >= MAP_TOP )
+         {
+           lltostr(tmp_lttude,pStrBuf);
+           GUI_DispStringAt(pStrBuf, MAP_RIGHT+latitude_display_x_shift,tmp_y+latitude_display_y_shift);         
+         }
+
+//	         display_longitude_latitude(tmp_lttude,MAP_RIGHT + latitude_display_x_shift,tmp_y + latitude_display_y_shift);						 
+				 
+				 tmp_y  += scale.pixel;
+				 tmp_lttude  -= scale.minute;
+			 }
+}
+
+
+static void _PaintFrame(void) 
+{
+//	GUI_RECT r;
+//	WM_GetClientRect(&r);
+	GUI_SetBkColor(GUI_GRAY);
+	GUI_SetColor(GUI_WHITE);
+	GUI_SetLineStyle(GUI_LS_DASH);
+	GUI_SetPenSize(1);
+	//GUI_SetFont(GUI_Font16);
+	GUI_SetTextMode(GUI_TEXTMODE_NORMAL);
+//	GUI_ClearRectEx(&r);
+	GUI_ClearRectEx(pRect);
+//  	GUI_CURSOR_Select(&GUI_CursorCrossS);
+//  	GUI_CURSOR_Show();
+
+}
+
+//void _DeleteFrame(void) 
+//{
+//	WM_DeleteWindow(_hLastFrame);
+//	_hLastFrame = 0;
+//}
+
+void _CB_WM(WM_MESSAGE* pMsg)
+{
+	GUI_RECT Rect;
+	switch(pMsg->MsgId)
+	{
+	case WM_PAINT:
+		WM_GetInsideRect(&Rect);
+		GUI_SetBkColor(GUI_GREEN);
+		GUI_SetColor(GUI_YELLOW);
+	 	GUI_SetFont (&GUI_Font24_ASCII);
+		GUI_ClearRectEx(&Rect);
+		GUI_DrawRectEx(&Rect);
+
+
+		break;
+	default:
+		WM_DefaultProc(pMsg);
+	}
+}
+
+/*****************************************************************
+*  @brief   根据当前光标位置计算Tip框的坐标
+* 
+*  @details Function:       updateTipLoc()
+*           Description:   根据当前光标位置计算Tip框的坐标
+*           Calls:         
+*           CalledBy:       _cbWindowAllFishMap()
+*           Table Accessed:
+*           Table Updated:
+*           Input:          x(x location of cursor)
+*                           y(y location of cursor)
+*           Output:         void
+*           Return:         void
+*           Others:
+*
+****************************************************************/
+
+static void updateTipLoc(short x, short y)
+{
+	if(x > MAP_RIGHT-tip_width)
+	{
+		tip_loc_x  = x-tip_width;
+	}
+	else if(x > MAP_LEFT)
+	{
+		tip_loc_x  = x;
+	}
+	
+	if(y > MAP_BOTTOM-tip_height)
+	{
+		tip_loc_y  = y-tip_height;
+  
+	}
+	else if(y > MAP_TOP)
+	{
+		tip_loc_y  = y;
+	}
+}
 

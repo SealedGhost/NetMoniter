@@ -32,13 +32,18 @@ extern int isKeyTrigged;
 
 /*-------------------------- Global Variables -------------------------------------*/
 
-char Doubleclick;
+Bool Doubleclick  = FALSE;
 uint8_t DMADest_Buffer[DMA_SIZE]; 
 GPDMA_Channel_CFG_Type GPDMACfg;
 
 volatile int myCnt = 0;
 __IO uint8_t UART2_RX[50];//
 
+
+__inline void DoubleClicCmd(Bool isEnable)
+{
+   Doubleclick  = isEnable;
+}
 
 /**
  *
@@ -120,17 +125,17 @@ void DMA_IRQHandler (void)
 									default:printf("ERROR DEFAULT 0x4E");break;
 								}break;
 								
-//				case 0x43: //松开
-//			   		Doubleclick  = 1;
-//								switch (DMADest_Buffer[1])
-//								{
-//										case 0x6C:if(DMADest_Buffer[2]==0x76){printf("5");if (Doubleclick == 0)GUI_StoreKeyMsg(GUI_KEY_UP    ,0);}else printf("error 0x43 0x6C but not 0x76");break;
-//										case 0x6B:if(DMADest_Buffer[2]==0x77){printf("7");if (Doubleclick == 0)GUI_StoreKeyMsg(GUI_KEY_LEFT  ,0);}else printf("error 0x43 0x6B but not 0x77");break;
-//										case 0x6F:if(DMADest_Buffer[2]==0x73){printf("9");if (Doubleclick == 0)GUI_StoreKeyMsg(GUI_KEY_RIGHT ,0);}else printf("error 0x43 0x6F but not 0x73");break;
-//										case 0x6D:if(DMADest_Buffer[2]==0x75){printf("0");if (Doubleclick == 0)GUI_StoreKeyMsg(GUI_KEY_DOWN  ,0);}else printf("error 0x43 0x6D but not 0x75");break;
-//										
-//									default:printf("ERROR DEFAULT 0x43");break;
-//								}break;
+				case 0x43: //松开
+			   		if(Doubleclick)
+								switch (DMADest_Buffer[1])
+								{
+										case 0x6C:if(DMADest_Buffer[2]==0x76){printf("5");GUI_StoreKeyMsg(GUI_KEY_UP    ,0);}else printf("error 0x43 0x6C but not 0x76");break;
+										case 0x6B:if(DMADest_Buffer[2]==0x77){printf("7");GUI_StoreKeyMsg(GUI_KEY_LEFT  ,0);}else printf("error 0x43 0x6B but not 0x77");break;
+										case 0x6F:if(DMADest_Buffer[2]==0x73){printf("9");GUI_StoreKeyMsg(GUI_KEY_RIGHT ,0);}else printf("error 0x43 0x6F but not 0x73");break;
+										case 0x6D:if(DMADest_Buffer[2]==0x75){printf("0");GUI_StoreKeyMsg(GUI_KEY_DOWN  ,0);}else printf("error 0x43 0x6D but not 0x75");break;
+										
+									default:printf("ERROR DEFAULT 0x43");break;
+								}break;
 				default:
 //       printf("ERROR UNDEFINE THIS KEY");
 //       lpc1788_DMA_Init();

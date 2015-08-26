@@ -63,7 +63,6 @@ extern WM_HWIN subWins[4];
 extern WM_HWIN confirmWin;
 extern WM_HWIN menuWin;
 
-extern MNT_BOAT MNT_Boats[BOAT_LIST_SIZE_MAX];
 extern short N_monitedBoat;
 
 extern CONF_SYS  SysConf;
@@ -199,8 +198,19 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        {
           BUTTON_SetBkColor(hBts[i], BUTTON_CI_UNPRESSED, GUI_GRAY);
           BUTTON_SetTextColor(hBts[i], BUTTON_CI_UNPRESSED,GUI_WHITE);
-       }       
+       } 
+       break;
+       
+       
+  case USER_MSG_UNIT:
+INFO("case user_msg_UNIT");  
+       TEXT_SetText(WM_GetDialogItem(pMsg->hWin, ID_TEXT_8), pMsg->Data.v?"nm":"km");
+       TEXT_SetText(WM_GetDialogItem(pMsg->hWin, ID_TEXT_9), pMsg->Data.v?"nm":"km");
+       break;
+   
+       
   case WM_INIT_DIALOG:
+       pMntSetWinSkin  = &(MntSetWinSkins[SysConf.Skin]);
     //
     // Initialization of 'text'
     //    
@@ -220,10 +230,14 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label);    
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_7);
     TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label);    
+    
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_8);
-    TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label);    
+    TEXT_SetFont(hItem, GUI_FONT_24_1);
+    TEXT_SetText(hItem, SysConf.Unit==UNIT_km?"km":"nm");
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_9);
-    TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label);    
+    TEXT_SetFont(hItem, GUI_FONT_24_1);
+    TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label);   
+    TEXT_SetText(hItem, SysConf.Unit==UNIT_km?"km":"nm");    
   
     //
     // Initialization of 'et_0'
@@ -522,8 +536,7 @@ static void myButtonListener(WM_MESSAGE* pMsg)
                     mntSetting.DRG_Setting.isSndEnable  = ENABLE;
                     BUTTON_SetText(hBts[6], "开启");
                  }
-                 break;            
-                 
+                 break;             
          }
          break;
     	
@@ -549,9 +562,8 @@ static void myButtonListener(WM_MESSAGE* pMsg)
        {
           case REPLY_OK:
                MNT_makeSettingUp(&mntSetting);  
-               MNT_init(&mntSetting);
-               btReset(btWin);
-//               printMoniteSetting(MNT_Boats);              
+               MNT_initSetting(&mntSetting);
+               btReset(btWin);             
                WM_SetFocus(menuWin);
                break;
           case REPLY_CANCEL:         

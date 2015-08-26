@@ -6,6 +6,7 @@
 
 
 /* external variables */
+extern CONF_SYS SysConf;
 extern boat mothership;
 
  char strBuf[20]  = "???°??.???";
@@ -356,34 +357,27 @@ void CleanText(WM_MESSAGE* pMsg)
 
 void Draw_ScaleRuler(scale_map scale)
 {
+ uint16_t length  = 0;
+ 
+ if(SysConf.Unit==UNIT_nm)
+ {
+    length  = scale.pixel;
+ }
+ else 
+ {
+    length  = scale.pixel * 5 /9;
+ }
+
 	GUI_SetColor(GUI_LIGHTGREEN);
  GUI_SetPenSize(1);
+ GUI_SetLineStyle(GUI_LS_SOLID);
  
- GUI_DrawLine(800-160, 480-10,  800-160+scale.pixel, 480-10);
+ GUI_DrawLine(800-160, 480-10,  800-160+length, 480-10);
  GUI_DrawLine(800-160, 480-10,  800-160, 480-20);
- GUI_DrawLine(800-160+scale.pixel, 480-10, 800-160+scale.pixel, 480-20);
- sprintf(pStrBuf, "%ld.%ldnm",scale.minute/1000,(scale.minute%1000)/100);
+ GUI_DrawLine(800-160+length, 480-10, 800-160+length, 480-20);
+ sprintf(pStrBuf, "%ld.%ld%s",scale.minute/1000,(scale.minute%1000)/100,SysConf.Unit==UNIT_nm?"nm":"km");
  GUI_DispStringAt(pStrBuf, 800-160+10, 480-10-20);
-//	GUI_DrawLine(x0,y0,x0+52,y0);
-//	GUI_DrawLine(x0,y0,x0,y0-5),
-//	GUI_DrawLine(x0+52,y0,x0+52,y0-5);
-//	
-//	
-//	
-//	if(3000>scaleVal)
-//	{
-//		GUI_GotoXY(x0+2,y0-20);
-//		GUI_DispFloatMin(scaleVal/1000.0,2 );
-//		GUI_DispChar('n');
-//		GUI_DispChar('m');
-//	}
-//	else
-//	{
-//		GUI_GotoXY(x0+10,y0-20);
-//		GUI_DispDecMin(scaleVal/1000);
-//		GUI_DispChar('n');
-//		GUI_DispChar('m');
-//	}
+
 }
 
 

@@ -45,7 +45,7 @@ void lpc1788_Uart_Init(int port)//LPC1788_Uart_Init
 }
 
 
-static void UART_Config(unsigned char channel)
+ void UART_Config(unsigned char channel)
 {
    UART_CFG_Type UARTConfigStruct1;
    UART_FIFO_CFG_Type UARTFIFOConfigStruct1;
@@ -88,10 +88,9 @@ void USER_Init(void)
  lpc1788_DMA_Init();  
 //	printf("uart0 init success!\n\r\r");	
 	UART_Send((UART_ID_Type)0, Buffer0,sizeof(Buffer0),BLOCKING);
-	
-	UART_Config(2);	
-	DMA_Config(1);      
-	UART_Send((UART_ID_Type)2,Buffer2,sizeof(Buffer2),BLOCKING);///* 打印一串字符到串口Uart2 */
+
+     
+//	UART_Send((UART_ID_Type)2,Buffer2,sizeof(Buffer2),BLOCKING);///* 打印一串字符到串口Uart2 */
 ////	lpc1788_TIMER_Init();
 }
 
