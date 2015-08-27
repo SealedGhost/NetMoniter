@@ -198,151 +198,110 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
   
        pKeyInfo  = (WM_KEY_INFO*)(pMsg->Data.p);
        
-       
-       drawMapSwitchCnt  = 0;
-       if(drawMapSwitch == 0)
+       if(pKeyInfo->Key >= GUI_KEY_LEFT  &&  pKeyInfo->Key <= GUI_KEY_DOWN)
        {
-          drawMapSwitch  = 1; 
-          WM_InvalidateRect(hDlg_FishMap,Rect_Map);
-          WM_Paint(hDlg_FishMap);           
+          switch(pKeyInfo->Key)  
+          {
+             case GUI_KEY_LEFT:
+                  Dir_x  = -1;
+                  Dir_y  = 0;
+                  break;
+             case GUI_KEY_UP:
+                  Dir_x  = 0;
+                  Dir_y  = -1;             
+                  break;
+             case GUI_KEY_RIGHT:
+                  Dir_x  = 1;
+                  Dir_y  = 0;             
+                  break;
+             case GUI_KEY_DOWN:
+                  Dir_x  = 0;
+                  Dir_y  = 1;             
+                  break;
+          }
+          if(pKeyInfo->PressedCnt)
+          {
+              WM_DeleteTimer(reTimer);
+              cursorTimer  = WM_CreateTimer(hDlg_FishMap, ID_TIMER_CURSOR, 500, 0);
+              Doubleclick  = TRUE;             
+              onCursorMoved();            
+          }
+          else
+          {
+              WM_DeleteTimer(cursorTimer);         
+              Doubleclick  = FALSE;
+ 	            reTimer  = WM_CreateTimer(pMsg->hWin, ID_TIMER_MAP_REFRESH,MAP_REFRESH_SLOT, 0);          
+          }
+          
+          drawMapSwitchCnt  = 0;
+          if(drawMapSwitch == 0)
+          {
+             drawMapSwitch  = 1;
+             WM_InvalidateRect(hDlg_FishMap, Rect_Map);
+             WM_Paint(hDlg_FishMap);
+          }
+          
+        //		WM_InvalidateRect(hWin,Rect_Map);  
+          if(!GUI_CURSOR_GetState())
+          {
+             GUI_CURSOR_Show();
+          }          
        }
-       
-     //		WM_InvalidateRect(hWin,Rect_Map);  
-       if(!GUI_CURSOR_GetState())
+       else switch(pKeyInfo->Key)
        {
-          GUI_CURSOR_Show();
-       }
-       
-      if( ((WM_KEY_INFO*)(pMsg->Data.p))->key )
-  
-			switch (((WM_KEY_INFO*)(pMsg->Data.p))->Key) 
-			{
-			   case GUI_KEY_UP:
-           if( ((WM_KEY_INFO*)(pMsg->Data.p))->PressedCnt )
-           {
-//              WM_DeleteTimer(reTimer);
-//              cursorTimer  = WM_CreateTimer(hDlg_FishMap, ID_TIMER_CURSOR, 500, 0);
-//              Doubleclick  = TRUE;             
-              Dir_x  = 0;
-              Dir_y  = -1;
-//              onCursorMoved();           
-           }
-           else
-           {
-              WM_DeleteTimer(cursorTimer);         
-              Doubleclick  = FALSE;
- 	            reTimer  = WM_CreateTimer(pMsg->hWin, ID_TIMER_MAP_REFRESH,MAP_REFRESH_SLOT, 0);
-           }
-           break;
-           
-      case GUI_KEY_DOWN:
-           if( ((WM_KEY_INFO*)(pMsg->Data.p))->PressedCnt )
-           {
-              WM_DeleteTimer(reTimer);
-              cursorTimer  = WM_CreateTimer(hDlg_FishMap, ID_TIMER_CURSOR, 500, 0);
-              Doubleclick  = TRUE;             
-              Dir_x  = 0;
-              Dir_y  = 1;
-              onCursorMoved();           
-           }
-           else
-           {
-              WM_DeleteTimer(cursorTimer);         
-              Doubleclick  = FALSE;
- 	            reTimer  = WM_CreateTimer(pMsg->hWin, ID_TIMER_MAP_REFRESH,MAP_REFRESH_SLOT, 0);
-           }
-           break;
-      
-      case GUI_KEY_LEFT:
-           if( ((WM_KEY_INFO*)(pMsg->Data.p))->PressedCnt )
-           {
-              WM_DeleteTimer(reTimer);
-              cursorTimer  = WM_CreateTimer(hDlg_FishMap, ID_TIMER_CURSOR, 500, 0);
-              Doubleclick  = TRUE;             
-              Dir_x  = -1;
-              Dir_y  = 0;
-              onCursorMoved();           
-           }
-           else
-           {
-              WM_DeleteTimer(cursorTimer);         
-              Doubleclick  = FALSE;
- 	            reTimer  = WM_CreateTimer(pMsg->hWin, ID_TIMER_MAP_REFRESH,MAP_REFRESH_SLOT, 0);
-           }
-           break;
-           
-      case GUI_KEY_RIGHT:
-           if( ((WM_KEY_INFO*)(pMsg->Data.p))->PressedCnt )
-           {
-              WM_DeleteTimer(reTimer);
-              cursorTimer  = WM_CreateTimer(hDlg_FishMap, ID_TIMER_CURSOR, 500, 0);
-              Doubleclick  = TRUE;             
-              Dir_x  = 1;
-              Dir_y  = 0;
-              onCursorMoved();           
-           }
-           else
-           {
-              WM_DeleteTimer(cursorTimer);         
-              Doubleclick  = FALSE;
- 	            reTimer  = WM_CreateTimer(pMsg->hWin, ID_TIMER_MAP_REFRESH,MAP_REFRESH_SLOT, 0);
-           }
-           break;
-      /*----------------------   捕捉到中心按键按下的响应:    -----------------------*/
-      /*   中心按键按下后：将本船位置和光标显示到map中心点 */
-       
-      case GUI_KEY_ENTER:
-        
-        /* 光标定位到中心 */
-          __cursor.x = (MAP_LEFT+MAP_RIGHT)/2;
-          __cursor.y = (MAP_TOP+MAP_BOTTOM)/2;
-       
-       /* 光标代表的经纬度设置为母船的经纬度 */
-          __cursor.latitude = mothership.latitude;
-          __cursor.longitude = mothership.longitude;
+         /*----------------------   捕捉到中心按键按下的响应:    -----------------------*/
+         /*   中心按键按下后：将本船位置和光标显示到map中心点 */
           
-          center.lgtude  = mothership.longitude;
-          center.lttude  = mothership.latitude;
-          
-          GUI_CURSOR_Hide();
-          GUI_CURSOR_SetPosition(__cursor.x, __cursor.y);
-          WM_InvalidateRect(hDlg_FishMap,Rect_Map);
-          WM_Paint(hDlg_FishMap);
-          GUI_CURSOR_Show();
-          break;
+         case GUI_KEY_ENTER:         
+            /* 光标定位到中心 */
+              __cursor.x = (MAP_LEFT+MAP_RIGHT)/2;
+              __cursor.y = (MAP_TOP+MAP_BOTTOM)/2;
+           
+           /* 光标代表的经纬度设置为母船的经纬度 */
+              __cursor.latitude = mothership.latitude;
+              __cursor.longitude = mothership.longitude;
+              
+              center.lgtude  = mothership.longitude;
+              center.lttude  = mothership.latitude;
+              
+              GUI_CURSOR_Hide();
+              GUI_CURSOR_SetPosition(__cursor.x, __cursor.y);
+              WM_InvalidateRect(hDlg_FishMap,Rect_Map);
+              WM_Paint(hDlg_FishMap);
+              GUI_CURSOR_Show();
+              break;
      
-				case GUI_KEY_LARGE: 
-         if(scale_choose <MAX_GEAR)
-          scale_choose++;
-         WM_InvalidateRect( hWin,Rect_Map);//WM_Paint(hWin);
-         flip_lttude = measuring_scale[scale_choose].minute*((flip_speed_lat)/measuring_scale[scale_choose].pixel);
-         flip_lngtude = measuring_scale[scale_choose].minute*((flip_speed_long)/measuring_scale[scale_choose].pixel);
-         break;
+        case GUI_KEY_LARGE: 
+             if(scale_choose <MAX_GEAR)
+              scale_choose++;
+             WM_InvalidateRect( hWin,Rect_Map);//WM_Paint(hWin);
+             flip_lttude = measuring_scale[scale_choose].minute*((flip_speed_lat)/measuring_scale[scale_choose].pixel);
+             flip_lngtude = measuring_scale[scale_choose].minute*((flip_speed_long)/measuring_scale[scale_choose].pixel);
+             break;
      
-				case GUI_KEY_REDUCE:   
-         if(scale_choose >0)
-          scale_choose--;
-         WM_InvalidateRect( hWin,Rect_Map);//WM_Paint(hWin);
-         flip_lttude = measuring_scale[scale_choose].minute*(flip_speed_lat)/measuring_scale[scale_choose].pixel;
-         flip_lngtude = measuring_scale[scale_choose].minute*(flip_speed_long)/measuring_scale[scale_choose].pixel;
-         break;
+        case GUI_KEY_REDUCE:   
+             if(scale_choose >0)
+              scale_choose--;
+             WM_InvalidateRect( hWin,Rect_Map);//WM_Paint(hWin);
+             flip_lttude = measuring_scale[scale_choose].minute*(flip_speed_lat)/measuring_scale[scale_choose].pixel;
+             flip_lngtude = measuring_scale[scale_choose].minute*(flip_speed_long)/measuring_scale[scale_choose].pixel;
+             break;
 					
-				case GUI_KEY_MENU:	         
-          GUI_CURSOR_Hide();
+        case GUI_KEY_MENU:	         
+              GUI_CURSOR_Hide();
 
 
-          WM_ShowWindow(subWins[0]);
-          WM_ShowWindow(subWins[1]);
-          WM_ShowWindow(btWin);
-          WM_ShowWindow(subWins[2]);
-          WM_ShowWindow(subWins[3]);
-          WM_BringToTop(menuWin);
-          WM_SetFocus(menuWin);
-//					WM_SetFocus (WM_GetDialogItem (menuWin, GUI_ID_BUTTON0));
-			      	break;
+              WM_ShowWindow(subWins[0]);
+              WM_ShowWindow(subWins[1]);
+              WM_ShowWindow(btWin);
+              WM_ShowWindow(subWins[2]);
+              WM_ShowWindow(subWins[3]);
+              WM_BringToTop(menuWin);
+              WM_SetFocus(menuWin);
+			          	break;
 
-			}
-		 break;
+			     }
+		      break;
 			
 		case WM_PAINT: 
 /// Draw  map grid     
