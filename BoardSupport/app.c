@@ -163,6 +163,7 @@ void Insert_Task(void *p_arg)  //等待接收采集到的数据
  
     tmp  = translate_(s,&text_out,&text_out_24A,&text_out_type_of_ship); 
     OSMutexPend(Refresher, 0, &myErr);     
+//INFO("insert");    
     switch(tmp)
     {
        case 18:

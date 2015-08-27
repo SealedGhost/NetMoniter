@@ -40,11 +40,6 @@ volatile int myCnt = 0;
 __IO uint8_t UART2_RX[50];//
 
 
-__inline void DoubleClicCmd(Bool isEnable)
-{
-   Doubleclick  = isEnable;
-}
-
 /**
  *
  *

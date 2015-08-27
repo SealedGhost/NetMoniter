@@ -16,6 +16,7 @@
 #define MAP_BOTTOM_LT 210000  //   N =3.5°
 
 #define ID_TIMER_MAP_REFRESH  0x01
+#define ID_TIMER_CURSOR       0x02
 
 
 #define MAP_WIDTH (MAP_RIGHT-MAP_LEFT)
@@ -92,8 +93,8 @@
 						__cursor.x = (MAP_LEFT+MAP_RIGHT)/2;\
 						__cursor.y = (MAP_TOP+MAP_BOTTOM)/2;\
 						GUI_CURSOR_SetPosition(__cursor.x,__cursor.y);\
-						WM_InvalidateRect(hWin,pRect);
-//						WM_InvalidateRect(hWin, pRect);
+						WM_InvalidateRect(hWin,Rect_Map);
+//						WM_InvalidateRect(hWin, Rect_Map);
 
 //						WM_InvalidateWindow(hWin); 
 //						WM_Paint(hWin);

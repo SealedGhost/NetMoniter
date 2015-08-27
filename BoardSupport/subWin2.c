@@ -27,6 +27,15 @@
 #include "MainTask.h"
 #include "Setting.h"
 #include "SystemConfig.h"
+#include "GUI_ARRAY.h"
+#include <stdlib.h>
+#include <string.h>
+#include "HEADER.h"
+#include "WIDGET.h"
+#include "SCROLLBAR.h"
+#include "LISTVIEW_Private.h"
+#include "WM_Intern.h"
+
 
 /* --- Macro defines ---*/
 
@@ -51,6 +60,7 @@ static long MMSI  = 0;
 /*--- local functions ---*/
 static void updateListViewContent(WM_HWIN thisHandle);
 int confirmWinExec(void);
+static void _Paint(LISTVIEW_Handle hObj, LISTVIEW_Obj* pObj, WM_MESSAGE* pMsg) ;
 
 
 
@@ -414,10 +424,9 @@ static void myListViewListener(WM_MESSAGE* pMsg)
        WM_InvalidateRect(subWins[2],&lvIndicate); 
        break;	
        
-   case WM_PAINT:
-        LISTVIEW_Callback(pMsg);
-        
-        break;   
+//   case WM_PAINT:
+//        _Paint(thisListView, LISTVIEW_H2P(thisListView), pMsg);
+//        break;   
         
     case WM_KEY:
 			pInfo  = (WM_KEY_INFO*)pMsg->Data.p; 
@@ -767,4 +776,190 @@ int getSelectedIndex(WM_HWIN thisListView,  int col)
 }
 
 
+/*********************************************************************
+*
+*       _GetNumVisibleRows
+*
+* Purpose:
+*   Returns the number of visible rows according the header
+*   and (if exist) horizontal scrollbar.
+*
+* Return value:
+*   Number of visible rows. If no entire row can be displayed, this
+*   function will return one.
+*/
+static unsigned _GetNumVisibleRows(LISTVIEW_Handle hObj, const LISTVIEW_Obj* pObj) {
+  unsigned RowDistY, ySize, r = 1;
+  GUI_RECT Rect;
+  WM_GetInsideRectExScrollbar(hObj, &Rect);
+  ySize    = Rect.y1 - Rect.y0 + 1 - HEADER_GetHeight(pObj->hHeader);
+  RowDistY = LISTVIEW__GetRowDistY(pObj);
+  if (RowDistY) {
+    r = ySize / RowDistY;
+    r = (r == 0) ? 1 : r;
+  }
+  return r;
+}
+
+
+
+/*********************************************************************
+*
+*       GUI_ARRAY_GetpItem
+*
+* Purpose:
+*   Gets the pointer of specified item
+*
+* Notes:
+*   (1) Index out of bounds
+*       It is permitted to specify an index larger than the
+*       array size. In this case, a 0-handle is returned.
+*   (2) Locking
+*       It is the caller's responsibility to lock before calling this
+*       function.
+*/
+void* GUI_ARRAY_GetpItem(const GUI_ARRAY* pThis, unsigned int Index) {
+  void* p = NULL;
+  WM_HMEM h;
+
+  h = GUI_ARRAY_GethItem(*pThis, Index);
+  if (h) {
+    p = WM_H2P(h);
+  }
+  return p;
+}
+
+
 /*************************** End of file ****************************/
+static void _Paint(LISTVIEW_Handle hObj, LISTVIEW_Obj* pObj, WM_MESSAGE* pMsg) {
+  GUI_ARRAY* pRow;
+  GUI_RECT ClipRect, Rect;
+  int NumRows, NumVisRows, NumColumns;
+  int LBorder, RBorder, EffectSize;
+  int xPos, yPos, Width, RowDistY;
+  int Align, i, j, EndRow;
+  /* Init some values */
+  NumColumns = HEADER_GetNumItems(pObj->hHeader);
+  
+  NumVisRows = _GetNumVisibleRows(hObj, pObj);
+  RowDistY   = LISTVIEW__GetRowDistY(pObj);
+  LBorder    = pObj->LBorder;
+  RBorder    = pObj->RBorder;
+  EffectSize = pObj->Widget.pEffect->EffectSize;
+  yPos       = HEADER_GetHeight(pObj->hHeader) + EffectSize;
+  EndRow     = pObj->ScrollStateV.v + (((NumVisRows + 1) > NumRows) ? NumRows : NumVisRows + 1);
+  /* Calculate clipping rectangle */
+  ClipRect = *(const GUI_RECT*)pMsg->Data.p;
+  GUI_MoveRect(&ClipRect, -pObj->Widget.Win.Rect.x0, -pObj->Widget.Win.Rect.y0);
+  WM_GetInsideRectExScrollbar(hObj, &Rect);
+  GUI__IntersectRect(&ClipRect, &Rect);
+  /* Set drawing color, font and text mode */
+  LCD_SetColor(pObj->Props.aTextColor[0]);
+  GUI_SetFont(pObj->Props.pFont);
+  GUI_SetTextMode(GUI_TM_TRANS);
+  /* Do the drawing */
+  for (i = pObj->ScrollStateV.v; i < EndRow; i++) {
+//    pObj->RowArray
+//    pRow = (const GUI_ARRAY*)GUI_ARRAY_GetpItem(&pObj->RowArray, i);
+    pRow  = (GUI_ARRAY*)GUI_ARRAY_GetpItemLocked(pObj->RowArray, i);
+    if (pRow) {
+      Rect.y0 = yPos;
+      /* Break when all other rows are outside the drawing area */
+      if (Rect.y0 > ClipRect.y1) {
+        break;
+      }
+      Rect.y1 = yPos + RowDistY - 1;
+      /* Make sure that we draw only when row is in drawing area */
+      if (Rect.y1 >= ClipRect.y0) {
+        int ColorIndex;
+        /* Set background color */
+        if (i == pObj->Sel) {
+          ColorIndex = (pObj->Widget.State & WIDGET_STATE_FOCUS) ? 2 : 1;
+        } else {
+          ColorIndex = 0;
+        }
+        LCD_SetBkColor(pObj->Props.aBkColor[ColorIndex]);
+        /* Iterate over all columns */
+        if (pObj->ShowGrid) {
+          Rect.y1--;
+        }
+        xPos = EffectSize - pObj->ScrollStateH.v;
+        for (j = 0; j < NumColumns; j++) {
+          Width   = HEADER_GetItemWidth(pObj->hHeader, j);
+          Rect.x0 = xPos;
+          /* Break when all other columns are outside the drawing area */
+          if (Rect.x0 > ClipRect.x1) {
+            break;
+          }
+          Rect.x1 = xPos + Width - 1;
+          /* Make sure that we draw only when column is in drawing area */
+          if (Rect.x1 >= ClipRect.x0) {
+            LISTVIEW_ITEM * pItem;
+            pItem = (LISTVIEW_ITEM *)GUI_ARRAY_GetpItem(pRow, j);
+            if (pItem->hItemInfo) {
+              LISTVIEW_ITEM_INFO * pItemInfo;
+              pItemInfo = (LISTVIEW_ITEM_INFO *)GUI_ALLOC_h2p(pItem->hItemInfo);
+              LCD_SetBkColor(pItemInfo->aBkColor[ColorIndex]);
+              LCD_SetColor(pItemInfo->aTextColor[ColorIndex]);
+            } else {
+              LCD_SetColor(pObj->Props.aTextColor[ColorIndex]);
+            }
+            /* Clear background */
+            GUI_ClearRect(Rect.x0, Rect.y0, Rect.x1, Rect.y1);
+            /* Draw text */
+            Rect.x0 += LBorder;
+            Rect.x1 -= RBorder;
+            Align = *((int*)GUI_ARRAY_GetpItem(&pObj->AlignArray, j));
+            GUI_DispStringInRect(pItem->acText, &Rect, Align);
+INFO("%s",pItem->acText);            
+            if (pItem->hItemInfo) {
+              LCD_SetBkColor(pObj->Props.aBkColor[ColorIndex]);
+            }
+          }
+          xPos += Width;
+        }
+        /* Clear unused area to the right of items */
+        if (xPos <= ClipRect.x1) {
+          GUI_ClearRect(xPos, Rect.y0, ClipRect.x1, Rect.y1);
+        }
+      }
+      yPos += RowDistY;
+    }
+  }
+  /* Clear unused area below items */
+  if (yPos <= ClipRect.y1) {
+    LCD_SetBkColor(pObj->Props.aBkColor[0]);
+    GUI_ClearRect(ClipRect.x0, yPos, ClipRect.x1, ClipRect.y1);
+  }
+  /* Draw grid */
+//  if (pObj->ShowGrid) {
+    GUI_SetPenSize(6);
+    LCD_SetColor(pObj->Props.GridColor);
+    yPos = HEADER_GetHeight(pObj->hHeader) + EffectSize - 1;
+    for (i = 0; i < NumVisRows; i++) {
+      yPos += RowDistY;
+      /* Break when all other rows are outside the drawing area */
+      if (yPos > ClipRect.y1) {
+        break;
+      }
+      /* Make sure that we draw only when row is in drawing area */
+      if (yPos >= ClipRect.y0) {
+        GUI_DrawHLine(yPos, ClipRect.x0, ClipRect.x1);
+      }
+    }
+    xPos = EffectSize - pObj->ScrollStateH.v;
+    for (i = 0; i < NumColumns; i++) {
+      xPos += HEADER_GetItemWidth(pObj->hHeader, i);
+      /* Break when all other columns are outside the drawing area */
+      if (xPos > ClipRect.x1) {
+        break;
+      }
+      /* Make sure that we draw only when column is in drawing area */
+      if (xPos >= ClipRect.x0) {
+        GUI_DrawVLine(xPos, ClipRect.y0, ClipRect.y1);
+      }
+    }
+//  }
+  /* Draw the effect */
+  WIDGET__EFFECT_DrawDown(&pObj->Widget);
+}

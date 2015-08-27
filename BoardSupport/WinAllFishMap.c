@@ -22,12 +22,19 @@ extern SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
 extern MNT_BERTH MNT_Berthes[MNT_NUM_MAX];
 extern BERTH * pHeader;
 extern MNT_BERTH * pMntHeader;
+
+extern Bool Doubleclick;
+
 /*--------------------- external function ----------------------------------*/
 extern void MNT_dispBoat(const scale_map * scale,  long center_lg, long center_lt, MNT_BERTH * pIterator);
 
 /*------------------------- local variables --------------------------------*/
 static WM_HTIMER reTimer;
+static WM_HTIMER cursorTimer;
 static TEXT_Handle textHandle  = 0;
+static short Dir_x  = 0;
+static short Dir_y  = 0;
+static _cursor tmp_cursor;
 
 static unsigned int drawMapSwitch  = 1;
 static unsigned int drawMapSwitchCnt  = 0;
@@ -52,13 +59,14 @@ MapWin_COLOR mapSkins[2] = {
 
 MapWin_COLOR * pMapSkin  = mapSkins;                                           
 
-GUI_RECT pRect[]  = {MAP_LEFT,0,MAP_RIGHT,MAP_BOTTOM};
+GUI_RECT Rect_MapWin[]  = {MAP_LEFT, 0,       MAP_RIGHT, MAP_BOTTOM};
+GUI_RECT Rect_Title[]  =  {MAP_LEFT, 0,       MAP_RIGHT, MAP_TOP-1};
+GUI_RECT Rect_Map[]  =    {MAP_LEFT, MAP_TOP, MAP_RIGHT, MAP_BOTTOM};
 
 static int v;
 
 
 volatile _cursor __cursor  = {(MAP_LEFT+MAP_RIGHT)/2, (MAP_TOP+MAP_BOTTOM)/2,7300000, 1740000, 1,0,20,20};
-WM_HTIMER timer_cursor;
 long temp_lat = 1920726,temp_long = 7305545;
 char time_delay = 0;
 char scale_choose = 1;
@@ -85,6 +93,7 @@ long flip_lngtude = 10000*(flip_speed_long)/120;
 
 static void map_draw(long longitude,  long latitude, scale_map scale);
 static void setWrapedView(void);
+static void onCursorMoved(void);
 
 WM_MESSAGE * pUpdateMsg;
 
@@ -105,34 +114,35 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 	{
 		case WM_CREATE:
   
-				WM_SetFocus(hWin);
-				GUI_CURSOR_Select(&GUI_CursorCrossS);
-//				GUI_CURSOR_Show();
+       WM_SetFocus(hWin);
+       GUI_CURSOR_Select(&GUI_CursorCrossS);
+   //				GUI_CURSOR_Show();
+       
+       pMapSkin  = &(mapSkins[SysConf.Skin]);
+      
+       for(i=0;i<MNT_NUM_MAX;i++)
+       {
+          if(MNT_Berthes[i].mntBoat.mmsi > 0)
+             break;
+       }
+       /// Do not exist monited boat.
+       if(i>=MNT_NUM_MAX)
+       {
+          myMsg.hWin  = WM_GetClientWindow(confirmWin);
+          myMsg.hWinSrc  = pMsg->hWin;
+          myMsg.MsgId  = USER_MSG_ID_CHOOSE;
+          myMsg.Data.v  = ADD_MONITED;
+          WM_SendMessage(myMsg.hWin, &myMsg);
+          WM_BringToTop(confirmWin);
+          WM_SetFocus(confirmWin); 
+       }
+   		  reTimer  = WM_CreateTimer(pMsg->hWin, ID_TIMER_MAP_REFRESH,MAP_REFRESH_SLOT, 0);
+       break;
     
-    pMapSkin  = &(mapSkins[SysConf.Skin]);
-   
-    for(i=0;i<MNT_NUM_MAX;i++)
-    {
-       if(MNT_Berthes[i].mntBoat.mmsi > 0)
-          break;
-    }
-    /// Do not exist monited boat.
-    if(i>=MNT_NUM_MAX)
-    {
-       myMsg.hWin  = WM_GetClientWindow(confirmWin);
-       myMsg.hWinSrc  = pMsg->hWin;
-       myMsg.MsgId  = USER_MSG_ID_CHOOSE;
-       myMsg.Data.v  = ADD_MONITED;
-       WM_SendMessage(myMsg.hWin, &myMsg);
-       WM_BringToTop(confirmWin);
-       WM_SetFocus(confirmWin); 
-    }
-		  reTimer  = WM_CreateTimer(pMsg->hWin, ID_TIMER_MAP_REFRESH,MAP_REFRESH_SLOT, 0);
-				break;
   case USER_MSG_SKIN: 
-     pMapSkin  = &(mapSkins[pMsg->Data.v]);
-     break;
-     
+       pMapSkin  = &(mapSkins[pMsg->Data.v]);
+       break;
+       
   case USER_MSG_SHAPE:
        changeShape(pMsg->Data.v);
        break;
@@ -160,332 +170,155 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
        break;  
   
 		case WM_TIMER: 
-  drawMapSwitchCnt++;
-  if(drawMapSwitchCnt > AUTO_ADAPTER_CNT)
-  {
-     drawMapSwitchCnt  = 0;
-     drawMapSwitch  = 0;
-     GUI_CURSOR_Hide();
-  }
+  
+       if(ID_TIMER_CURSOR  == WM_GetTimerId(cursorTimer))
+       {        
+          onCursorMoved();
+          WM_RestartTimer(pMsg->Data.v, 50);
+       }
+       else if(ID_TIMER_MAP_REFRESH == WM_GetTimerId(reTimer))
+       {		
+          drawMapSwitchCnt++;
+          if(drawMapSwitchCnt > AUTO_ADAPTER_CNT)
+          {
+             drawMapSwitchCnt  = 0;
+             drawMapSwitch  = 0;
+             GUI_CURSOR_Hide();
+          }          
+          WM_InvalidateRect( hWin,Rect_Map);
+          WM_RestartTimer(reTimer, MAP_REFRESH_SLOT);
+       }
 
-			 if(ID_TIMER_MAP_REFRESH == WM_GetTimerId(reTimer))
-				{		    
-						WM_InvalidateRect( hWin,pRect);
-			 		WM_RestartTimer(reTimer, MAP_REFRESH_SLOT);
-				}
-				break;
-		
-		    #ifndef KEY_TIMER_MODE
-		             break;
-		    #endif
-		/* 按键长按响应 */
-					if(time_delay)
-					{
-								time_delay++;
-								if(time_delay == speed_up_after)
-									
-								/* 长按  光标加速移动 */
-									  __cursor.speed = CURSOR_SPEED_FAST;
+       break;
 
-								
-						switch(__cursor.key)
-						{
-						case 1:
-							if(__cursor.y <= MAP_TOP+20)
-						 {				
-                    temp_lat = temp_lat + flip_lttude;	          							 
-										if(temp_lat>=MAP_TOP_LT)
-										{
-											time_delay = 0;	
-											break;
-										}else
-										{
-											UART_SendByte(UART_0,'0');
-											__cursor.latitude = temp_lat;
-										}
-										TIMER_handle
-							}
-							else
-							{
-										__cursor.y = __cursor.y - __cursor.speed;
-							}
-							break;
-						case 2:
-							if(__cursor.y >= MAP_BOTTOM-40)
-								{
 
-											temp_lat = temp_lat - flip_lttude;
-											if(temp_lat<=MAP_BOTTOM_LT)
-											{
-														time_delay = 0;
-														break;
-											}
-											else
-												__cursor.latitude = temp_lat;
-											
-							}
-							else
-										__cursor.y = __cursor.y + __cursor.speed;
-							break;
-							
-						case 3:
-							if(__cursor.x <= MAP_LEFT+20)
-							{
-										temp_long = temp_long - flip_lngtude;
-								
-										if(temp_long<=MAP_LEFT_LG)
-										{
-													time_delay = 0;
-													break;
-										}
-										else
-											__cursor.longitude = temp_long;
-										
-										
-										TIMER_handle
-							}
-							else
-										__cursor.x = __cursor.x - __cursor.speed;
-							break;
-							
-						case 4:
-							if(__cursor.x >= MAP_RIGHT-20)
-							{
-										temp_long = temp_long + flip_lngtude;
-							
-										if(temp_long>=MAP_RIGHT_LG)
-										{
-													time_delay = 0;
-													break;
-										}
-										else
-											__cursor.longitude = temp_long;
-										
-										TIMER_handle
-							}
-							else
-										__cursor.x = __cursor.x + __cursor.speed;
-							break;
-						}
-						GUI_CURSOR_SetPosition(__cursor.x,__cursor.y);
-						WM_RestartTimer(timer_cursor,timer_millisecond);
-			}
-			break;
-			
 		case WM_KEY: 
-  drawMapSwitchCnt  = 0;
-  drawMapSwitch     = 1;
-
-//		WM_InvalidateRect(hWin,pRect);  
-  if(!GUI_CURSOR_GetState())
-  {
-     GUI_CURSOR_Show();
-  }
+       drawMapSwitchCnt  = 0;
+       if(drawMapSwitch == 0)
+       {
+          drawMapSwitch  = 1; 
+          WM_InvalidateRect(hDlg_FishMap,Rect_Map);
+          WM_Paint(hDlg_FishMap);           
+       }
+       
+     //		WM_InvalidateRect(hWin,Rect_Map);  
+       if(!GUI_CURSOR_GetState())
+       {
+          GUI_CURSOR_Show();
+       }
   
   
 			switch (((WM_KEY_INFO*)(pMsg->Data.p))->Key) 
 			{
-			
-				
-				/*----------------------   捕捉到中心按键按下的响应:    -----------------------*/
-				/*   中心按键按下后：将本船位置和光标显示到map中心点 */
-					
-				case GUI_KEY_ENTER:
-					
-				 /* 光标定位到中心 */
-							__cursor.x = (MAP_LEFT+MAP_RIGHT)/2;
-							__cursor.y = (MAP_TOP+MAP_BOTTOM)/2;
-
-				/* map中心点经纬度 */
-//         mothership.latitude = 1927265;
-//         mothership.longitude = 7128660;
-//         mothership.true_heading  = 0;
-				
-				/* 光标代表的经纬度设置为母船的经纬度 */
-				   __cursor.latitude = mothership.latitude;
-				   __cursor.longitude = mothership.longitude;
-  
-
-//map_getWraped();
-					 board_handle					
-				break;
-				
-				case GUI_KEY_UP:
-					//KEY_handle(1,y,-)
-					if(__cursor.y <= MAP_TOP+20)
-					{
-									temp_lat = temp_lat + flip_lttude;
-									if(temp_lat>=MAP_TOP_LT)
-									{
-										time_delay = 0;	
-										break;
-									}
-									else													
-										__cursor.latitude = temp_lat;
-//									
-//									board_handle
-
-					}
-					if(temp_lat<MAP_TOP_LT)
-					{
-					//	KEY_handle(1,y,-)
-						__cursor.key = 1;
-						if(time_delay == 0)
-						{
-							time_delay = 1;
-							__cursor.y = __cursor.y - __cursor.speed;
-							GUI_CURSOR_SetPosition(__cursor.x,__cursor.y);
-		
-						#ifdef KEY_TIMER_MODE
-							timer_cursor =  WM_CreateTimer(hWin,0,timer_millisecond,0);
-						#endif
-						}
-						else
-						{
-								time_delay = 0;
-								WM_DeleteTimer(timer_cursor);
-								__cursor.speed = CURSOR_SPEED_SLOW;
-
-						}
-					}
-					break;					
-				case GUI_KEY_DOWN:
-
- 					if(__cursor.y >= MAP_BOTTOM-40){
-						temp_lat = temp_lat - flip_lttude;
-						if(temp_lat<=MAP_BOTTOM_LT)
-						{
-							time_delay = 0;
-							//temp_lat = __cursor.latitude;
-							break;
-						}
-						else
-							__cursor.latitude = temp_lat;
-						
-//						board_handle
-					}
-
-					if(temp_lat>MAP_BOTTOM_LT){
-						__cursor.key = 2;
-						if(time_delay == 0)
-						{
-							time_delay = 1;
-							__cursor.y = __cursor.y + __cursor.speed;
-							GUI_CURSOR_SetPosition(__cursor.x,__cursor.y);
-							
-							#ifdef KEY_TIMER_MODE
-							 timer_cursor =  WM_CreateTimer(hWin,0,timer_millisecond,0);
-							#endif
-						}
-						else{
-							time_delay = 0;
-							
-							#ifdef  KEY_TIMER_MODE
-							 WM_DeleteTimer(timer_cursor);
-							#endif
-							
-							__cursor.speed = CURSOR_SPEED_SLOW;
-
-						}
-					}
-
-					break;
-				case GUI_KEY_LEFT:
-				if(__cursor.x <= MAP_LEFT+20){
-						temp_long = temp_long - flip_lngtude;
-						if(__cursor.longitude<=MAP_LEFT_LG)
-						{
-							time_delay = 0;
-							break;
-						}
-						else
-							__cursor.longitude = temp_long;
-						
-//						board_handle
-					}
-
-					if(temp_long>MAP_LEFT_LG){
-						//KEY_handle(3,x,-)
-						__cursor.key = 3;
-						if(time_delay == 0)
-						{
-							time_delay = 1;
-							__cursor.x = __cursor.x - __cursor.speed;
-							GUI_CURSOR_SetPosition(__cursor.x,__cursor.y);
-							
-							#ifdef KEY_TIMER_MODE
-							 timer_cursor =  WM_CreateTimer(hWin,0,timer_millisecond,0);
-							#endif
-							
-						}
-						else{
-							time_delay = 0;
-							
-							#ifdef KEY_TIMER_MODE
-							 WM_DeleteTimer(timer_cursor);
-							#endif
-							
-							__cursor.speed = CURSOR_SPEED_SLOW;
-
-						}
-					}
-					break;
-				case GUI_KEY_RIGHT:
-				if(__cursor.x >= MAP_RIGHT-20){
-							temp_long = temp_long + flip_lngtude;					
-					
-						if(__cursor.longitude>=MAP_RIGHT_LG)
-						{
-							time_delay = 0;
-							break;
-						}
-						else
-							__cursor.longitude = temp_long;
-//						board_handle
-					}
-
-					if(temp_long<MAP_RIGHT_LG){
-						//KEY_handle(4,x,+)
-						__cursor.key = 4;
-						if(time_delay == 0)
-						{
-							time_delay = 1;
-							__cursor.x = __cursor.x + __cursor.speed;
-							GUI_CURSOR_SetPosition(__cursor.x,__cursor.y);
-							
-							#ifdef KEY_TIMER_MODE
-							 timer_cursor =  WM_CreateTimer(hWin,0,timer_millisecond,0);
-							#endif
-							
-						}
-						else{
-							time_delay = 0;
-							
-							#ifdef KEY_TIMER_MODE
-							 WM_DeleteTimer(timer_cursor);
-							#endif
-							
-							__cursor.speed = CURSOR_SPEED_SLOW;
-
-						}
-					}
-
-					break;
+			   case GUI_KEY_UP:
+           if( ((WM_KEY_INFO*)(pMsg->Data.p))->PressedCnt )
+           {
+              WM_DeleteTimer(reTimer);
+              cursorTimer  = WM_CreateTimer(hDlg_FishMap, ID_TIMER_CURSOR, 500, 0);
+              Doubleclick  = TRUE;             
+              Dir_x  = 0;
+              Dir_y  = -1;
+              onCursorMoved();           
+           }
+           else
+           {
+              WM_DeleteTimer(cursorTimer);         
+              Doubleclick  = FALSE;
+ 	            reTimer  = WM_CreateTimer(pMsg->hWin, ID_TIMER_MAP_REFRESH,MAP_REFRESH_SLOT, 0);
+           }
+           break;
+           
+      case GUI_KEY_DOWN:
+           if( ((WM_KEY_INFO*)(pMsg->Data.p))->PressedCnt )
+           {
+              WM_DeleteTimer(reTimer);
+              cursorTimer  = WM_CreateTimer(hDlg_FishMap, ID_TIMER_CURSOR, 500, 0);
+              Doubleclick  = TRUE;             
+              Dir_x  = 0;
+              Dir_y  = 1;
+              onCursorMoved();           
+           }
+           else
+           {
+              WM_DeleteTimer(cursorTimer);         
+              Doubleclick  = FALSE;
+ 	            reTimer  = WM_CreateTimer(pMsg->hWin, ID_TIMER_MAP_REFRESH,MAP_REFRESH_SLOT, 0);
+           }
+           break;
+      
+      case GUI_KEY_LEFT:
+           if( ((WM_KEY_INFO*)(pMsg->Data.p))->PressedCnt )
+           {
+              WM_DeleteTimer(reTimer);
+              cursorTimer  = WM_CreateTimer(hDlg_FishMap, ID_TIMER_CURSOR, 500, 0);
+              Doubleclick  = TRUE;             
+              Dir_x  = -1;
+              Dir_y  = 0;
+              onCursorMoved();           
+           }
+           else
+           {
+              WM_DeleteTimer(cursorTimer);         
+              Doubleclick  = FALSE;
+ 	            reTimer  = WM_CreateTimer(pMsg->hWin, ID_TIMER_MAP_REFRESH,MAP_REFRESH_SLOT, 0);
+           }
+           break;
+           
+      case GUI_KEY_RIGHT:
+           if( ((WM_KEY_INFO*)(pMsg->Data.p))->PressedCnt )
+           {
+              WM_DeleteTimer(reTimer);
+              cursorTimer  = WM_CreateTimer(hDlg_FishMap, ID_TIMER_CURSOR, 500, 0);
+              Doubleclick  = TRUE;             
+              Dir_x  = 1;
+              Dir_y  = 0;
+              onCursorMoved();           
+           }
+           else
+           {
+              WM_DeleteTimer(cursorTimer);         
+              Doubleclick  = FALSE;
+ 	            reTimer  = WM_CreateTimer(pMsg->hWin, ID_TIMER_MAP_REFRESH,MAP_REFRESH_SLOT, 0);
+           }
+           break;
+      /*----------------------   捕捉到中心按键按下的响应:    -----------------------*/
+      /*   中心按键按下后：将本船位置和光标显示到map中心点 */
+       
+      case GUI_KEY_ENTER:
+        
+        /* 光标定位到中心 */
+          __cursor.x = (MAP_LEFT+MAP_RIGHT)/2;
+          __cursor.y = (MAP_TOP+MAP_BOTTOM)/2;
+       
+       /* 光标代表的经纬度设置为母船的经纬度 */
+          __cursor.latitude = mothership.latitude;
+          __cursor.longitude = mothership.longitude;
+          
+          center.lgtude  = mothership.longitude;
+          center.lttude  = mothership.latitude;
+          
+          GUI_CURSOR_Hide();
+          GUI_CURSOR_SetPosition(__cursor.x, __cursor.y);
+          WM_InvalidateRect(hDlg_FishMap,Rect_Map);
+          WM_Paint(hDlg_FishMap);
+          GUI_CURSOR_Show();
+          break;
+     
 				case GUI_KEY_LARGE: 
-					if(scale_choose <MAX_GEAR)
-						scale_choose++;
-					WM_InvalidateRect( hWin,pRect);//WM_Paint(hWin);
-					flip_lttude = measuring_scale[scale_choose].minute*((flip_speed_lat)/measuring_scale[scale_choose].pixel);
-					flip_lngtude = measuring_scale[scale_choose].minute*((flip_speed_long)/measuring_scale[scale_choose].pixel);
-					break;
+         if(scale_choose <MAX_GEAR)
+          scale_choose++;
+         WM_InvalidateRect( hWin,Rect_Map);//WM_Paint(hWin);
+         flip_lttude = measuring_scale[scale_choose].minute*((flip_speed_lat)/measuring_scale[scale_choose].pixel);
+         flip_lngtude = measuring_scale[scale_choose].minute*((flip_speed_long)/measuring_scale[scale_choose].pixel);
+         break;
      
 				case GUI_KEY_REDUCE:   
-					if(scale_choose >0)
-						scale_choose--;
-					WM_InvalidateRect( hWin,pRect);//WM_Paint(hWin);
-					flip_lttude = measuring_scale[scale_choose].minute*(flip_speed_lat)/measuring_scale[scale_choose].pixel;
-					flip_lngtude = measuring_scale[scale_choose].minute*(flip_speed_long)/measuring_scale[scale_choose].pixel;
-					break;
+         if(scale_choose >0)
+          scale_choose--;
+         WM_InvalidateRect( hWin,Rect_Map);//WM_Paint(hWin);
+         flip_lttude = measuring_scale[scale_choose].minute*(flip_speed_lat)/measuring_scale[scale_choose].pixel;
+         flip_lngtude = measuring_scale[scale_choose].minute*(flip_speed_long)/measuring_scale[scale_choose].pixel;
+         break;
 					
 				case GUI_KEY_MENU:	         
           GUI_CURSOR_Hide();
@@ -502,7 +335,7 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 			      	break;
 
 			}
-		break;
+		 break;
 			
 		case WM_PAINT: 
 /// Draw  map grid     
@@ -512,14 +345,12 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
    if(drawMapSwitch)
    {
       
-			   map_draw(__cursor.longitude,__cursor.latitude,measuring_scale[scale_choose]);
-
-			  	center.x=(MAP_LEFT+MAP_RIGHT)/2;
-				  center.y=(MAP_TOP+MAP_BOTTOM)/2;
-		  
-      center.lgtude = __cursor.longitude;
-      center.lttude = __cursor.latitude;
-    
+//			   map_draw(__cursor.longitude,__cursor.latitude,measuring_scale[scale_choose]);
+//      map_draw(__cursor.longitude - measuring_scale[scale_choose].minute/measuring_scale[scale_choose].pixel*(__cursor.x-MAP_RIGHT/2),
+//               __cursor.latitude  + measuring_scale[scale_choose].minute/measuring_scale[scale_choose].pixel*(__cursor.y-MAP_BOTTOM/2),
+//               measuring_scale[scale_choose]);
+      map_draw(center.lgtude, center.lttude, measuring_scale[scale_choose]);
+  
       MNT_dispBoat(&measuring_scale[scale_choose], center.lgtude, center.lttude, pMntHeader);
       
       Draw_ScaleRuler(measuring_scale[scale_choose]);
@@ -946,32 +777,12 @@ static void map_draw(long longitude,  long latitude, scale_map scale)
 	 
 	 anchor.lgtude  = longitude;
 	 anchor.lttude  = latitude;
-	
-	 
-		 do
-		 {
-      if(fishing_area[i+1].latitude_fish<latitude && fishing_area[i].latitude_fish>=latitude)
-      {
-         count_fr_fsh_ara  = (longitude - fishing_area[i].longitude_fish)/scale.minute;
-         num_fr_fsh_ara    = fishing_area[i].fish_number + count_fr_fsh_ara;
-         break;
-      }
-      else
-      {
-         i++;
-      }
-		 }while(i<num_fish-1);
-		 
-		 anchor.y  = (MAP_TOP+MAP_BOTTOM)/2 - \
-		                 (fishing_area[i].latitude_fish-latitude)*scale.pixel \
-		                 / scale.minute;
-		 anchor.x  = (MAP_LEFT+MAP_RIGHT)/2  - \
-		                 (longitude-fishing_area[i].longitude_fish)%scale.minute \
-		                 * scale.pixel / scale.minute;
-		 
-		 anchor.lttude  = fishing_area[i].latitude_fish;
-		 anchor.lgtude  = fishing_area[i].longitude_fish + count_fr_fsh_ara * scale.minute;
 
+   anchor.x  = (MAP_LEFT+MAP_RIGHT)/2 - (anchor.lgtude%scale.minute) * scale.pixel / scale.minute;
+   anchor.y  = (MAP_TOP+MAP_BOTTOM)/2 - (anchor.lttude%scale.minute) * scale.pixel / scale.minute;
+   
+   anchor.lgtude  = anchor.lgtude - (anchor.lgtude%scale.minute);
+   anchor.lttude  = anchor.lttude - (anchor.lttude%scale.minute);
 		 
 	   while(anchor.x  >= MAP_LEFT+(scale.pixel-shift_x))
 		 {
@@ -1062,7 +873,7 @@ static void _PaintFrame(void)
 	//GUI_SetFont(GUI_Font16);
 	GUI_SetTextMode(GUI_TEXTMODE_NORMAL);
 //	GUI_ClearRectEx(&r);
-	GUI_ClearRectEx(pRect);
+	GUI_ClearRectEx(Rect_Map);
 //  	GUI_CURSOR_Select(&GUI_CursorCrossS);
 //  	GUI_CURSOR_Show();
 
@@ -1133,3 +944,45 @@ static void updateTipLoc(short x, short y)
 	}
 }
 
+
+
+static void onCursorMoved()
+{
+   tmp_cursor.x  = __cursor.x + Dir_x*CURSOR_SPEED;
+   tmp_cursor.y  = __cursor.y + Dir_y*CURSOR_SPEED;
+
+   tmp_cursor.longitude  = __cursor.longitude + measuring_scale[scale_choose].minute/measuring_scale[scale_choose].pixel * Dir_x;
+   tmp_cursor.latitude   = __cursor.latitude - measuring_scale[scale_choose].minute/measuring_scale[scale_choose].pixel * Dir_y;
+   
+   /// Cursor into valid area.
+   if(    tmp_cursor.longitude > MAP_LEFT_LG  &&  tmp_cursor.longitude < MAP_RIGHT_LG  
+      &&  tmp_cursor.latitude > MAP_BOTTOM_LT  &&  tmp_cursor.latitude < MAP_TOP_LT)
+   {   
+      __cursor.x  = (tmp_cursor.x-MAP_LEFT+MAP_WIDTH) % MAP_WIDTH + MAP_LEFT;    
+      __cursor.y  = (tmp_cursor.y-MAP_TOP+MAP_HEIGHT) % MAP_HEIGHT + MAP_TOP;
+      __cursor.longitude  = tmp_cursor.longitude;
+      __cursor.latitude   = tmp_cursor.latitude;
+       
+      /// Page turn.
+      if(   tmp_cursor.x <= MAP_LEFT || tmp_cursor.x >= MAP_RIGHT 
+         || tmp_cursor.y <= MAP_TOP ||  tmp_cursor.y >= MAP_BOTTOM)
+      {
+         center.lgtude  = center.lgtude + MAP_WIDTH/2 * Dir_x *(measuring_scale[scale_choose].minute/measuring_scale[scale_choose].pixel);
+         center.lttude  = center.lttude - MAP_HEIGHT/2 * Dir_y * (measuring_scale[scale_choose].minute/measuring_scale[scale_choose].pixel);
+         
+         GUI_CURSOR_Hide();
+         GUI_CURSOR_SetPosition(__cursor.x, __cursor.y);
+         WM_InvalidateRect(hDlg_FishMap,Rect_Map);
+         WM_Paint(hDlg_FishMap);
+         GUI_CURSOR_Show();
+      }
+      else
+      {
+         GUI_CURSOR_SetPosition(__cursor.x, __cursor.y);
+      }
+   }
+   
+   
+   
+   
+}
