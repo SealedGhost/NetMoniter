@@ -102,6 +102,8 @@ WM_MESSAGE * pUpdateMsg;
 void _cbWindowAllFishMap(WM_MESSAGE* pMsg) 
 {	
 	WM_HWIN hWin = pMsg->hWin;
+ 
+ WM_KEY_INFO * pKeyInfo  = NULL;
 
  WM_MESSAGE myMsg;
 
@@ -193,6 +195,10 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 
 
 		case WM_KEY: 
+  
+       pKeyInfo  = (WM_KEY_INFO*)(pMsg->Data.p);
+       
+       
        drawMapSwitchCnt  = 0;
        if(drawMapSwitch == 0)
        {
@@ -206,19 +212,20 @@ void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
        {
           GUI_CURSOR_Show();
        }
-  
+       
+      if( ((WM_KEY_INFO*)(pMsg->Data.p))->key )
   
 			switch (((WM_KEY_INFO*)(pMsg->Data.p))->Key) 
 			{
 			   case GUI_KEY_UP:
            if( ((WM_KEY_INFO*)(pMsg->Data.p))->PressedCnt )
            {
-              WM_DeleteTimer(reTimer);
-              cursorTimer  = WM_CreateTimer(hDlg_FishMap, ID_TIMER_CURSOR, 500, 0);
-              Doubleclick  = TRUE;             
+//              WM_DeleteTimer(reTimer);
+//              cursorTimer  = WM_CreateTimer(hDlg_FishMap, ID_TIMER_CURSOR, 500, 0);
+//              Doubleclick  = TRUE;             
               Dir_x  = 0;
               Dir_y  = -1;
-              onCursorMoved();           
+//              onCursorMoved();           
            }
            else
            {
