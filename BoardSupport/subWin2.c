@@ -22,8 +22,47 @@
 // USER END
 
 #include "DIALOG.h"
+#include <UCOS_II.h>
 #include "Config.h"
 #include "MainTask.h"
+#include "Setting.h"
+#include "SystemConfig.h"
+#include "GUI_ARRAY.h"
+#include <stdlib.h>
+#include <string.h>
+#include "HEADER.h"
+#include "WIDGET.h"
+#include "SCROLLBAR.h"
+#include "LISTVIEW_Private.h"
+#include "WM_Intern.h"
+
+
+/* --- Macro defines ---*/
+
+
+/*--- external variables ---*/
+extern BERTH * pHeader;
+extern SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
+
+extern WM_HWIN confirmWin;
+
+extern MNT_BOAT MNT_Boats[MNT_NUM_MAX];
+extern MNT_SETTING mntSetting;
+
+extern CONF_SYS SysConf;
+
+/*--- external functions ---*/
+//extern boat* boat_list_p[BOAT_LIST_SIZE_MAX];
+
+/*--- local variables ---*/
+static long MMSI  = 0;
+
+/*--- local functions ---*/
+static void updateListViewContent(WM_HWIN thisHandle);
+int confirmWinExec(void);
+static void _Paint(LISTVIEW_Handle hObj, LISTVIEW_Obj* pObj, WM_MESSAGE* pMsg) ;
+
+
 
 
 /*********************************************************************
@@ -47,42 +86,40 @@
 
 
 /*---------------- external variables ---------------------------*/
-extern _boat* boat_list_p[BOAT_LIST_SIZE_MAX];
+//extern _boat* boat_list_p[BOAT_LIST_SIZE_MAX];
 extern _boat  boat_list[BOAT_LIST_SIZE_MAX];
 
 
-extern short N_boat;
+extern int N_boat;
 extern short N_monitedBoat;
-extern unsigned char* pStrBuf;
+extern char* pStrBuf;
 
 extern WM_HWIN menuWin;
 extern WM_HWIN subWins[4];
-
-
+extern OS_EVENT * Updater;
+extern uint8_t myErr_2;
 
 
 
 
 /*---------------- external functions --------------------------*/
-extern void myftoa(unsigned char * str, float num);
+extern void myftoa( char * str, float num);
 
 
 
 /*---------------- loacal variables ----------------------------*/
 
 
-
 /*---------------- local functions -----------------------------*/
 static void myListViewListener(WM_MESSAGE* pMsg);
 static void updateListViewContent(WM_HWIN thisHandle);
-static void showSelectedBoatInfo(WM_HWIN thisHandle);
+//static void showSelectedBoatInfo(WM_HWIN thisHandle);
 int getSelectedBoatIndex(WM_HWIN thisHandle, int col, int row);
-
-
+void disttostr( char * str, int num);
+int getSelectedIndex(WM_HWIN thisListView,  int col);
 
 /*---------------- static variables ----------------------------*/
 static int Index  = -1; //模块变量
-static int SelRow  = 0;
 static int TotalRows  = 0;
 static WM_HTIMER allListRefshTimer;
 
@@ -116,15 +153,15 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
   { WINDOW_CreateIndirect,   "Window",          ID_WINDOW_0,   SubWin_X,         SubWin_Y,        SubWin_WIDTH, SubWin_HEIGHT, 0, 0x0, 0},
   { LISTVIEW_CreateIndirect, "Listview",        ID_LISTVIEW_0, LV_AllList_X,     LV_AllList_Y,    LV_AllList_WIDTH, LV_AllList_HEIGHT, 0, 0x0, 0 },
 	
-	{ TEXT_CreateIndirect,     "All List",        ID_TEXT_0,     LV_AllList_X,     LV_AllList_Y-30,  200,  30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect,     "All boats info",  ID_TEXT_1,     LV_AllList_WIDTH, LV_AllList_Y-40,  200,  30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect,     "Name:",           ID_TEXT_2,     LV_AllList_WIDTH, LV_AllList_Y+40,  200,  30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect,     "N:",              ID_TEXT_3,     LV_AllList_WIDTH, LV_AllList_Y+80,  200,  30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect,     "E:",              ID_TEXT_4,     LV_AllList_WIDTH, LV_AllList_Y+120, 200,  30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect,     "SOG:",            ID_TEXT_5,     LV_AllList_WIDTH, LV_AllList_Y+160, 200,  30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect,     "XSAlarm:",        ID_TEXT_6,     LV_AllList_WIDTH, LV_AllList_Y+200, 200,  30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect,     "FDAlarm:",        ID_TEXT_7,     LV_AllList_WIDTH, LV_AllList_Y+240, 200,  30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect,     "ZMAlarm:",        ID_TEXT_8,     LV_AllList_WIDTH, LV_AllList_Y+280, 200,  30, 0, 0x0, 0}
+	{ TEXT_CreateIndirect,     "AIS船舶列表",     ID_TEXT_0,     LV_AllList_X,     LV_AllList_Y-30,  200,  30, 0, 0x0, 0},
+	{ TEXT_CreateIndirect,     "当前船舶信息",    ID_TEXT_1,     LV_AllList_WIDTH, LV_AllList_Y-40,  200,  30, 0, 0x0, 0},
+	{ TEXT_CreateIndirect,     "船名:",            ID_TEXT_2,     LV_AllList_WIDTH, LV_AllList_Y+40,  200,  30, 0, 0x0, 0},
+	{ TEXT_CreateIndirect,     "北纬:",            ID_TEXT_3,     LV_AllList_WIDTH, LV_AllList_Y+80,  200,  30, 0, 0x0, 0},
+	{ TEXT_CreateIndirect,     "东经:",            ID_TEXT_4,     LV_AllList_WIDTH, LV_AllList_Y+120, 200,  30, 0, 0x0, 0},
+	{ TEXT_CreateIndirect,     "航速:",            ID_TEXT_5,     LV_AllList_WIDTH, LV_AllList_Y+160, 200,  30, 0, 0x0, 0},
+	{ TEXT_CreateIndirect,     "航向:",            ID_TEXT_6,     LV_AllList_WIDTH, LV_AllList_Y+200, 200,  30, 0, 0x0, 0}
+//	{ TEXT_CreateIndirect,     "FDAlarm:",        ID_TEXT_7,     LV_AllList_WIDTH, LV_AllList_Y+240, 200,  30, 0, 0x0, 0},
+//	{ TEXT_CreateIndirect,     "ZMAlarm:",        ID_TEXT_8,     LV_AllList_WIDTH, LV_AllList_Y+280, 200,  30, 0, 0x0, 0}
   // USER START (Optionally insert additional widgets)
   // USER END
 };
@@ -150,87 +187,149 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
   WM_HWIN hItem;
   int     NCode;
   int     Id;
+  int     i  = 0;
+  int     SelectedRow  = -1;
   // USER START (Optionally insert additional variables)
   // USER END
-
   switch (pMsg->MsgId) {	
+  
+  case USER_MSG_SKIN:
+       pLVSkin  = &(lvWinSkins[pMsg->Data.v]);
+       
+       WINDOW_SetBkColor(pMsg->hWin,pLVSkin->BackGround);
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_0);
+       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_1);
+       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_2);
+       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_3);
+       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_4);
+       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_5);
+       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);       
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_6);
+       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+//       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_7);
+//       TEXT_SetTextColor(hItem, pLVSkin->Win_Label); 
+//       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_8);
+//       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);        
+       
+       
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0);
+       LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_UNSEL, pLVSkin->LV_bkUnsel);
+       LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SEL,   pLVSkin->LV_bkSel);
+       LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SELFOCUS, pLVSkin->LV_bkFocus);
+       
+       LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_UNSEL, pLVSkin->LV_tx_Unsel);
+       LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_SEL,   pLVSkin->LV_tx_Sel);
+       LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_SELFOCUS, pLVSkin->LV_tx_Focus);
+       
+       hItem  = LISTVIEW_GetHeader(hItem);
+       HEADER_SetBkColor(hItem,pLVSkin->LV_Header_Bk);
+       HEADER_SetTextColor(hItem,pLVSkin->LV_Header_Text);
+       break; 
+  
   case WM_INIT_DIALOG:
+    pLVSkin  = &(lvWinSkins[SysConf.Skin]);
     //
     // Initialization of 'Window'
     //
     hItem = pMsg->hWin;
-    WINDOW_SetBkColor(hItem, 0x00FFFF00);
+    WINDOW_SetBkColor(hItem, pLVSkin->BackGround);
+    
+    //
+    // Initialization of 'Text'
+    //
+    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_0);
+    TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_1);
+    TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_2);
+    TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_3);
+    TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_4);
+    TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_5);
+    TEXT_SetTextColor(hItem, pLVSkin->Win_Label);       
+    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_6);
+    TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+//    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_7);
+//    TEXT_SetTextColor(hItem, pLVSkin->Win_Label); 
+//    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_8);
+//    TEXT_SetTextColor(hItem, pLVSkin->Win_Label);     
+    
     //
     // Initialization of 'Listview'
     //
     hItem = WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0);
 	   WM_SetCallback(hItem, &myListViewListener);
 	  
-	   LISTVIEW_SetFont(hItem, &GUI_Font28);
-    LISTVIEW_AddColumn(hItem, LV_AllList_Col_0_WIDTH, "Dis", GUI_TA_HCENTER | GUI_TA_VCENTER);
-    LISTVIEW_AddColumn(hItem, LV_AllList_Col_1_WIDTH, "Ang", GUI_TA_HCENTER | GUI_TA_VCENTER);
+    LISTVIEW_AddColumn(hItem, LV_AllList_Col_0_WIDTH, "距离", GUI_TA_HCENTER | GUI_TA_VCENTER);
+//    LISTVIEW_AddColumn(hItem, LV_AllList_Col_1_WIDTH, "方位", GUI_TA_HCENTER | GUI_TA_VCENTER);
     LISTVIEW_AddColumn(hItem, LV_AllList_Col_2_WIDTH, "MMSI", GUI_TA_HCENTER | GUI_TA_VCENTER);
     LISTVIEW_AddColumn(hItem, LV_AllList_Col_3_WIDTH, "State", GUI_TA_HCENTER | GUI_TA_VCENTER);	
     LISTVIEW_AddRow(hItem, NULL);
     LISTVIEW_SetGridVis(hItem, 1);
 	   LISTVIEW_SetHeaderHeight(hItem,LV_MoniteList_Header_HEIGHT);
 	   LISTVIEW_SetRowHeight(hItem,LV_MoniteList_Row_HEIGHT);
-	
-    LISTVIEW_SetFont(hItem, &GUI_Font24B_1);
-    LISTVIEW_SetTextColor(hItem, LISTVIEW_CI_UNSEL,GUI_WHITE);
-    LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_UNSEL,DEEPBLUE);
-    LISTVIEW_SetTextColor(hItem, LISTVIEW_CI_SELFOCUS,GUI_BLACK);
-    LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SELFOCUS, GUI_WHITE);
-    LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SEL, DEEPBLUE);
-    LISTVIEW_SetAutoScrollV(hItem,1);
+	   LISTVIEW_SetAutoScrollV(hItem,1);
+	  	LISTVIEW_SetFont(hItem,&GUI_Font24_1);
+    LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_UNSEL, pLVSkin->LV_bkUnsel);
+    LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SEL,   pLVSkin->LV_bkSel);
+    LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SELFOCUS, pLVSkin->LV_bkFocus);
     
-//   LISTVIEW_SetCompareFunc(hItem,2,LISTVIEW_CompareDec);
-//   LISTVIEW_SetSort(hItem,2,1);
-//   LISTVIEW_EnableSort(hItem);
-   
-   updateListViewContent(hItem);
+    LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_UNSEL, pLVSkin->LV_tx_Unsel);
+    LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_SEL,   pLVSkin->LV_tx_Sel);
+    LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_SELFOCUS, pLVSkin->LV_tx_Focus);
+    
+    updateListViewContent(hItem);
+    
+    hItem  = LISTVIEW_GetHeader(hItem);
+    HEADER_SetBkColor(hItem,pLVSkin->LV_Header_Bk);
+    HEADER_SetTextColor(hItem,pLVSkin->LV_Header_Text);
+    //LISTVIEW_SetWrapMode();
+    //LISTVIEW_SetWrapMode(hItem,GUI_WRAPMODE_NONE);
+
     
     allListRefshTimer  = WM_CreateTimer(pMsg->hWin, 1, 5000, 0);
     // USER START (Optionally insert additional code for further widget initialization)
     // USER END
     break;
 case WM_TIMER:
-   WM_InvalidateRect(subWins[2],&lvRect);
-   WM_InvalidateRect(subWins[2],&lvIndicate);
+   updateListViewContent(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0));
    WM_RestartTimer(allListRefshTimer,5000);
 break;    
 		
 case WM_PAINT:
 
-    updateListViewContent(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0));
+//    updateListViewContent(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0));
 
-		GUI_SetFont(&GUI_Font24_1);
-		GUI_SetColor(GUI_YELLOW);
-		GUI_SetTextMode(GUI_TM_TRANS);
+     GUI_SetFont(&GUI_Font24_1);
+     GUI_SetColor(pLVSkin->String);
+     GUI_SetTextMode(GUI_TM_TRANS);
 	  
-	  if(Index >= 0)
-		{
+     SelectedRow  = LISTVIEW_GetSel(WM_GetDialogItem(pMsg->hWin,ID_LISTVIEW_0)); 
      
-     sprintf(pStrBuf,"%3d/%3d",Index+1,TotalRows);
-     GUI_DispStringAt(pStrBuf,LV_AllList_WIDTH-200,LV_AllList_Y-40);
-//      if(boat_list_p[Index]->name[0] != '\0')
-			  GUI_DispStringAt(boat_list_p[Index]->name,LV_AllList_WIDTH+50,80);       
-     
-     lltostr(boat_list_p[Index]->latitude,pStrBuf);
-     GUI_DispStringExAt(pStrBuf,LV_AllList_WIDTH+20,120);	
-     
-     lltostr(boat_list_p[Index]->longitude,pStrBuf);
-     GUI_DispStringExAt(pStrBuf,LV_AllList_WIDTH+20,160);
-     
-     GUI_DispDecAt(boat_list_p[Index]->SOG,LV_AllList_WIDTH+80,200,3);
-//INFO("at %d name:%s",Index,boat_list_p[Index]->name);     
-//INFO("at %d id: %ld",Index,boat_list_p[Index]->user_id);
-//INFO("at %d lg: %ld",Index,boat_list_p[Index]->longitude);      
-//INFO("at %d lt: %ld",Index,boat_list_p[Index]->latitude);
+     if(SelectedRow < 0)
+        break;
+     sprintf(pStrBuf,"%3d/%3d",SelectedRow+1,TotalRows);
 
-  	}
-
-		break;		
+     GUI_DispStringAt(pStrBuf,LV_AllList_WIDTH-100,LV_AllList_Y-30);
+    
+     GUI_DispStringAt(SimpBerthes[SelectedRow].pBerth->Boat.name,LV_AllList_WIDTH+80,85);       
+    
+     lltostr(SimpBerthes[SelectedRow].latitude,pStrBuf);    
+     GUI_DispStringAt(pStrBuf,LV_AllList_WIDTH+80,125);
+     
+     lltostr(SimpBerthes[SelectedRow].longitude,pStrBuf);  
+     GUI_DispStringAt(pStrBuf,LV_AllList_WIDTH+80,165);
+     
+     GUI_DispDecAt(SimpBerthes[SelectedRow].pBerth->Boat.SOG,LV_AllList_WIDTH+80,205,3); 
+     GUI_DispDecAt(SimpBerthes[SelectedRow].pBerth->Boat.COG,LV_AllList_WIDTH+80,245,3);     
+	   	break;		
 		
   case WM_NOTIFY_PARENT:
     Id    = WM_GetId(pMsg->hWinSrc);
@@ -296,30 +395,49 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 	const WM_KEY_INFO* pInfo;
 	WM_HWIN thisListView  = pMsg->hWin;
  
+ WM_MESSAGE myMsg;
+ 
  int selectedRow  = -1;
  int totalRows  = 0;
 	int i  = 0;
- 
+ Bool isAdded  = FALSE;
+ long Id  = 0;
 	switch(pMsg->MsgId)
-	{
+	{  
 		case WM_SET_FOCUS:
 
-      if(LISTVIEW_GetNumRows(pMsg->hWin) && (LISTVIEW_GetSel(pMsg->hWin)<0))
-         LISTVIEW_SetSel(pMsg->hWin, 0);
-      showSelectedBoatInfo(pMsg->hWin);
-      LISTVIEW_Callback(pMsg);
-      break;	    
-    
+       if(LISTVIEW_GetNumRows(pMsg->hWin) && (LISTVIEW_GetSel(pMsg->hWin)<0))
+          LISTVIEW_SetSel(pMsg->hWin, 0);
+ 
+       if(pMsg->Data.v)
+       {
+          myMsg.hWin  = menuWin;
+          myMsg.hWinSrc  = thisListView;
+          myMsg.MsgId  = USER_MSG_BRING;
+          myMsg.Data.v  = 2;
+          WM_SendMessage(myMsg.hWin, &myMsg);           
+       }
+
+       
+       LISTVIEW_Callback(pMsg);
+       WM_InvalidateRect(subWins[2],&lvRect);
+       WM_InvalidateRect(subWins[2],&lvIndicate); 
+       break;	
+       
+//   case WM_PAINT:
+//        _Paint(thisListView, LISTVIEW_H2P(thisListView), pMsg);
+//        break;   
+        
     case WM_KEY:
-			pInfo  = (WM_KEY_INFO*)pMsg->Data.p;
-		  
+			pInfo  = (WM_KEY_INFO*)pMsg->Data.p; 
 		  switch(pInfo->Key)
 			{
 				case GUI_KEY_UP:
 				case GUI_KEY_DOWN:
-				  LISTVIEW_Callback(pMsg);
-  				showSelectedBoatInfo(thisListView);
-				 	break;
+				     LISTVIEW_Callback(pMsg);
+         WM_InvalidateRect(subWins[2],&lvRect);
+         WM_InvalidateRect(subWins[2],&lvIndicate);          
+				    	break;
 				
     case GUI_KEY_RIGHT:
     
@@ -328,7 +446,8 @@ static void myListViewListener(WM_MESSAGE* pMsg)
          LISTVIEW_SetSel(thisListView, totalRows);
          if(selectedRow/10 < totalRows/10)
             LISTVIEW_SetSel(thisListView,selectedRow-selectedRow%10+10);
-         showSelectedBoatInfo(thisListView);
+         WM_InvalidateRect(subWins[2],&lvRect);
+         WM_InvalidateRect(subWins[2],&lvIndicate); 
          break;
          
     case GUI_KEY_LEFT:
@@ -339,60 +458,138 @@ static void myListViewListener(WM_MESSAGE* pMsg)
             LISTVIEW_SetSel(thisListView, totalRows);
             LISTVIEW_SetSel(thisListView,selectedRow-selectedRow%10-10);
          }
-            
+         WM_InvalidateRect(subWins[2],&lvRect);
+         WM_InvalidateRect(subWins[2],&lvIndicate); 
 
             
-         showSelectedBoatInfo(thisListView);
+//         showSelectedBoatInfo(thisListView);
          break;
     
-				case GUI_KEY_BACKSPACE:
-//      for(i=0;i<N_boat;i++)
-//      {
-//         if( MNTState_Choosen == boat_list_p[i]->mntState)
-//         {
-//            
-//            boat_list_p[i]->mntState  = MNTState_Monite;
-//            selectedRow  = MNT_insert(mntBoats,boat_list_p[i]->user_id, boat_list_p[i]->name);
-////printf("\r\nendIndex:%d:\r\n",selectedRow);
-////printf("\r\nN_moniteBoat:%d\r\n",N_monitedBoat);            
-//         }
-//      }
-      WM_SetFocus(menuWin);
-      break;
-/*----------------------------------------------------------------------     
-				case GUI_KEY_ENTER:
-      selectedRow  = LISTVIEW_GetSel(thisListView);
-      LISTVIEW_GetItemText(thisListView, 3, selectedRow, pStrBuf, 10);
-      
-      ///
-      if('o' == pStrBuf[0])
-      {
-         boat_list_p[selectedRow]->isVisible  = 0;
-         LISTVIEW_SetItemText(thisListView, 3, selectedRow, "x");
-      }
-      else
-      {
-         boat_list_p[selectedRow]->isVisible  = 1;
-         LISTVIEW_SetItemText(thisListView, 3, selectedRow, "o");
-      }
-      break;
-----------------------------------------------------------------------*/    
-//    case GUI_KEY_ENTER:
-//         selectedRow  = LISTVIEW_GetSel(thisListView);
-//   
-//         if(MNTState_None == boat_list_p[Index]->mntState)
-//         {
-//       
-//            boat_list_p[Index]->mntState  = MNTState_Choosen;
-//            LISTVIEW_SetItemText(thisListView, 3, selectedRow, "o");
-//         }
-//         else if(MNTState_Choosen  == boat_list_p[Index]->mntState)
-//         {
-//     
-//            boat_list_p[Index]->mntState  = MNTState_None;
-//            LISTVIEW_SetItemText(thisListView, 3, selectedRow, "x");
-//         }
-//         break;
+				case GUI_KEY_BACKSPACE:    
+         
+         for(i=N_boat-1;i>=0;i--) 
+         {
+            if(MNTState_Choosen == SimpBerthes[i].pBerth->mntState)
+            {     
+               isAdded  = MNT_add(&SimpBerthes[i].pBerth->Boat);
+               if( isAdded )
+               {         
+                  SimpBerthes[i].pBerth->mntState  = MNTState_Monited;   
+               }
+               else
+               {
+                  break;
+               }
+            }            
+         }
+         MNT_printSetting();         
+         WM_SetFocus(menuWin);
+         break;
+    case GUI_KEY_MONITORING:
+         selectedRow  = LISTVIEW_GetSel(thisListView);
+         
+         LISTVIEW_GetItemText(thisListView, LV_AllList_Col_MMSI, selectedRow, pStrBuf, 10);
+         Id  = strtoi(pStrBuf);
+         
+         for(i=N_boat-1;i>=0;i--)
+         {
+     
+            if(SimpBerthes[i].pBerth->Boat.user_id == Id)
+            {          
+               break;
+            }
+         }
+              
+         if(SimpBerthes[i].pBerth->mntState == MNTState_None)     
+         {
+            SimpBerthes[i].pBerth->mntState  = MNTState_Choosen;
+            LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, selectedRow, "Y");
+         }
+         break;
+    case GUI_KEY_CANCEL:
+         selectedRow  = LISTVIEW_GetSel(thisListView);
+         
+         LISTVIEW_GetItemText(thisListView, LV_AllList_Col_MMSI, selectedRow, pStrBuf, 10);
+         Id  = strtoi(pStrBuf);
+         
+         for(i=N_boat-1;i>=0;i--)
+         {
+     
+            if(SimpBerthes[i].pBerth->Boat.user_id == Id)
+            {          
+               break;
+            }
+         }
+
+         if(MNTState_Choosen  == SimpBerthes[i].pBerth->mntState)
+         {
+     
+            SimpBerthes[i].pBerth->mntState  = MNTState_None;
+            LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, selectedRow, "N");
+         }
+         
+         else if(MNTState_Monited  <= SimpBerthes[i].pBerth->mntState)
+         {  
+            MMSI  = SimpBerthes[i].pBerth->Boat.user_id;
+            myMsg.hWin     = WM_GetClientWindow(confirmWin);
+            myMsg.hWinSrc  = thisListView;
+            myMsg.MsgId    = USER_MSG_ID_CHOOSE;
+            myMsg.Data.v   = CANCEL_MONITED;
+            WM_SendMessage(myMsg.hWin, &myMsg); 
+           	WM_BringToTop(confirmWin);
+				        WM_SetFocus(confirmWin);  
+         }               
+         break;    
+     
+    case GUI_KEY_ENTER:
+         selectedRow  = LISTVIEW_GetSel(thisListView);
+INFO("sel:%d",selectedRow);         
+         if(selectedRow < 0)
+         {
+            break;
+         }
+         
+         LISTVIEW_GetItemText(thisListView, LV_AllList_Col_MMSI, selectedRow, pStrBuf, 10);
+         Id  = strtoi(pStrBuf);
+         
+
+//         OSMutexPend(Updater, 0, &myErr_2);
+         for(i=N_boat-1;i>=0;i--)
+         {
+     
+            if(SimpBerthes[i].pBerth->Boat.user_id == Id)
+            {          
+               break;
+            }
+         }
+                 
+         
+         if(MNTState_None == SimpBerthes[i].pBerth->mntState)
+         {
+       
+            SimpBerthes[i].pBerth->mntState  = MNTState_Choosen;
+            LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, selectedRow, "Y");
+         }
+         else if(MNTState_Choosen  == SimpBerthes[i].pBerth->mntState)
+         {
+     
+            SimpBerthes[i].pBerth->mntState  = MNTState_None;
+            LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, selectedRow, "N");
+         }
+         
+         else if(MNTState_Monited  == SimpBerthes[i].pBerth->mntState)
+         {  
+            MMSI  = SimpBerthes[i].pBerth->Boat.user_id;
+            myMsg.hWin     = WM_GetClientWindow(confirmWin);
+            myMsg.hWinSrc  = thisListView;
+            myMsg.MsgId    = USER_MSG_ID_CHOOSE;
+            myMsg.Data.v   = CANCEL_MONITED;
+            WM_SendMessage(myMsg.hWin, &myMsg); 
+           	WM_BringToTop(confirmWin);
+				        WM_SetFocus(confirmWin);  
+         }
+//         OSMutexPost(Updater);
+         break;
 
          
 				default:
@@ -401,6 +598,41 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 			}
 			break;
 			
+   case USER_MSG_ID_REPLY:
+       switch(pMsg->Data.v)
+       {
+          case REPLY_OK:
+               LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, LISTVIEW_GetSel(thisListView), "N");
+               if(MNT_removeById(MMSI))
+               {
+                  for(i=N_boat-1;i>=0;i--)
+                  {
+                     if(SimpBerthes[i].pBerth->Boat.user_id == MMSI)
+                     {
+                        SimpBerthes[i].pBerth->mntState  = MNTState_None;
+                        break;
+                     }
+                  }
+                                 
+//                  MNT_printSetting();
+                 WM_SetFocus(subWins[2]);
+               }
+               else 
+               {
+INFO("Error!"); 
+                  WM_SetFocus(menuWin);                
+               }
+               break;
+          case REPLY_CANCEL:         
+               WM_SetFocus(pMsg->hWin);
+               break;
+               
+           default:
+INFO("Something err!");           
+           break;
+       }
+  break;
+
 				default:
 					LISTVIEW_Callback(pMsg);
 					break;
@@ -413,132 +645,321 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 *
 */
 static void updateListViewContent(WM_HWIN thisHandle)
-{
-	
-
-	
+{	
 	WM_HWIN thisListView  = thisHandle;
 	
 	int i  = 0;
 	int NumOfRows  = 0;
-
+ int SelectedRow  = -1;
+ long Id  = 0;
  
-	NumOfRows  = LISTVIEW_GetNumRows(thisListView);
+   SelectedRow  = LISTVIEW_GetSel(thisListView);
+ 
+   LISTVIEW_GetItemText(thisListView, LV_AllList_Col_MMSI, SelectedRow, pStrBuf, 10);
+   Id  = strtoi(pStrBuf);
+
+  
+	  NumOfRows  = LISTVIEW_GetNumRows(thisListView);
 	
-	for(i=0;i<N_boat;i++)
-	{
-		// LISTVIEW 行数小于要显示的船的数量，添加行
-		if(i+1 > NumOfRows)
-		{		
-			LISTVIEW_AddRow(thisListView, NULL);
-			NumOfRows  = LISTVIEW_GetNumRows(thisListView);
-		}
-		
+   for(i=0; i<N_boat; i++)
+   {
 
-    myftoa(pStrBuf, boat_list_p[i]->dist);
-    LISTVIEW_SetItemText(thisListView, 0, i, pStrBuf);
-		  sprintf(pStrBuf, "%09ld", boat_list_p[i]->user_id);
-		  LISTVIEW_SetItemText(thisListView, 2, i, pStrBuf);
+      if(i+1 > NumOfRows)
+      {
+         LISTVIEW_AddRow(thisListView, NULL);
+         NumOfRows  = LISTVIEW_GetNumRows(thisListView);
+      }
+//      if(SimpBerthes[i].pBoat->user_id == Id)
+       if(SimpBerthes[i].pBerth->Boat.user_id == Id)
+       {
+      
+          SelectedRow  = i;      
+       }
+//      sprintf(pStrBuf, "%d", SimpBerthes[i].Dist);
 
-	}
 
-// while(pTmp)
-// {
-//    i++;
-//    if(i>NumOfRows)
-//    {
-//       LISTVIEW_AddRow(LISTVIEW_GetNumRows(thisListView),NULL);
-//       NumOfRows  = LISTVIEW_GetNumRows(thisHandle);
-//    }
-//    
-//    sprintf(pStrBuf, "%09ld", pTmp->boat.user_id);
-//    LISTVIEW_SetItemText(thisListView, 2, i, pStrBuf);
-//    pTmp  = pTmp->pNext;
-// }
-//	
-	// LISTVIEW 行数大于要显示的船的数量，删除行
-	while(NumOfRows > i)
+      disttostr(pStrBuf, SimpBerthes[i].Dist);
+      LISTVIEW_SetItemText(thisListView, LV_AllList_Col_DIST, i, pStrBuf);
+      
+      sprintf(pStrBuf, "%09ld", SimpBerthes[i].pBerth->Boat.user_id);
+      LISTVIEW_SetItemText(thisListView, LV_AllList_Col_MMSI, i, pStrBuf);
+      
+      if(MNTState_None == SimpBerthes[i].pBerth->mntState)
+      {
+         LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, i, "N");
+      }
+      else
+      {
+         LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, i, "Y");
+      }
+   }
+	
+	// LISTVIEW 行数大于要显示的船的数量，删除行 
+ /// Warning: Delete first row error!
+	while(NumOfRows > N_boat)
 	{
 	 	LISTVIEW_DeleteRow(thisListView, NumOfRows-1);
 	 	NumOfRows  = LISTVIEW_GetNumRows(thisListView);
 	}
 	
- NumOfRows  = LISTVIEW_GetNumRows(thisListView);
+ LISTVIEW_SetSel(thisListView, SelectedRow);
  TotalRows  = NumOfRows;
- 
-
+    WM_InvalidateRect(subWins[2],&lvRect);
+    WM_InvalidateRect(subWins[2],&lvIndicate); 
 }
 
 
-int getSelectedBoatIndex(WM_HWIN thisHandle,int col,int row)
+void disttostr( char * str, int num)
 {
-   WM_HWIN thisListView  = thisHandle;
+
+   if(num > 99999)
+      sprintf(str, "%s", "????");
+   else if(num > 9999)
+      sprintf(str, "%2d.%02d",num/1000, (num%1000)/10);
+   else 
+      sprintf(str, "%0d.%03d", num/1000, (num%1000));
+   
+//    int i  = 0;
+//    int j  = 0;
+//    int subVal  = 0;
+//    unsigned tmp  = 0;
+//    
+//    
+//    subVal  = (num*1000)/1;
+////printf("\r\nsubVal:%d",subVal);  
+//    for(i=0;i<3;i++)
+//    {
+//       str[i]  = '0'+subVal%10;
+//       subVal  = subVal/10;
+//    }
+//    str[i++]  = '.';
+//    subVal  = num/1;
+
+//    str[i++]  = subVal%10 + '0';
+//    
+//    subVal  = subVal/10;
+//    while(subVal)
+//    {
+//       str[i++]  = subVal%10 + '0';
+//       subVal  = subVal/10;
+//    }
+//    str[i]  = '\0';
+//    i--;
+//    for (j = 0; j<(i + 1) / 2; j++)
+//    {
+//     str[j] =      str[j] ^ str[i - j];
+//     str[i - j] =  str[j] ^ str[i - j];
+//     str[j] =      str[j] ^ str[i - j];
+
+//    }
+//    
+//    str[5]  = '\0';
+////printf("\r\nstr:%s",str);  
+}
+
+
+int getSelectedIndex(WM_HWIN thisListView,  int col)
+{
    int i  = -1;
-   long SelectedId  = 0;
-   if(row >= 0)
+   long Id  = 0;
+   i  = LISTVIEW_GetSel(thisListView);
+   LISTVIEW_GetItemText(thisListView, col, i, pStrBuf, 10);
+   i  = strtoi(pStrBuf);
+   for(Index=0;Index<N_boat;Index++)
    {
-      LISTVIEW_GetItemText(thisListView, col, row, pStrBuf, 10);
-      SelectedId  = strtoi(pStrBuf);
-      
-      while( (boat_list_p[i]->user_id!=SelectedId)  &&  (i<N_boat) )
+      if(SimpBerthes[i].pBerth->Boat.user_id == Id)
       {
-          i++;
+         return i;      
       }
    }
-   
-  return i;
+   return -1;
 }
 
 
-static void showSelectedBoatInfo(WM_HWIN thisHandle)
-{
-	
-	WM_HWIN thisListView  = thisHandle;
-	
-	int SelectedRow  = -1;
-//	int i  = 0;
-//	
-//	long SelectedId  = 0;
-
-//	
-	SelectedRow  = LISTVIEW_GetSel(thisListView);
-//	if(SelectedRow >= 0)
-//	{
-//    SelRow  = SelectedRow+1;
-//    LISTVIEW_GetItemText(thisListView, 2, SelectedRow, pStrBuf, 10);
-//    SelectedId  = strtoi(pStrBuf);
-//    
-//    // 找到 MMSI 对应的船舶索引
-//    while((boat_list_p[i]->user_id!=SelectedId) && (i<N_boat))
-//    {
-//     i++;
-//    }
-//    
-//    if(i<N_boat)
-//    {
-//     Index  = i;
-//    }
-    Index  = getSelectedBoatIndex(thisListView, 2, SelectedRow);
-    WM_InvalidateRect(subWins[2],&infoRect);
-    WM_InvalidateRect(subWins[2],&lvIndicate);
-//	}
+/*********************************************************************
+*
+*       _GetNumVisibleRows
+*
+* Purpose:
+*   Returns the number of visible rows according the header
+*   and (if exist) horizontal scrollbar.
+*
+* Return value:
+*   Number of visible rows. If no entire row can be displayed, this
+*   function will return one.
+*/
+static unsigned _GetNumVisibleRows(LISTVIEW_Handle hObj, const LISTVIEW_Obj* pObj) {
+  unsigned RowDistY, ySize, r = 1;
+  GUI_RECT Rect;
+  WM_GetInsideRectExScrollbar(hObj, &Rect);
+  ySize    = Rect.y1 - Rect.y0 + 1 - HEADER_GetHeight(pObj->hHeader);
+  RowDistY = LISTVIEW__GetRowDistY(pObj);
+  if (RowDistY) {
+    r = ySize / RowDistY;
+    r = (r == 0) ? 1 : r;
+  }
+  return r;
 }
 
 
 
+/*********************************************************************
+*
+*       GUI_ARRAY_GetpItem
+*
+* Purpose:
+*   Gets the pointer of specified item
+*
+* Notes:
+*   (1) Index out of bounds
+*       It is permitted to specify an index larger than the
+*       array size. In this case, a 0-handle is returned.
+*   (2) Locking
+*       It is the caller's responsibility to lock before calling this
+*       function.
+*/
+void* GUI_ARRAY_GetpItem(const GUI_ARRAY* pThis, unsigned int Index) {
+  void* p = NULL;
+  WM_HMEM h;
 
-
-
-
-
-
-
-
-
-
-
-
-
+  h = GUI_ARRAY_GethItem(*pThis, Index);
+  if (h) {
+    p = WM_H2P(h);
+  }
+  return p;
+}
 
 
 /*************************** End of file ****************************/
+static void _Paint(LISTVIEW_Handle hObj, LISTVIEW_Obj* pObj, WM_MESSAGE* pMsg) {
+  GUI_ARRAY* pRow;
+  GUI_RECT ClipRect, Rect;
+  int NumRows, NumVisRows, NumColumns;
+  int LBorder, RBorder, EffectSize;
+  int xPos, yPos, Width, RowDistY;
+  int Align, i, j, EndRow;
+  /* Init some values */
+  NumColumns = HEADER_GetNumItems(pObj->hHeader);
+  
+  NumVisRows = _GetNumVisibleRows(hObj, pObj);
+  RowDistY   = LISTVIEW__GetRowDistY(pObj);
+  LBorder    = pObj->LBorder;
+  RBorder    = pObj->RBorder;
+  EffectSize = pObj->Widget.pEffect->EffectSize;
+  yPos       = HEADER_GetHeight(pObj->hHeader) + EffectSize;
+  EndRow     = pObj->ScrollStateV.v + (((NumVisRows + 1) > NumRows) ? NumRows : NumVisRows + 1);
+  /* Calculate clipping rectangle */
+  ClipRect = *(const GUI_RECT*)pMsg->Data.p;
+  GUI_MoveRect(&ClipRect, -pObj->Widget.Win.Rect.x0, -pObj->Widget.Win.Rect.y0);
+  WM_GetInsideRectExScrollbar(hObj, &Rect);
+  GUI__IntersectRect(&ClipRect, &Rect);
+  /* Set drawing color, font and text mode */
+  LCD_SetColor(pObj->Props.aTextColor[0]);
+  GUI_SetFont(pObj->Props.pFont);
+  GUI_SetTextMode(GUI_TM_TRANS);
+  /* Do the drawing */
+  for (i = pObj->ScrollStateV.v; i < EndRow; i++) {
+//    pObj->RowArray
+//    pRow = (const GUI_ARRAY*)GUI_ARRAY_GetpItem(&pObj->RowArray, i);
+    pRow  = (GUI_ARRAY*)GUI_ARRAY_GetpItemLocked(pObj->RowArray, i);
+    if (pRow) {
+      Rect.y0 = yPos;
+      /* Break when all other rows are outside the drawing area */
+      if (Rect.y0 > ClipRect.y1) {
+        break;
+      }
+      Rect.y1 = yPos + RowDistY - 1;
+      /* Make sure that we draw only when row is in drawing area */
+      if (Rect.y1 >= ClipRect.y0) {
+        int ColorIndex;
+        /* Set background color */
+        if (i == pObj->Sel) {
+          ColorIndex = (pObj->Widget.State & WIDGET_STATE_FOCUS) ? 2 : 1;
+        } else {
+          ColorIndex = 0;
+        }
+        LCD_SetBkColor(pObj->Props.aBkColor[ColorIndex]);
+        /* Iterate over all columns */
+        if (pObj->ShowGrid) {
+          Rect.y1--;
+        }
+        xPos = EffectSize - pObj->ScrollStateH.v;
+        for (j = 0; j < NumColumns; j++) {
+          Width   = HEADER_GetItemWidth(pObj->hHeader, j);
+          Rect.x0 = xPos;
+          /* Break when all other columns are outside the drawing area */
+          if (Rect.x0 > ClipRect.x1) {
+            break;
+          }
+          Rect.x1 = xPos + Width - 1;
+          /* Make sure that we draw only when column is in drawing area */
+          if (Rect.x1 >= ClipRect.x0) {
+            LISTVIEW_ITEM * pItem;
+            pItem = (LISTVIEW_ITEM *)GUI_ARRAY_GetpItem(pRow, j);
+            if (pItem->hItemInfo) {
+              LISTVIEW_ITEM_INFO * pItemInfo;
+              pItemInfo = (LISTVIEW_ITEM_INFO *)GUI_ALLOC_h2p(pItem->hItemInfo);
+              LCD_SetBkColor(pItemInfo->aBkColor[ColorIndex]);
+              LCD_SetColor(pItemInfo->aTextColor[ColorIndex]);
+            } else {
+              LCD_SetColor(pObj->Props.aTextColor[ColorIndex]);
+            }
+            /* Clear background */
+            GUI_ClearRect(Rect.x0, Rect.y0, Rect.x1, Rect.y1);
+            /* Draw text */
+            Rect.x0 += LBorder;
+            Rect.x1 -= RBorder;
+            Align = *((int*)GUI_ARRAY_GetpItem(&pObj->AlignArray, j));
+            GUI_DispStringInRect(pItem->acText, &Rect, Align);
+INFO("%s",pItem->acText);            
+            if (pItem->hItemInfo) {
+              LCD_SetBkColor(pObj->Props.aBkColor[ColorIndex]);
+            }
+          }
+          xPos += Width;
+        }
+        /* Clear unused area to the right of items */
+        if (xPos <= ClipRect.x1) {
+          GUI_ClearRect(xPos, Rect.y0, ClipRect.x1, Rect.y1);
+        }
+      }
+      yPos += RowDistY;
+    }
+  }
+  /* Clear unused area below items */
+  if (yPos <= ClipRect.y1) {
+    LCD_SetBkColor(pObj->Props.aBkColor[0]);
+    GUI_ClearRect(ClipRect.x0, yPos, ClipRect.x1, ClipRect.y1);
+  }
+  /* Draw grid */
+//  if (pObj->ShowGrid) {
+    GUI_SetPenSize(6);
+    LCD_SetColor(pObj->Props.GridColor);
+    yPos = HEADER_GetHeight(pObj->hHeader) + EffectSize - 1;
+    for (i = 0; i < NumVisRows; i++) {
+      yPos += RowDistY;
+      /* Break when all other rows are outside the drawing area */
+      if (yPos > ClipRect.y1) {
+        break;
+      }
+      /* Make sure that we draw only when row is in drawing area */
+      if (yPos >= ClipRect.y0) {
+        GUI_DrawHLine(yPos, ClipRect.x0, ClipRect.x1);
+      }
+    }
+    xPos = EffectSize - pObj->ScrollStateH.v;
+    for (i = 0; i < NumColumns; i++) {
+      xPos += HEADER_GetItemWidth(pObj->hHeader, i);
+      /* Break when all other columns are outside the drawing area */
+      if (xPos > ClipRect.x1) {
+        break;
+      }
+      /* Make sure that we draw only when column is in drawing area */
+      if (xPos >= ClipRect.x0) {
+        GUI_DrawVLine(xPos, ClipRect.y0, ClipRect.y1);
+      }
+    }
+//  }
+  /* Draw the effect */
+  WIDGET__EFFECT_DrawDown(&pObj->Widget);
+}

@@ -7,33 +7,55 @@
 #include "GUI.h"
 //#include "WM.h"
 #include "MainTask.h"  
+#include "pwm.h"
 
+
+/*---------------------------- Macro defines --------------------------------------*/
 #define DMA_SIZE		3
 
-char Doubleclick;
 
-uint8_t DMADest_Buffer[DMA_SIZE]; 
-GPDMA_Channel_CFG_Type GPDMACfg;
+/*---------------------------- External  variables --------------------------------*/
 extern volatile const void *GPDMA_LUTPerAddr[];
 extern const LPC_GPDMACH_TypeDef *pGPDMACh[8];
 extern const uint8_t GPDMA_LUTPerBurst[];
 extern const uint8_t GPDMA_LUTPerWid[];
-volatile int myCnt = 0;
 
-__IO uint8_t UART2_RX[50];//
 extern OS_EVENT *QSem;//
 extern OS_MEM   *PartitionPt;
 extern uint8_t  Partition[MSG_QUEUE_TABNUM][100];
+
+/// If key pressed , isKeyTrigged will be TRUE. Your apps must set iskeyTrigged FALSe after using it.
+extern int isKeyTrigged;  
+                             
+/*-------------------------- Local Variables --------------------------------------*/
+
+
+/*-------------------------- Global Variables -------------------------------------*/
+
+Bool Doubleclick  = FALSE;
+uint8_t DMADest_Buffer[DMA_SIZE]; 
+GPDMA_Channel_CFG_Type GPDMACfg;
+
+volatile int myCnt = 0;
+__IO uint8_t UART2_RX[50];//
+
+
+/**
+ *
+ *
+ *
+ */
 void DMA_IRQHandler (void)
 {
 	uint8_t *pt,*pt0,index,err;	
-   printf("\r\nreach\r\n");
+
 	if (GPDMA_IntGetStatus(GPDMA_STAT_INT, 0))	/* 检查DMA通道0中断状态 */
 	{ 
 		GPDMA_ChannelCmd(0, DISABLE); 
+ 
 		if(GPDMA_IntGetStatus(GPDMA_STAT_INTTC, 0))/* 检查DMA通道0终端计数请求状态，读取DMACIntTCStatus寄存器来判断中断是否因为传输的结束而产生（终端计数） */ 
 		{			
-			GPDMA_ClearIntPending (GPDMA_STATCLR_INTTC, 0);/* 清除DMA通道0终端计数中断请求 */				
+//			GPDMA_ClearIntPending (GPDMA_STATCLR_INTTC, 0);/* 清除DMA通道0终端计数中断请求 */				
      switch (DMADest_Buffer[0])
 			{
 			
@@ -46,16 +68,16 @@ void DMA_IRQHandler (void)
 										        {printf("a");GUI_StoreKeyMsg(GUI_KEY_LARGE ,1);}    else printf("error 0x4E 0x61 but not 0x81");break;
 									case 0x62://归中
 									          if(DMADest_Buffer[2]==0x80)
-										        {printf("b");/*GUI_StoreKeyMsg(GUI_KEY_LARGE ,1);*/}else printf("error 0x4E 0x62 but not 0x80");break;										
+										        {printf("b");GUI_StoreKeyMsg(GUI_KEY_LARGE ,1);isKeyTrigged  = 1; }else printf("error 0x4E 0x62 but not 0x80");break;										
 									case 0x63://缩小
 										       if(DMADest_Buffer[2]==0x7F)
 										       {printf("c");GUI_StoreKeyMsg(GUI_KEY_REDUCE,1);}     else printf("error 0x4E 0x63 but not 0x7F");break;										
 									case 0x65://PWM++
                            if(DMADest_Buffer[2]==0x7D)
-                           {printf("e");/*BACK_PWM--;if(BACK_PWM==-1)BACK_PWM=0;PWM_SET(BACK_PWM);*/}else printf("error 0x4E 0x65 but not 0x7D");break;													 
+                           {printf("e");PWM_BkBrightness--;if(PWM_BkBrightness==-1)PWM_BkBrightness=0;PWM_SET(PWM_BkBrightness);}else printf("error 0x4E 0x65 but not 0x7D");break;													 
 									case 0x66://PWM--
                            if(DMADest_Buffer[2]==0x7C)
-                           {printf("f");/*BACK_PWM++;if(BACK_PWM==11)BACK_PWM=10;PWM_SET(BACK_PWM);*/}else printf("error 0x4E 0x66 but not 0x7C");break;
+                           {printf("f");PWM_BkBrightness++;if(PWM_BkBrightness==11)PWM_BkBrightness=10;PWM_SET(PWM_BkBrightness);}else printf("error 0x4E 0x66 but not 0x7C");break;
 									case 0x67://航迹关
                            if(DMADest_Buffer[2]==0x7B)
                            {printf("g");/*BACK_PWM--;if(BACK_PWM==-1)BACK_PWM=0;PWM_SET(BACK_PWM);*/}else printf("error 0x4E 0x67 but not 0x7B");break;													 
@@ -85,7 +107,7 @@ void DMA_IRQHandler (void)
 													 {printf("o");GUI_StoreKeyMsg(GUI_KEY_RIGHT ,1); }else printf("error 0x4E 0x6F but not 0x73");break;												
 									case 0x70://菜单
 													 if(DMADest_Buffer[2]==0x72)
-													 {printf("p");GUI_StoreKeyMsg(GUI_KEY_MENU  ,1);}else printf("error 0x4E 0x70 but not 0x72");break;
+													 {printf("                                             ");GUI_StoreKeyMsg(GUI_KEY_MENU  ,1);}else printf("error 0x4E 0x70 but not 0x72");break;
 									case 0x71://返回
 													 if(DMADest_Buffer[2]==0x71)
 													 {printf("q");GUI_StoreKeyMsg(GUI_KEY_BACKSPACE,1);}else printf("error 0x4E 0x71 but not 0x71");break;
@@ -99,17 +121,20 @@ void DMA_IRQHandler (void)
 								}break;
 								
 				case 0x43: //松开
-					Doubleclick  = 1;
+			   		if(Doubleclick)
 								switch (DMADest_Buffer[1])
 								{
-										case 0x6C:if(DMADest_Buffer[2]==0x76){printf("5");if (Doubleclick == 0)GUI_StoreKeyMsg(GUI_KEY_UP    ,0);}else printf("error 0x43 0x6C but not 0x76");break;
-										case 0x6B:if(DMADest_Buffer[2]==0x77){printf("7");if (Doubleclick == 0)GUI_StoreKeyMsg(GUI_KEY_LEFT  ,0);}else printf("error 0x43 0x6B but not 0x77");break;
-										case 0x6F:if(DMADest_Buffer[2]==0x73){printf("9");if (Doubleclick == 0)GUI_StoreKeyMsg(GUI_KEY_RIGHT ,0);}else printf("error 0x43 0x6F but not 0x73");break;
-										case 0x6D:if(DMADest_Buffer[2]==0x75){printf("0");if (Doubleclick == 0)GUI_StoreKeyMsg(GUI_KEY_DOWN  ,0);}else printf("error 0x43 0x6D but not 0x75");break;
+										case 0x6C:if(DMADest_Buffer[2]==0x76){printf("5");GUI_StoreKeyMsg(GUI_KEY_UP    ,0);}else printf("error 0x43 0x6C but not 0x76");break;
+										case 0x6B:if(DMADest_Buffer[2]==0x77){printf("7");GUI_StoreKeyMsg(GUI_KEY_LEFT  ,0);}else printf("error 0x43 0x6B but not 0x77");break;
+										case 0x6F:if(DMADest_Buffer[2]==0x73){printf("9");GUI_StoreKeyMsg(GUI_KEY_RIGHT ,0);}else printf("error 0x43 0x6F but not 0x73");break;
+										case 0x6D:if(DMADest_Buffer[2]==0x75){printf("0");GUI_StoreKeyMsg(GUI_KEY_DOWN  ,0);}else printf("error 0x43 0x6D but not 0x75");break;
 										
 									default:printf("ERROR DEFAULT 0x43");break;
 								}break;
-				default:printf("ERROR UNDEFINE THIS KEY");lpc1788_DMA_Init();break;									
+				default:
+//       printf("ERROR UNDEFINE THIS KEY");
+//       lpc1788_DMA_Init();
+       break;									
 			}		
 			LPC_GPDMACH0->CDestAddr = GPDMACfg.DstMemAddr;// Assign memory destination address
 			LPC_GPDMACH0->CControl= GPDMA_DMACCxControl_TransferSize((uint32_t)GPDMACfg.TransferSize) \
@@ -120,52 +145,59 @@ void DMA_IRQHandler (void)
 														| GPDMA_DMACCxControl_DI \
 														| GPDMA_DMACCxControl_I;			
 		}
-		if (GPDMA_IntGetStatus(GPDMA_STAT_INTERR, 0))		/* 检查DMA通道0中断错误状态 */
+		if (GPDMA_IntGetStatus(GPDMA_STAT_INTERR, 0) )		/* 检查DMA通道0中断错误状态 */
 		{
-  printf("\r\nerr\r\n");
+  printf(" \n\r\aDMA ERR!\n\r\a");
 			GPDMA_ClearIntPending (GPDMA_STATCLR_INTERR, 0);//Channel0_Err++;	/* 清除DMA通道0中断错误请求 */
+   lpc1788_DMA_Init();
 		}
+  
+  
+  GPDMA_ClearIntPending (GPDMA_STATCLR_INTTC, 0);
 		GPDMA_ChannelCmd(0, ENABLE);
 	}
 ///////////////////////////////////////////////////////	
 	if (GPDMA_IntGetStatus(GPDMA_STAT_INT, 1))
 	{
     GPDMA_ChannelCmd(1, DISABLE);
-		if(GPDMA_IntGetStatus(GPDMA_STAT_INTTC, 1))/* 检查DMA通道1终端计数请求状态，读取DMACIntTCStatus寄存器来判断中断是否因为传输的结束而产生（终端计数） */ 		
-		{
-			GPDMA_ClearIntPending (GPDMA_STATCLR_INTTC, 1);
-myCnt++;
-				pt=OSMemGet(PartitionPt,&err);
-				pt0=pt;
- 				for(index=0;index<50;index++)	
- 				{
- 					*pt=UART2_RX[index];
-					pt++;
-        }
-			  OSQPost(QSem,(void *)pt0);		
-    	
-       
-       
-//      for(index=0;index<50;index++)	
-//      {
-//        Partition[myCnt][index]=UART2_RX[index];
-//      }
+     
+    if(GPDMA_IntGetStatus(GPDMA_STAT_INTTC, 1))/* 检查DMA通道1终端计数请求状态，读取DMACIntTCStatus寄存器来判断中断是否因为传输的结束而产生（终端计数） */ 		
+    {
+//       GPDMA_ClearIntPending (GPDMA_STATCLR_INTTC, 1);
+//       pt=OSMemGet(PartitionPt,&err);
+//       pt0=pt;
+//        for(index=0;index<50;index++)	
+//        {
+//          *pt=UART2_RX[index];
+//           pt++;
+//        }
+//        OSQPost(QSem,(void *)pt0);		
+        
+       for(index=0;index<50;index++)	
+       {
+         Partition[myCnt][index]=UART2_RX[index];
+       }
 
-//     OSQPost(QSem,(void *)Partition[myCnt]); 
-//     myCnt++;
-//     myCnt  = myCnt%(MSG_QUEUE_TABNUM+1);
-//						
+       OSQPost(QSem,(void *)Partition[myCnt]); 
+       myCnt++;
+       myCnt  = myCnt%(MSG_QUEUE_TABNUM);  
+//printf("myCnt:%d",myCnt);       
+      
+       LPC_GPDMACH1->CControl = (LPC_GPDMACH1->CControl & 0xfffff000)|(sizeof(UART2_RX) &0x0fff);
+       LPC_GPDMACH1->CDestAddr = (uint32_t) &UART2_RX;//ÖØÖÃÆðÊ¼µØÖ·		
+//printf("\r\nDMA OK.\n\r");    
     }
-		LPC_GPDMACH1->CControl = (LPC_GPDMACH1->CControl & 0xfffff000)|(sizeof(UART2_RX) &0x0fff);
- 		LPC_GPDMACH1->CDestAddr = (uint32_t) &UART2_RX;//ÖØÖÃÆðÊ¼µØÖ·		
-   
-  if (GPDMA_IntGetStatus(GPDMA_STAT_INTERR, 0))		/* 检查DMA通道0中断错误状态 */
-		{
-  printf("\r\nerr\r\n");
-			GPDMA_ClearIntPending (GPDMA_STATCLR_INTERR, 0);//Channel0_Err++;	/* 清除DMA通道0中断错误请求 */
-		}
+    
+    if (GPDMA_IntGetStatus(GPDMA_STAT_INTERR, 1)  )		/* 检查DMA通道0中断错误状态 */
+    {
+printf("\r\n\aDMA Err!\r\n");
+        GPDMA_ClearIntPending (GPDMA_STATCLR_INTERR, 1);//Channel0_Err++;	/* 清除DMA通道0中断错误请求 */
+        DMA_Config(1);  //lpc1788_DMA_Init();
+    }
+       
+    GPDMA_ClearIntPending (GPDMA_STATCLR_INTTC, 1);
     GPDMA_ChannelCmd(1, ENABLE);		
-  }
+ }
 }
 
 

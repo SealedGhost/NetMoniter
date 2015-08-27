@@ -6,20 +6,16 @@
 
 
 /* external variables */
+extern CONF_SYS SysConf;
 extern boat mothership;
 
-unsigned char strBuf[10];
-unsigned char* pStrBuf = strBuf;
-char du[5];
-char fen[6];
+ char strBuf[20]  = "???°??.???";
+ char* pStrBuf = strBuf;
 
 
-float getDistance(const long lt, const long lg)
-{
-	
-}
 
-int strtoi(const char*str)
+
+long strtoi(const char*str)
 {
 	int val = 0;
 	short i = 0;
@@ -93,19 +89,19 @@ void showname (WM_MESSAGE* pMsg,const char* name)
 		TEXT_SetText(WM_GetDialogItem(hWin, GUI_ID_TEXT3),str);
 }
 
-void GUI_DispStringExAt(const unsigned char *str,const int x, const int y)
-{
-	int i  = 0;
-	int fontXSize  = 0;
-//	const GUI_FONT* font  = NULL;
-//	font  = GUI_GetFont();
-	fontXSize  = GUI_GetCharDistX('a');
-	while(str[i] != '\0')
-	{
-		GUI_DispCharAt(str[i],x+i*fontXSize,y);
-		i++;
-	}
-}
+//void GUI_DispStringAt(const unsigned char *str,const int x, const int y)
+//{
+//	int i  = 0;
+//	int fontXSize  = 0;
+////	const GUI_FONT* font  = NULL;
+////	font  = GUI_GetFont();
+//	fontXSize  = GUI_GetCharDistX('a');
+//	while(str[i] != '\0')
+//	{
+//		GUI_DispCharAt(str[i],x+i*fontXSize,y);
+//		i++;
+//	}
+//}
 
 
 
@@ -133,22 +129,40 @@ char * ttoi(long num , char *str)
 
 void lltostr(long l_o_l,char *str)
 {
-	char i = 0,j=0;
 	int degree  = 0;
 	int minute_int  = 0;
 	int minute_dec  = 0;
 	char tmp[10];
+ if( l_o_l==0)
+ {
+    str[0]  = '?';
+    str[1]  = '?';
+    str[2]  = '?';
+    str[3]  = 194;
+    str[4]  = 176;
+    str[5]  = '?';
+    str[6]  = '?';
+    str[7]  = '.';
+    str[8] = '?';
+    str[9] = '?';
+    str[10] = '?';
+    str[11] = '\0';
+ }
+ else
+ {
+    degree = l_o_l/(distance<<1);
+    minute_int = (l_o_l%(distance<<1))/mul_pow;
+    minute_dec = (l_o_l%(distance<<1))-minute_int*mul_pow;
+    
+   //	ttoi(degree,tmp);
+    sprintf(str,"%03d",degree);
+    str[3]  = 194;
+    str[4]  = 176;
+    sprintf(str+5,"%02d",minute_int);
+    str[7] = '.';
+    sprintf(str+8,"%03d",minute_dec); 
+ }
 
-	degree = l_o_l/(distance<<1);
-	minute_int = (l_o_l%(distance<<1))/mul_pow;
-	minute_dec = (l_o_l%(distance<<1))-minute_int*mul_pow;
-	
-//	ttoi(degree,tmp);
-	sprintf(str,"%03d",degree);
-	str[3]  = 176;
-	sprintf(str+4,"%02d",minute_int);
-	str[6] = '.';
-	sprintf(str+7,"%03d",minute_dec);
 }
 void PaintFrame() 
 {
@@ -302,25 +316,25 @@ void CleanText(WM_MESSAGE* pMsg)
 	TEXT_SetText(WM_GetDialogItem(hWin,GUI_ID_TEXT9),"");
 }
 
-void InitText(WM_MESSAGE* pMsg,long user_id,short SOG,short COG,short true_heading,long longitude,long latitude,char *name,int type_of_electronic_position_fixing_device)
-{
-	char user_id_c[10],lol_c[11];
-	WM_HWIN hWin = pMsg->hWin;
-	
-	ttoi(user_id,user_id_c);
-	TEXT_SetText(WM_GetDialogItem(hWin,GUI_ID_TEXT1),user_id_c);
-	TEXT_SetText(WM_GetDialogItem(hWin, GUI_ID_TEXT2),name);
-	showname(pMsg,name);
-	
-	lltostr(longitude,lol_c);
-	TEXT_SetText(WM_GetDialogItem(hWin, GUI_ID_TEXT4),du);
-	TEXT_SetText(WM_GetDialogItem(hWin, GUI_ID_TEXT5),"°");
-	TEXT_SetText(WM_GetDialogItem(hWin, GUI_ID_TEXT6),fen);
-	
-	lltostr(latitude,lol_c);
-	lltostr(WM_GetDialogItem(hWin, GUI_ID_TEXT7),du);
-	TEXT_SetText(WM_GetDialogItem(hWin, GUI_ID_TEXT8),"°");
-	TEXT_SetText(WM_GetDialogItem(hWin, GUI_ID_TEXT9),fen);
+//void InitText(WM_MESSAGE* pMsg,long user_id,short SOG,short COG,short true_heading,long longitude,long latitude,char *name,int type_of_electronic_position_fixing_device)
+//{
+//	char user_id_c[10],lol_c[11];
+//	WM_HWIN hWin = pMsg->hWin;
+//	
+//	ttoi(user_id,user_id_c);
+//	TEXT_SetText(WM_GetDialogItem(hWin,GUI_ID_TEXT1),user_id_c);
+//	TEXT_SetText(WM_GetDialogItem(hWin, GUI_ID_TEXT2),name);
+//	showname(pMsg,name);
+//	
+//	lltostr(longitude,lol_c);
+//	TEXT_SetText(WM_GetDialogItem(hWin, GUI_ID_TEXT4),du);
+//	TEXT_SetText(WM_GetDialogItem(hWin, GUI_ID_TEXT5),"°");
+//	TEXT_SetText(WM_GetDialogItem(hWin, GUI_ID_TEXT6),fen);
+//	
+//	lltostr(latitude,lol_c);
+//	lltostr(WM_GetDialogItem(hWin, GUI_ID_TEXT7),du);
+//	TEXT_SetText(WM_GetDialogItem(hWin, GUI_ID_TEXT8),"°");
+//	TEXT_SetText(WM_GetDialogItem(hWin, GUI_ID_TEXT9),fen);
 
 // 	TEXT_SetText(WM_GetDialogItem(hWin, GUI_ID_TEXT0),"[7:00]");
 // 	TEXT_SetText(WM_GetDialogItem(hWin, GUI_ID_TEXT1),"411371444[A]");
@@ -339,110 +353,32 @@ void InitText(WM_MESSAGE* pMsg,long user_id,short SOG,short COG,short true_headi
 // 	TEXT_SetText(WM_GetDialogItem(hWin, GUI_ID_TEXT14),"118 41.491");
 // 	TEXT_SetText(WM_GetDialogItem(hWin, GUI_ID_TEXT15),"渔区图/列表");
 // 	TEXT_SetText(WM_GetDialogItem(hWin, GUI_ID_TEXT16),"所有船舶/监控船舶");
-}
+//}
 
-void Draw_ScaleRuler(int x0, int y0, long scaleVal)
+void Draw_ScaleRuler(scale_map scale)
 {
-	
-	GUI_DrawLine(x0,y0,x0+52,y0);
-	GUI_DrawLine(x0,y0,x0,y0-5),
-	GUI_DrawLine(x0+52,y0,x0+52,y0-5);
-	
-	
-	
-	if(3000>scaleVal)
-	{
-		GUI_GotoXY(x0+2,y0-20);
-		GUI_DispFloatMin(scaleVal/1000.0,2 );
-		GUI_DispChar('n');
-		GUI_DispChar('m');
-	}
-	else
-	{
-		GUI_GotoXY(x0+10,y0-20);
-		GUI_DispDecMin(scaleVal/1000);
-		GUI_DispChar('n');
-		GUI_DispChar('m');
-	}
+ uint16_t length  = 0;
+ 
+ if(SysConf.Unit==UNIT_nm)
+ {
+    length  = scale.pixel;
+ }
+ else 
+ {
+    length  = scale.pixel * 5 /9;
+ }
+
+	GUI_SetColor(GUI_LIGHTGREEN);
+ GUI_SetPenSize(1);
+ GUI_SetLineStyle(GUI_LS_SOLID);
+ 
+ GUI_DrawLine(800-160, 480-10,  800-160+length, 480-10);
+ GUI_DrawLine(800-160, 480-10,  800-160, 480-20);
+ GUI_DrawLine(800-160+length, 480-10, 800-160+length, 480-20);
+ sprintf(pStrBuf, "%ld.%ld%s",scale.minute/1000,(scale.minute%1000)/100,SysConf.Unit==UNIT_nm?"nm":"km");
+ GUI_DispStringAt(pStrBuf, 800-160+10, 480-10-20);
+
 }
 
 
-void strcpyEx( unsigned char* dest,  const unsigned char* src)
-{
-	int i  = 0;
-	while(src[i])
-	{
-		*(dest+i) = *(src+i);
-	}
-}
 
-int GUI__strlenEx(const unsigned char GUI_UNI_PTR * s) {
- 
-  int r = -1;
-  if (s != '\0') {
- 
-    do {
- 
-      r++;
-     
-} while (*s++);
-   
-}
-  return r;
- 
-}
-
-int GUI__SetTextEx(GUI_HMEM* phText, const unsigned char* s)
-{
- 
-  int r = 0;
- 
-    GUI_HMEM hMem;
-    hMem = GUI_ALLOC_AllocNoInit(GUI__strlenEx(s) + 1);
-    if (hMem)
-		{
- 
-      unsigned char* pMem;
-      pMem = (unsigned char*) GUI_ALLOC_h2p(hMem);
-      strcpyEx(pMem, s);
-      GUI_ALLOC_FreePtr(phText);
-      *phText = hMem;
-      r = 1;
-		}
-  return r;
- 
-}
-
-
-typedef struct {
-  WIDGET Widget;
-  WM_HMEM hpText;
-  const GUI_FONT GUI_UNI_PTR * pFont;
-  I16 Align;
-  GUI_COLOR TextColor;
-  GUI_COLOR BkColor;
-  #if GUI_DEBUG_LEVEL >= GUI_DEBUG_LEVEL_CHECK_ALL
-    int DebugId;
-  #endif  
-} TEXT_Obj;
-#define TEXT_H2P(h) (TEXT_Obj*) GUI_ALLOC_h2p(h)
-
-
-void TEXT_SetTextEx(TEXT_Handle hObj, const unsigned char* s) {
- 
-  if (hObj) {
- 
-    TEXT_Obj* pObj;
-    WM_LOCK();
-    pObj = TEXT_H2P(hObj);
-    if (GUI__SetTextEx(&pObj->hpText, s)) {
- 
-      WM_Invalidate(hObj);
-     
-}
-    WM_UNLOCK();
-   
-}
- 
-}
- 

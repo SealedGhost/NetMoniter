@@ -25,12 +25,13 @@ void lpc1788_Lcd_Init(void)
 {
 	LCD_Config_Type lcd_config;
 
+	/* Ú˜Ò•LCDà ˜×† */
+	LCD_Enable (FALSE);
+ 
 	/* ³õÊ¼»¯SDRAM */
 	lpc1788_SDRAM_Init();
-  lpc1788_SDRAM_Clean();
+ lpc1788_SDRAM_Clean();
 
-	/* ¹Ø±ÕLCD¿ØÖÆ */
-	LCD_Enable (FALSE);
 
  	/* ÅäÖÃLCD²ÎÊý */
   lcd_config.big_endian_byte = 0;
@@ -145,18 +146,18 @@ void LCD_test(void)
 	/* ³õÊ¼»¯LCD */
 	lpc1788_Lcd_Init();
 
-	/* LCDÇåÆÁ */
-	LCD_Clear(LCD_PANEL_UPPER, WHITE);
-	LCD_Clear(LCD_PANEL_LOWER, WHITE);
+//	/* LCDÇåÆÁ */
+//	LCD_Clear(LCD_PANEL_UPPER, WHITE);
+//	LCD_Clear(LCD_PANEL_LOWER, WHITE);
 
-	/* Ìî³ä¾ØÐÎ */
-	LCD_FillRectangle (LCD_PANEL_UPPER, 10, 100, 10, 100, GREEN);
-	LCD_FillRectangle (LCD_PANEL_UPPER, 100, 200, 100, 200, RED);
-	LCD_FillRectangle (LCD_PANEL_UPPER, 200, 300, 100, 200, BLUE);
+//	/* Ìî³ä¾ØÐÎ */
+//	LCD_FillRectangle (LCD_PANEL_UPPER, 10, 100, 10, 100, GREEN);
+//	LCD_FillRectangle (LCD_PANEL_UPPER, 100, 200, 100, 200, RED);
+//	LCD_FillRectangle (LCD_PANEL_UPPER, 200, 300, 100, 200, BLUE);
 
-	for(x=350;x<400;x++)
-		for(y=100;y<200;y++)
-			LCD_PutPixel(LCD_PANEL_UPPER,x,y,RED);
+//	for(x=350;x<400;x++)
+//		for(y=100;y<200;y++)
+//			LCD_PutPixel(LCD_PANEL_UPPER,x,y,RED);
 }
 
 /************************************* End *************************************/

@@ -203,14 +203,7 @@ void Refresh_Task(void *p_arg);
 void App_TaskStart(void);
 int translate_(unsigned char *text,message_18 *text_out,message_24_partA *text_out_24A,type_of_ship *text_out_type_of_ship);
 
-void insert_18(boat * boats,  struct message_18* p_msg );
 
-void insert_24A(boat* boats, struct message_24_partA* p_msg);
-
-void insert_24B(boat* boats,  struct type_of_ship* p_msg);
-
-void updateTimeStamp(boat* boats);
-void mntSetting_init(void);
 
 
 

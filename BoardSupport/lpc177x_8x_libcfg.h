@@ -104,7 +104,7 @@
 //#define _ADC
 
 /* EEPROM ------------------------------- */
-//#define _EEPROM
+#define _EEPROM
 
 /* PWM ------------------------------- */
 #define _PWM

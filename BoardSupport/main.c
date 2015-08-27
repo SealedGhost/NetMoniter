@@ -2,7 +2,6 @@
 #include "lpc177x_8x_clkpwr.h"
 #include "lpc177x_8x_pinsel.h"
 #include "lpc177x_8x_lcd.h"
-
 #include "uart.h"
 #include "dma.h"
 #include "timer.h"
@@ -11,7 +10,15 @@
 #include "pwm.h"
 #include <ucos_ii.h>
 // #include "exfuns.h"
+#include "lpc177x_8x_eeprom.h"
 
+////////
+///////
+//////
+////
+///
+//
+//
 extern volatile int TimeMS;  // Defined in GUI_X.c
 
 void SysTick_Handler (void);
@@ -40,12 +47,14 @@ int main(void)
 	CLKPWR_ConfigPPWR(CLKPWR_PCONP_PCGPIO, ENABLE);/* 打开GPIO外设电源，上电后GPIO电源默认是打开的，此行可去掉 */
 
 
-
-	USER_Init();//初始化UART0 ，UART2，打开Timer2
+//初始化UART0 ，UART2，打开Timer2
+	USER_Init();
 	lpc1788_Lcd_Init();	  /* 初始化LCD */	
-	LCD_test();
+ lpc1788_PWM_Init();
+ EEPROM_Init();
+ 
+//	LCD_test();
   //fs_test();
-//  	W25QXX_Init();
 //  	exfuns_init();
 //  	load_font(); //加载flash字库
 	

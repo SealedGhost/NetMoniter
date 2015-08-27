@@ -5,294 +5,568 @@
 #include "string.h"
 #include <math.h>
 #include <stdlib.h>
+#include "Setting.h"
 // find if id exist in aux_boat, yes return 1, otherwise 0, size exclusive
+
+/*----------------------- Macro defination -----------------------*/
 #define alloc_boat_mem (_boat**)malloc(sizeof(_boat*)*5000);
 
-#define NOT_ALMOST(x, y)  (x>y?(x-y>10):(y-x>10))
+#define NOT_ALMOST(x, y)  (x>y?(x-y>2):(y-x>2))
 
 #define PI 3.14
+
+
+/*----------------------- external variables ---------------------*/
+extern int N_boat;
+extern int list_endIndex;
+extern int myCnt;
+extern char * pStrBuf;
+extern _boat* boat_list_p[BOAT_LIST_SIZE_MAX];
+extern boat mothership;
+extern BERTH Berthes[BOAT_LIST_SIZE_MAX];
+extern SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
+extern MNT_BERTH * pMntHeader;
+extern Bool INVD_deleteByMMSI(long MMSI);
+/*----------------------- external functions -----------------------*/
+
+
+
+/*----------------------- local variables -------------------------*/
+static int mymyCnt  = 0;
 const unsigned int  R_KM  = 6371;
 const unsigned int  R_NM  = (unsigned int)(0.54*R_KM);
 const float         LLTOA = PI/60000/180;
-extern int list_endIndex;
 
-extern unsigned char * pStrBuf;
-extern _boat* boat_list_p[BOAT_LIST_SIZE_MAX];
-extern boat mothership;
+BERTH * pHeader  = NULL;
+BERTH * pTail    = NULL;
+/*----------------------- local functions --------------------------*/
+int insert_18(struct message_18 * p_msg);
+int update_18(BERTH * pBerth, struct message_18 * p_msg);
+int add_18(struct message_18 * p_msg);
 
-static double getSphereDist(long lg_1,long lt_1, long lg_2, long lt_2);
-void myftoa(unsigned char * str, float num);
-//float getSphereDist(long lg_1,long lt_1, long lg_2, long lt_2);
+int insert_24A(struct message_24_partA * p_msg);
+int update_24A(BERTH * pBerth, struct message_24_partA * p_msg);
+int add_24A(struct message_24_partA * p_msg);
+
+static int getSphereDist(long lg_1,long lt_1, long lg_2, long lt_2);
+void updateTimeStamp(void);
+static BERTH * allocOneBerth(void);
 
 /**
 * 
 *
 */
-	void insert_18(boat * boats,  struct message_18* p_msg )
-  {
-     int i  = 0;
-     long tmp  = 0;
-     
-     ///若本条消息的ID为 0 放弃本次插入
-     if(p_msg->user_id == 0)
-       return;
+int insert_18(struct message_18 * p_msg)
+{
+   int i  = 0; 
+   
+   /// Give up berthes out of range .
+   if( (p_msg->longitude < mothership.longitude-30000)  ||  (p_msg->longitude > mothership.longitude+30000) ) 
+        return 0;
+   if( (p_msg->latitude < mothership.latitude-30000)  ||  (p_msg->latitude > mothership.latitude+30000) )
+        return 0; 
+   /// Update existent berth
+   for(i=0;i<BOAT_LIST_SIZE_MAX;i++)
+   {
+      if(Berthes[i].Boat.user_id == p_msg->user_id)
+      {
+         /// We regard little offset as non-move ,just for optimizaton
+          if(   NOT_ALMOST(p_msg->longitude,Berthes[i].Boat.longitude)  
+             || NOT_ALMOST(p_msg->latitude,Berthes[i].Boat.latitude)    ) 
+          {
+               
+               if(update_18(&(Berthes[i]), p_msg))
+               {
+                  return 1;               
+               }
 
-    /// 若本条消息的经纬度超出母船 30分 放弃本次插入     
-     if( (p_msg->longitude < mothership.longitude-30000)  ||  (p_msg->longitude > mothership.longitude+30000) ) 
-        return;
-     if( (p_msg->latitude < mothership.latitude-30000)  ||  (p_msg->latitude > mothership.latitude+30000) )
-        return;
+               else
+                  return -1;
+          }
+          else
+          {
+             return 0;
+          }
+      }
+   }
+   
+   /// Add non-existent berth
+   if(add_18(p_msg))
+   {
+      return 1;
+   }
+   return -1;
+}
+
+
+
+int insert_24A(struct message_24_partA * p_msg)
+{
+   int i  = 0;
+   
+   if(0 == p_msg->user_id)
+      return 0;     
+   /// This Id exist
+   for(i=0;i<BOAT_LIST_SIZE_MAX;i++)
+   {
+      /// Update existent berth and add nonexistent one
+      if(Berthes[i].Boat.user_id == p_msg->user_id)
+      {
+         if(update_24A(&(Berthes[i]), p_msg))
+         {        
+            return  1;
+         }
+          else
+          {
+             return -1;
+          }
+      }
+   }
+   
+   if(add_24A(p_msg))
+   { 
+      return 1;
+   }
+   return -1;
+}
+
+
+int update_18(BERTH * pBerth, struct message_18 * p_msg)
+{
+   int lastDist  = 0;
+   int Dist  = 0;
+   int i  = 0;
+   int cnt  = 0;
+ 
+   BERTH * tmp  = NULL;   
+   lastDist  = pBerth->Boat.dist;
+
+
+
+   /// Update struct elements  
+   pBerth->Boat.SOG    = p_msg->SOG;
+   pBerth->Boat.COG    = p_msg->COG;
+   pBerth->Boat.true_heading  = p_msg->true_heading;
+   pBerth->Boat.longitude     = p_msg->longitude;
+   pBerth->Boat.latitude      = p_msg->latitude;
+   
+   Dist = getSphereDist(p_msg->latitude,p_msg->longitude,
+                        mothership.latitude,mothership.longitude);  
+   pBerth->Boat.dist  = Dist;
+   
+   pBerth->Boat.time_cnt  = TIMESTAMP;
+
+   tmp  = pBerth;
+
+   /// Distance did not change ,we need do nothing. 
+   if(lastDist == Dist)
+   {
+ 
+      return 1;
+   }   
+   /// Distance decrease
+   if(Dist < lastDist)
+   {
+      /// pBerth do not need to change location
+      if(pBerth->pLast == NULL)
+      {
+         return 1; 
+      }         
+      if(Dist >= pBerth->pLast->Boat.dist)
+      {     
+         return 1;
+      }
+      /// pBerth need to change location 
+      while(tmp)
+      {
+         tmp  = tmp->pLast;
+         
+
+        /// pBerth->dist is smallest,move it to header
         
-     ///若此船已存在，刷新各项参数
-     for(i=0;i<=list_endIndex;i++)
-     {
-        if(boats[i].user_id  == p_msg->user_id)
-        {
-//printf("\r\nupdate 18  at [%3d]\r\n",i);    
-           if(   NOT_ALMOST(p_msg->longitude,boats[i].longitude)  
-              || NOT_ALMOST(p_msg->latitude,boats[i].latitude)    )  
-           {              
-              boats[i].SOG          = p_msg->SOG;
-              boats[i].COG          = p_msg->COG;
-              boats[i].true_heading = p_msg->true_heading;
-           
-              boats[i].longitude    = p_msg->longitude;
-              boats[i].latitude     = p_msg->latitude;
-              boats[i].dist         = getSphereDist(boats[i].latitude, boats[i].longitude, mothership.latitude, mothership.longitude);
-              if(boats[i].dist - 100.0  > 0)
-                 boats[i].dist /= 10;
-           }
-           else
-           {
-//printf("\r\ntoo nearly\r\n");     
-             ;      
-           }
-//           tmp  = p_msg->longitude/10;
-//           if( (tmp >= mothership.longitude-30000)  &&  (tmp <= mothership.longitude+30000) )  /// WARNING: ，若本行打开，经度一直为 0 还不知道原因
-//              boats[i].longitude  = tmp;
-//           tmp  = p_msg->latitude/10;
-//           if( (tmp >= mothership.latitude-30000)  &&  (tmp <= mothership.latitude+30000) )   ///本行打开 纬度也正常
-//              boats[i].latitude  = tmp;
-           boats[i].time_cnt     = TIMESTAMP; ///刷新时间戳变量
-
-           return ;
-        }
-     }
-     
-     ///若此船是新的，找到数组中的空位，插入此船信息
-     for(i=0;i<BOAT_LIST_SIZE_MAX;i++)
-     {
-     
-        if(boats[i].user_id == 0)
-        {
-//printf("\r\ninsert 18  at [%3d]\r\n",i);        
-           boats[i].user_id      = p_msg->user_id;
-           boats[i].SOG          = p_msg->SOG;
-           boats[i].COG          = p_msg->COG;
-           boats[i].true_heading = p_msg->true_heading;
-           boats[i].longitude    = p_msg->longitude;
-           boats[i].latitude     = p_msg->latitude;
-           boats[i].dist         = getSphereDist(boats[i].latitude, boats[i].longitude, mothership.latitude, mothership.longitude);
-           if(boats[i].dist - 100.0  > 0)
-              boats[i].dist /= 10;
-//printf("insert dist:%lf:",boats[i].dist);           
-//           tmp  = p_msg->longitude/10;
-//INFO("tmp:%ld",tmp);           
-//           if( (tmp >= mothership.longitude-30000)  &&  (tmp <= mothership.longitude+30000) )
-//           {
-//              boats[i].longitude  = tmp;
-//INFO("boats[%d].lg = %ld",i, boats[i].longitude);              
-//           }           
-
-//           tmp  = p_msg->latitude/10;
-//INFO("tmp:%ld",tmp);           
-//           if( (tmp >= mothership.latitude-30000)  &&  (tmp <= mothership.latitude+30000) )
-//           {
-//              boats[i].latitude  = tmp;
-//INFO("boats[%d].lt = %ld",i, boats[i].latitude);              
-//           }    
-           boats[i].time_cnt     = TIMESTAMP;
-           
-           
-            /// |___________________|_______| <--boats[]
-            ///                     ^       
-            ///                     |
-            ///                list_endIndex
-           ///若插入位置已超出尾端索引，更新尾端索引                          
-           if(i > list_endIndex) 
-           {
-              list_endIndex  = i;            
-           }
-           return ;                                                                   
-        }                                                                             
-     }
-     
-
-     INFO("Error:boat list full.");
-
-  }
-  
-  
-  void insert_24A(boat* boats, struct message_24_partA* p_msg)
-  {
-     int i  = 0;
-     int tmp  = 0;
+ /*        _________________________
+  *       /                         \
+  *      @here    NODE     NODE    |NODE|    NODE   NODE
+  *               tmp                
+  */
+//         if(tmp->pLast == NULL)
+         if(tmp == pHeader)
+         {  
+            pBerth->pLast->pNext  = pBerth->pNext;
+//            if(pBerth->pNext)
+            if(pBerth != pTail)
+               pBerth->pNext->pLast  = pBerth->pLast;
+            else  
+               pTail  = pBerth->pLast;
+               
+            tmp->pLast  = pBerth;
+            pBerth->pNext  = tmp;
+            pBerth->pLast  = NULL;
+            pHeader  = pBerth;
+            return 1;
+         }
+         
+         /// Find the correct location and fix pBerth location
+         
+ /*                _______________________
+  *               /                       \
+  *      NODE   @here    NODE    NODE   |NODE|    NODE
+  *                      tmp
+  */
+         if(Dist >= tmp->pLast->Boat.dist)
+         {        
+            pBerth->pLast->pNext  = pBerth->pNext;
+//            if(pBerth->pNext)
+            if(pBerth != pTail)
+               pBerth->pNext->pLast  = pBerth->pLast;
+            else
+               pTail  = pBerth->pLast;
+             
+            pBerth->pLast  = tmp->pLast;
+            pBerth->pNext  = tmp;
+            tmp->pLast->pNext  = pBerth;
+            tmp->pLast  = pBerth;
+            return 1;
+         }
+      }
+INFO("Err!");      
+      return -1;
+   }
    
-     if(p_msg->user_id == 0)
-       return ;
-     
-     ///此船存在
-     for(i=0;i<=list_endIndex;i++)
-     {     
-        if(boats[i].user_id == p_msg->user_id)
-        {
-//printf("\r\nupdate 24A at [%3d]\r\n",i);        
-//           memcpy(boats[i].name, p_msg,20); ///用memcpy 有问题
-
-           ///若此结构体原来没有存船名，（即先收到该id船舶的18或24B消息）
-           if(boats[i].name[0] == 0)
-           {            
-              for(tmp=0;tmp<20;tmp++)
-              {
-                 boats[i].name[tmp]  = p_msg->name[tmp];
-                 if(p_msg->name[tmp] == '\0')
-                 {                    
-                    break;
-                 }                 
-                    
-              }            
-           }
-           boats[i].time_cnt  = TIMESTAMP;
-          
-           return;
-        }
-     }
-     
-     ///此船为新的
-     for(i=0;i<BOAT_LIST_SIZE_MAX;i++)
-     { 
-        if(boats[i].user_id == 0)
-        {
-//printf("\r\ninsert 24A at [%3d]\r\n",i);        
-           boats[i].user_id  = p_msg->user_id;
-           
-           for(tmp=0;tmp<20;tmp++)
-           {
-              boats[i].name[tmp]  = p_msg->name[tmp];
-              if(p_msg->name[tmp] == '\0')
-              {                  
-                 break;
-              }
-                 
-           } 
-           boats[i].time_cnt     = TIMESTAMP;           
-
-           if(i > list_endIndex)
-           {
-              list_endIndex  = i;
-              
-           }           
-           return;
-        }
-     }
-     
-
-     INFO("Error:boat list full.");
-  }
-  
-  
-  void insert_24B(boat* boats,  struct type_of_ship* p_msg)
-  {
-     int i  = 0;
-     
-     if(p_msg->user_id == 0)
-       return;
-     
-     for(i=0;i<=list_endIndex;i++)
-     {
-        if(boats[i].user_id == p_msg->user_id)
-        {
-//printf("\r\nupdate 24B at [%3d]\r\n",i);        
-           boats[i].type_of_electronic_position_fixing_device  = p_msg->type_of_ship_and_cargo_type;
-           boats[i].time_cnt  = TIMESTAMP;
-              return;
-        } 
-     }
+   
+   else 
+   {
+      if(pBerth->pNext == NULL)
+      {
+         return 1;
+      }
+      if(Dist <= pBerth->pNext->Boat.dist)
+      {     
+         return 1;
+      }
       
-     for(i=0;i<BOAT_LIST_SIZE_MAX;i++)
-     {
-     
-        if(boats[i].user_id == 0)
-        {
-//printf("\r\ninsert 24B at [%3d]\r\n",i);        
-           boats[i].type_of_electronic_position_fixing_device  = p_msg->type_of_ship_and_cargo_type;
-           boats[i].time_cnt     = TIMESTAMP;           
-           if(i > list_endIndex) list_endIndex  = i;
-              return;
-        }
-     }
+      while(tmp)
+      {
 
-     INFO("Error:boat list full.");     
-  }
-  
- ///每隔若干秒后调用本函数，遍历boats数组对所有船舶的time_cnt变量减一，若有船的time_cnt减为 0 ，
- ///则删去此船（将存放此船的boats[i].user_id设置为0，即可） 
-  void updateTimeStamp(boat* boats)
-  {
-     int i  = 0;
-     int j  = 0;
-     for(i=0;i <= list_endIndex;i++)
-     {
-        if(boats[i].user_id && (boats[i].time_cnt>=0))
-        { 
-           boats[i].time_cnt--;
-           ///boat_list_p 数组指向所有有效船舶的地址
-           boat_list_p[j++]  = &boats[i];
-        }
-        else if(boats[i].time_cnt  == -1 )
-        {
-           boats[i].user_id  = 0;
-           boats[i].longitude  = 0;
-           boats[i].latitude  = 0;
-           boats[i].true_heading  = 0;
-           boats[i].type_of_electronic_position_fixing_device  = 0;
-           boats[i].name[0] = '\0';
-           boats[i].time_cnt  = 0;
-//printf("\r\ndelete one at [%3d]\r\n",i);           
-        }
+      
+         tmp  = tmp->pNext;
+         
+         /// pBerth is biggest, move it to tail
+ /*                ____________________________
+  *               /                            \
+  *       NODE  |NODE|  NODE   NODE   NODE    @here
+  *                                    tmp
+  */       
+         if(tmp == pTail)
+         { 
+            if(pBerth != pHeader)
+               pBerth->pLast->pNext  = pBerth->pNext;
+            else
+               pHeader  = pBerth->pNext;
+            pBerth->pNext->pLast  = pBerth->pLast;
+            
+            tmp->pNext  = pBerth;
+            pBerth->pLast  = tmp;
+            pBerth->pNext  = NULL;
+            
+            pTail  = pBerth;
+            return 1;
+         }
+         
+         
+         /// pBerth in middle of link list
+ /*              ____________________________
+  *             /                            \ 
+  *   NODE   |NODE|   NODE   NODE   NODE   @here   NODE   NODE
+  *                                                 tmp
+  */  
+         if(Dist <= tmp->pNext->Boat.dist)
+         {       
+            if(pBerth != pHeader)
+               pBerth->pLast->pNext  = pBerth->pNext;
+             else
+               pHeader  = pBerth->pNext;
+             pBerth->pNext->pLast  = pBerth->pLast;
+             
+             pBerth->pLast  = tmp;
+             pBerth->pNext  = tmp->pNext;
+             tmp->pNext ->pLast  = pBerth;
+             tmp->pNext   = pBerth;
+             return 1;
+         }
+      }
+INFO("Err!");      
+      return -1;
+   }
+}
 
-     }
-     
-     while(boats[list_endIndex].user_id == 0)
-        list_endIndex--;
-     ///记录有效船舶的数量
-     N_boat  = j;
-//     myftoa(pStrBuf, 0.12);
-//     printf("\r\nstr:%s",pStrBuf);
-//     myftoa(pStrBuf, 0.123);
-//     printf("\r\nstr:%s",pStrBuf);
-//     myftoa(pStrBuf, 0.1234);
-//     printf("\r\nstr:%s",pStrBuf);
-//     myftoa(pStrBuf, 1.12);
-//     printf("\r\nstr:%s",pStrBuf);
-//     myftoa(pStrBuf, 1.123);
-//     printf("\r\nstr:%s",pStrBuf);
-//     myftoa(pStrBuf, 1.1234);
-//     printf("\r\nstr:%s",pStrBuf);
-//     myftoa(pStrBuf, 123.0);
-//     printf("\r\nstr:%s",pStrBuf);
-//     myftoa(pStrBuf, 123.1234);
-//     printf("\r\nstr:%s",pStrBuf);
-//     myftoa(pStrBuf, 1234.012);
-//     printf("\r\nstr:%s",pStrBuf);
-//     getSphereDist(1928457,7127540,1927264,7128662);
-//    getSphereDist(1928457, 7127540, 1927264, 7128662);
+
+int add_18(struct message_18 * p_msg)   
+{
+   BERTH * buf  = NULL;
+   BERTH * tmp  = NULL;
    
-  }
+   int Dist  = 0;
+
+   buf  = allocOneBerth();
+   if(buf == NULL) 
+   {
+INFO("alloc berth failed!");   
+      return -1;
+   }
+   
+   buf->Boat.user_id  = p_msg->user_id;
+   buf->Boat.SOG      = p_msg->SOG;
+   buf->Boat.COG      = p_msg->COG;
+   buf->Boat.true_heading    = p_msg->true_heading;
+   buf->Boat.longitude       = p_msg->longitude;
+   buf->Boat.latitude        = p_msg->latitude;
+   Dist  = getSphereDist(p_msg->latitude, p_msg->longitude,
+                         mothership.latitude, mothership.longitude);
+   buf->Boat.dist  = Dist;
+   buf->Boat.time_cnt  = TIMESTAMP;
+   
+   if(pHeader == NULL)
+   {
+      pHeader = buf;
+      pTail   = buf;      
+      return 1;
+   }
+   
+ /// Insert at header
+ /**   |
+  *    V
+  *  @here    NODE     NODE     NODE     NODE
+  *          header   
+  */  
+   if(Dist <= pHeader->Boat.dist)
+   {
+      buf->pNext  = pHeader;
+      pHeader->pLast  = buf;
+      pHeader  = buf;     
+      return 1;
+   }
+   
+   tmp  = pHeader;
+   while(tmp)
+   {
+ /// Insert at tail
+ /**                                    |
+  *                            tail     V
+  *   NODE    NODE    NODE    NODE    @here
+  *                            tmp     
+  */      
+      if(tmp == pTail)
+      {    
+         tmp->pNext  = buf;
+         buf->pLast  = tmp;
+         buf->pNext  = NULL;
+         
+         pTail  = buf;
+        
+         return 3;
+      }
+      
+ /// Insert at middle  
+ /**                           |
+  *                            V
+  *   NODE    NODE    NODE   @here    NODE   NODE
+  *                    tmp                   
+  */  
+      if(Dist <= tmp->pNext->Boat.dist)
+      {       
+         buf->pNext  = tmp->pNext;
+         buf->pLast  = tmp;
+         tmp->pNext->pLast  = buf;
+         tmp->pNext  = buf;
+       
+         return 2;
+      }
+      
+      tmp  = tmp->pNext;
+   }
+   
+   return -1;
+}
 
 
 
-static double getSphereDist(long lt_1,long lg_1, long lt_2, long lg_2)
+int update_24A(BERTH * pBerth, struct message_24_partA * p_msg)
+{
+   int i  = 0; 
+
+   pBerth->Boat.time_cnt  = TIMESTAMP; 
+   if(pBerth->Boat.name[0] == 0)
+   {
+      for(i=0;i<20;i++)
+      {
+         pBerth->Boat.name[i]  = p_msg->name[i];
+         if(p_msg->name[i] == '\0')
+         {
+            break;
+         }
+      }
+      pBerth->Boat.name[19]  = '\0';
+   }
+   else
+   {
+      return 0;      
+   }
+   
+   return 1;
+}
+
+
+int add_24A(struct message_24_partA * p_msg)
+{
+   BERTH * buf  = NULL;
+   BERTH * tmp  = NULL;
+
+   int i  = 0;
+   
+ 
+   buf  = allocOneBerth();
+   
+   if(buf == NULL)
+   {
+INFO("alloc berth failed!");   
+      return -1;
+   }
+//   buf->pLast  = NULL;
+//   buf->pNext  = NULL;
+   
+   buf->Boat.user_id  = p_msg->user_id;
+   buf->Boat.dist  = 999999;
+   buf->Boat.time_cnt  = TIMESTAMP;
+   
+   for(i=0;i<20;i++)
+   {
+      buf->Boat.name[i]  = p_msg->name[i];
+      if(p_msg->name[i] == '\0')
+      {
+         break;
+      }
+   }
+   buf->Boat.name[19]  = '\0';
+   
+   if(pHeader == NULL)
+   {
+      pHeader  = buf;
+      pTail    = buf;
+      return 1;
+   }
+  
+  /***     Add at tail  
+   *                                   |
+   *                                   V
+   *  NODE    NODE    NODE    NODE   @here
+   *                           tail
+   */                       
+   pTail->pNext  = buf;
+   buf->pLast    = pTail;
+   
+   buf->pNext  = NULL;
+   pTail  = buf;
+
+   return 1;
+}
+
+
+
+
+
+
+void updateTimeStamp()
+{
+   MNT_BERTH * pIterator  = NULL;
+   BERTH * tmp  = NULL;
+   BERTH * tmpTail  = pTail;
+   
+   
+   BERTH * pCur  = NULL;
+   int i  = 0;  
+   int k  = 0;
+   pCur  = pHeader; 
+   
+   while(pCur)
+   {
+      if(pCur->Boat.time_cnt > 0)
+      {
+         SimpBerthes[i].latitude   = pCur->Boat.latitude;
+         SimpBerthes[i].longitude  = pCur->Boat.longitude;
+         SimpBerthes[i].Dist       = pCur->Boat.dist;
+         SimpBerthes[i].pBerth     = pCur;
+         
+         pCur->Boat.time_cnt--;                   
+         pCur  = pCur->pNext;
+         i++;
+      }
+      else
+      { 
+printf("Delete %09ld\n\r", pCur->Boat.user_id); 
+         pIterator  = pMntHeader;
+         while(pIterator)
+         {
+            if(pIterator->mntBoat.mmsi == pCur->Boat.user_id)
+            {
+               pIterator->pBoat  = NULL;
+               break;
+            }
+            else
+            {
+               pIterator  = pIterator->pNext;
+            }
+         }
+         INVD_deleteByMMSI(pCur->Boat.user_id);
+              
+         /// Delete at header
+         if(pCur == pHeader)
+         {
+            pHeader  = pCur->pNext;
+            if(pCur->pNext)
+               pCur->pNext->pLast  = NULL;          
+         }
+         ///  Delete at middle
+         else if(pCur->pNext)
+         {
+            pCur->pLast->pNext  = pCur->pNext;
+            pCur->pNext->pLast  = pCur->pLast;
+         }
+         /// Delete at tail
+         else
+         {
+
+            pCur->pLast->pNext  = NULL;
+            pTail  = pCur->pLast;
+         }
+         tmp  = pCur->pNext;
+         
+         memset((void*)pCur, 0, sizeof(BERTH));
+         
+         pCur  = tmp;
+        
+      }
+
+   }
+   N_boat  = i;    
+
+
+//   for(i=0;i<BOAT_LIST_SIZE_MAX;i++)
+//   {
+//      if(Berthes[i].Boat.user_id != 0)
+//      {
+//         k++;
+//      }
+//   } 
+//  if(N_boat != k)
+//  {
+//     mymyCnt++;
+//     INFO("N_boat:%d < true N_Boat:%d %d err happend",N_boat,k,mymyCnt);
+//  }
+}
+
+
+static int getSphereDist(long lt_1,long lg_1, long lt_2, long lg_2)
 {
 	float dist = 0.0;
 	float f_1 = 1.0*lt_1 / 60000;
@@ -301,7 +575,6 @@ static double getSphereDist(long lt_1,long lg_1, long lt_2, long lg_2)
 	float l_2 = 1.0*lg_2 / 60000;
 	float diff = 1.0*(lg_1 - lg_2) / 60000;
  float tmp  = 0.0;
- long aa = 0;
 // f_1  = lt_1/60000 + ( (lt_1%60000)/10000 )*0.01667;
 
 // printf("\r\nf_1:%lf\r\n",f_1);
@@ -313,138 +586,57 @@ static double getSphereDist(long lt_1,long lg_1, long lt_2, long lg_2)
 // printf("\r\ntmp:%f",tmp);
 // 
 // 
+ if( (lt_1 == 0) || (lg_1 == 0) )
+ {
+    return 999999;
+ }
 
-	dist = 6371 / 1.852 * acos(cos((f_1 - f_2)*PI / 180) / 2
+	dist = 6371 *0.54 * acos(cos((f_1 - f_2)*PI / 180) / 2
 		- cos((f_1 + f_2)*PI / 180) / 2
 		+ cos((diff + f_1 + f_2)*PI / 180) / 4
 		+ cos((diff + f_1 - f_2)*PI / 180) / 4
 		+ cos((diff - f_1 + f_2)*PI / 180) / 4
 		+ cos((diff - f_1 - f_2)*PI / 180) / 4
 		);
- return dist;
-
-//  dist = R_NM * acos(       cos((f_1-f_2)*PI/180)/2
-//                           -cos((f_1+f_2)*PI/180)/2
-//                           +cos((diff+f_1+f_2)*PI/180)/4
-//                           +cos((diff+f_1-f_2)*PI/180)/4
-//                           +cos((diff-f_1+f_2)*PI/180)/4
-//                           +cos((diff-f_1-f_2)*PI/180)/4
-//                            ); 
-//  printf("\r\nSphere dist:%lf\r\n",dist); 
-//  
-//  dist = R_NM * acos(  cos(2.9E-7 * (lt_1-lt_2))/2
-//                           -cos((f_1+f_2)*PI/180)/2
-//                           +cos((diff+f_1+f_2)*PI/180)/4
-//                           +cos((diff+f_1-f_2)*PI/180)/4
-//                           +cos((diff-f_1+f_2)*PI/180)/4
-//                           +cos((diff-f_1-f_2)*PI/180)/4
-//                            ); 
-//  printf("\r\nSphere dist:%lf\r\n",dist);
-//  dist = R_NM * acos(  cos(LLTOA *(      lt_1 - lt_2) )/2
-//                      -cos(LLTOA *(      lt_1 + lt_2) )/2
-//                      +cos(LLTOA *(tmp + lt_1 + lt_2) )/4
-//                      +cos(LLTOA *(tmp + lt_1 - lt_2) )/4
-//                      +cos(LLTOA *(tmp - lt_1 + lt_2) )/4
-//                      +cos(LLTOA *(tmp - lt_1 - lt_2) )/4
-//                            ); 
-//  printf("\r\nSphere dist:%lf\r\n",dist);   
-
-
-   
+ return (dist*1000);
 }
 
 
-
-/*
-float getSphereDist(long lt_1,long lg_1, long lt_2, long lg_2)
+static BERTH * allocOneBerth()
 {
-  float dist = 0.0;
-  float f_1  = 1.0*lt_1/60000;
-  float f_2  = 1.0*lt_2/60000;
-  float l_1  = 1.0*lg_1/60000;
-  float l_2  = 1.0*lg_2/60000;
-//  long  tmp  = lg_1 - lg_2;
-  float diff = 1.0*(lg_1-lg_2)/60000;
-  
-//  dist = 6371/1.852* acos(  cos((f_1-f_2)*PI/180)/2
-//                           -cos((f_1+f_2)*PI/180)/2
-//                           +cos((diff+f_1+f_2)*PI/180)/4
-//                           +cos((diff+f_1-f_2)*PI/180)/4
-//                           +cos((diff-f_1+f_2)*PI/180)/4
-//                           +cos((diff-f_1-f_2)*PI/180)/4
-//                            );
-//  printf("\r\nSphere dist:%lf\r\n",dist); 
-
-  dist = R_NM * acos(       cos((f_1-f_2)*PI/180)/2
-                           -cos((f_1+f_2)*PI/180)/2
-                           +cos((diff+f_1+f_2)*PI/180)/4
-                           +cos((diff+f_1-f_2)*PI/180)/4
-                           +cos((diff-f_1+f_2)*PI/180)/4
-                           +cos((diff-f_1-f_2)*PI/180)/4
-                            ); 
-//  printf("\r\nSphere dist:%lf\r\n",dist); 
-  
-  return dist;
-//  dist = R_NM * acos(  cos(2.9E-7 * (lt_1-lt_2))/2
-//                           -cos((f_1+f_2)*PI/180)/2
-//                           +cos((diff+f_1+f_2)*PI/180)/4
-//                           +cos((diff+f_1-f_2)*PI/180)/4
-//                           +cos((diff-f_1+f_2)*PI/180)/4
-//                           +cos((diff-f_1-f_2)*PI/180)/4
-//                            ); 
-//  printf("\r\nSphere dist:%lf\r\n",dist);
-//  dist = R_NM * acos(  cos(LLTOA *(      lt_1 - lt_2) )/2
-//                      -cos(LLTOA *(      lt_1 + lt_2) )/2
-//                      +cos(LLTOA *(tmp + lt_1 + lt_2) )/4
-//                      +cos(LLTOA *(tmp + lt_1 - lt_2) )/4
-//                      +cos(LLTOA *(tmp - lt_1 + lt_2) )/4
-//                      +cos(LLTOA *(tmp - lt_1 - lt_2) )/4
-//                            ); 
-//  printf("\r\nSphere dist:%lf\r\n",dist);   
-   
+   int i  = 0;
+   for(i=0;i<BOAT_LIST_SIZE_MAX;i++)
+   {
+      if(Berthes[i].Boat.user_id == 0)
+      {         
+         return &(Berthes[i]);
+      }
+   }  
+   return NULL;
 }
-*/
 
 
-void myftoa(unsigned char * str, float num)
+
+void myPrint()
 {
-    int i  = 0;
-    int j  = 0;
-    int subVal  = 0;
-    unsigned tmp  = 0;
-    
-    
-    subVal  = (num*1000)/1;
-//printf("\r\nsubVal:%d",subVal);  
-    for(i=0;i<3;i++)
-    {
-       str[i]  = '0'+subVal%10;
-       subVal  = subVal/10;
-    }
-    str[i++]  = '.';
-    subVal  = num/1;
-
-    str[i++]  = subVal%10 + '0';
-    
-    subVal  = subVal/10;
-    while(subVal)
-    {
-       str[i++]  = subVal%10 + '0';
-       subVal  = subVal/10;
-    }
-    str[i]  = '\0';
-    i--;
-    for (j = 0; j<(i + 1) / 2; j++)
-    {
-     str[j] =      str[j] ^ str[i - j];
-     str[i - j] =  str[j] ^ str[i - j];
-     str[j] =      str[j] ^ str[i - j];
-
-    }
-    
-    str[5]  = '\0';
-//printf("\r\nstr:%s",str);  
+   int i  = 0;
+   BERTH * tmp  = NULL;
+   
+   tmp  = pHeader;
+   
+   printf("\r\n");
+   while(tmp)
+   {
+      i++;
+      printf("[%09ld,%d]->",tmp->Boat.user_id,tmp->Boat.dist);
+      if(i>20)
+      {
+         printf("\r\n");  
+         return ;         
+      }
+      tmp  = tmp->pNext;
+   }
+   
+   printf("\r\n");
 }
-
-
 

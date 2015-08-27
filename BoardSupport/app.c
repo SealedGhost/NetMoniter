@@ -6,22 +6,32 @@
 #include "lpc177x_8x_uart.h"
 #include "lpc177x_8x_timer.h"
 #include "Config.h"
+#include "Setting.h"
+#include "DMA.h"
+#include "Check.h"
+#include "SystemConfig.h"
+#include "uart.h"
+
 
 
 //#ifndef test_test
 //	#define test_test
 //#endif
 
+
+/*-------------------- Macro defines ---------------------*/
 /* 定义任务优先级 */
-#define UI_Task_PRIO       11
-#define Insert_Task_PRIO      8
+#define UI_Task_PRIO             11
+#define Insert_Task_PRIO         8
 #define Refresh_Task_PRIO        9
-#define Task_Stack_Use_PRIO  10  
+#define Task_Stack_Use_PRIO      10  
 /* 定义任务堆栈大小 */
-#define USER_TASK_STACK_SIZE 384
+#define USER_TASK_STACK_SIZE 2000
 #define TOUCH_TASK_STACK_SIZE 256
 #define KEY_TASK_STACK_SIZE 128
 #define Task_Stack_Use_STACK_SIZE 128
+
+/*------------------- static ----------------------------*/
 /* 定义任务堆栈 */
 static	OS_STK	UI_Task_Stack[USER_TASK_STACK_SIZE];
 
@@ -35,15 +45,40 @@ static  OS_STK  Task_Stack_Use_Stack[Task_Stack_Use_STACK_SIZE];
 //static  OS_STK_DATA Insert_Task_Stack_Use;
 //static  OS_STK_DATA Refresh_Task_Stack_Use;
 
+
+
+/*----------------- external variables ------------------*/
 extern volatile int myCnt ;
 static volatile int msgCnt  = 0;
-void SysTick_Init(void);
-
 
 extern boat mothership;
+__IO unsigned long SYS_Date  = 0;
+__IO unsigned long SYS_Time  = 0;
+
+
+
+extern int N_monitedBoat;
+
+extern MNT_BERTH * pMntHeader;
+/*----------------- external function -------------------*/
+
 extern void MainTask(void);
-extern void insert(boat* boats, struct message_18* p_msg);
+extern int insert_18(struct message_18 * p_msg);
+extern int insert_24A(struct message_24_partA * p_msg);
+extern void updateTimeStamp(void);
+extern void myPrint(void);
 void mntSetting_init(void);
+
+/*----------------- Global   variables --------------------*/
+///Insert , Refresh互斥信号量
+int isKeyTrigged  = 0;
+
+
+
+int ReleasedDectSwitch  = 0;
+
+OS_EVENT * Refresher;
+OS_EVENT * Updater;
 
 ///--消息队列的定义部分---
 OS_EVENT *QSem;//定义消息队列指针
@@ -53,64 +88,49 @@ OS_MEM   *PartitionPt;//定义内存分区指针
 uint8_t  Partition[MSG_QUEUE_TABNUM][100];
 // #pragma arm section rwdata
 // uint8_t  Partition[20][300]__attribute__((at(0xA1FF0000)));
-
+uint8_t myErr;
+uint8_t myErr_2;
 int list_endIndex  = -1;
 
 ///* ADDRESS: 0xAC000000  SIZE: 0x400000  */
 #pragma arm section rwdata = "SD_RAM1", zidata = "SD_RAM1"
-_boat boat_list[BOAT_LIST_SIZE_MAX]; // 0x10000: 64K
-_boat *boat_list_p[BOAT_LIST_SIZE_MAX];
+BERTH Berthes[BOAT_LIST_SIZE_MAX];
+SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
 _boat_m24A boat_list_24A[BOAT_LIST_SIZE_MAX];
 _boat_m24A *boat_list_p24A[BOAT_LIST_SIZE_MAX];
-#pragma arm section rwdata
-//_boat boat_list[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1C00000)));
-_boat boat_list[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1D00000)));
 
-_boat *boat_list_p[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1E00000)));
-_boat *boat_start = boat_list;
-_boat *boat_end = boat_list;
+
+#pragma arm section rwdata
+
+
+BERTH Berthes[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1D00000)));
+SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1E00000)));
 
 _boat_m24A boat_list_24A[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1F00000)));;
 _boat_m24A *boat_list_p24A[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1F80000)));
-_boat_m24A *boat_start24A = boat_list_24A;
-_boat_m24A *boat_end24A = boat_list_24A;
+
 
 _boat_m24B boat_list_24B[BOAT_LIST_SIZE_MAX];
 _boat_m24B *boat_lisp_p24B[BOAT_LIST_SIZE_MAX];
-_boat_m24B *boat_start24B = boat_list_24B;
-_boat_m24B *boat_end24B = boat_list_24B;
 
-///* ADDRESS: 0xAC000000  SIZE: 0x400000  */
-
-//_boat boat_list[BOAT_LIST_SIZE_MAX]; // 0x10000: 64K
-//_boat *boat_list_p[BOAT_LIST_SIZE_MAX];
-//_boat_m24A boat_list_24A[BOAT_LIST_SIZE_MAX];
-//_boat_m24A *boat_list_p24A[BOAT_LIST_SIZE_MAX];
-
-//_boat boat_list[BOAT_LIST_SIZE_MAX];
-//_boat *boat_list_p[BOAT_LIST_SIZE_MAX];
-//_boat *boat_start = boat_list;
-//_boat *boat_end = boat_list;
-
-//_boat_m24A boat_list_24A[BOAT_LIST_SIZE_MAX];
-//_boat_m24A *boat_list_p24A[BOAT_LIST_SIZE_MAX];
-//_boat_m24A *boat_start24A = boat_list_24A;
-//_boat_m24A *boat_end24A = boat_list_24A;
-
-//_boat_m24B boat_list_24B[BOAT_LIST_SIZE_MAX];
-//_boat_m24B *boat_lisp_p24B[BOAT_LIST_SIZE_MAX];
-//_boat_m24B *boat_start24B = boat_list_24B;
-//_boat_m24B *boat_end24B = boat_list_24B;
 
 struct message_18 msg_18;
 
-short N_boat = 0;
-short N_monitedBoat  = 0;
-_boat test[3];
-_boat *test_p[500];
-char name1[20]="MAN DE LI";
-char name2[20]="ZHE DAI YU ";
-								
+int N_boat = 0;
+static int LPC_recCnt  = 0;
+/*----------------- local   function  --------------------*/
+
+
+void SysTick_Init(void);
+
+
+
+
+
+
+///* ADDRESS: 0xAC000000  SIZE: 0x400000  */
+
+
 
 
 void UI_Task(void *p_arg)/*描述(Description):	任务UI_Task*/
@@ -126,64 +146,40 @@ void UI_Task(void *p_arg)/*描述(Description):	任务UI_Task*/
 void Insert_Task(void *p_arg)  //等待接收采集到的数据
 { 
 	int tmp  = 0;
+
 	uint8_t *s; 
 	INT8U err;
 //	static int a=0;
 	message_18 text_out;
 	message_24_partA text_out_24A;
-	type_of_ship text_out_type_of_ship;
-	
-
- 
+	type_of_ship text_out_type_of_ship; 
+// USER_Init();
 	while(1)
 	{	
-// printf("\r\nInsert task"); 
-		s = OSQPend(QSem,0,&err);
-    
-    tmp  = translate_(s,&text_out,&text_out_24A,&text_out_type_of_ship);
 
-    
-//    if(tmp>0 && tmp<28)
-//    {
-//      msgCnt++;
-//      INFO("msgID:%d  msgCnt:%d",tmp,msgCnt);
-//    }
-//		switch(tmp)
-//		{
-//			case 18:      
-//				insert_18(boat_list, &text_out);
-////        boat_list[0].user_id  = msg_18.user_id;
-//				break;
-//			case 240:				
-//				insert_24A(boat_list,&text_out_24A);
-//				break;
-//			case 241:			
-//				insert_24B(boat_list,&text_out_type_of_ship);
-//				break;
-//			default:			
-//				break;
-//		}
-    
+		s = OSQPend(QSem,0,&err);
+  
+  LPC_recCnt++; 
+ 
+    tmp  = translate_(s,&text_out,&text_out_24A,&text_out_type_of_ship); 
+    OSMutexPend(Refresher, 0, &myErr);     
+//INFO("insert");    
     switch(tmp)
     {
-   
        case 18:
-         insert_18(boat_list, &text_out);
-         break;
+            insert_18(&text_out);
+            break;
         case 240:
-         insert_24A(boat_list, &text_out_24A);
-
-//#if INFO_ENABLE
-//INFO("insert 24A");         
-//#endif
-         break;
-        case 241:
-         insert_24B(boat_list, &text_out_type_of_ship);
+            insert_24A(&text_out_24A);
+            break;
+//        case 241:
+       
          break;
         default:
          break;
     }
-		OSMemPut(PartitionPt,s);
+OSMutexPost(Refresher);    
+//		OSMemPut(PartitionPt,s);
 
 
 		OSTimeDly(20); 
@@ -192,16 +188,25 @@ void Insert_Task(void *p_arg)  //等待接收采集到的数据
 }
 void Refresh_Task(void *p_arg)//任务Refresh_Task
 {
+ int i  = 0;
 
 	while(1)
 	{
-	
-//		  OSTimeDly(30000); 		/* 延时8000ms */
-// 		if(boat_list_p) free(boat_list_p);
-// 		boat_list_p = (_boat**)malloc(sizeof(_boat*)*max_size);
-//printf("\r\nRefresh task and myCnt = %d",myCnt);		
-		updateTimeStamp(boat_list);
-		OSTimeDlyHMSM(0,0,3,0);
+  OSMutexPend(Refresher, 0, &myErr);
+//  OSMutexPend(Updater, 0, &myErr_2);
+  updateTimeStamp();
+  OSMutexPost(Refresher); 
+
+//  UART_SendByte(2, 'k');
+#ifdef CODE_CHECK 
+       check();
+#endif 
+
+//  CurMntBoatIndex++;
+//  CurMntBoatIndex  = CurMntBoatIndex%N_monitedBoat;
+  
+  
+		OSTimeDlyHMSM(0,0,5,0);
 	}
 }
 void Task_Stack_Use(void *p_arg)
@@ -211,12 +216,6 @@ void Task_Stack_Use(void *p_arg)
 	while(1)
 	{
 		OSMemQuery(PartitionPt,&MemInfo);
-//		OSTaskStkChk(UI_Task_PRIO ,&UI_Task_Stack_Use);
-// 		OSTaskStkChk(Insert_Task_PRIO,&Insert_Task_Stack_Use);
-//		OSTaskStkChk(Refresh_Task_PRIO,&Refresh_Task_Stack_Use);
-// 		printf("\n\rUI_Task             used/free:%d/%d  usage:%%%d\r\n",UI_Task_Stack_Use.OSUsed,UI_Task_Stack_Use.OSFree,(UI_Task_Stack_Use.OSUsed*100)/(UI_Task_Stack_Use.OSUsed+UI_Task_Stack_Use.OSFree));
-// 		printf("Insert_Task_Stack_Use  used/free:%d/%d  usage:%%%d\r\n",Insert_Task_Stack_Use.OSUsed,Insert_Task_Stack_Use.OSFree,(Insert_Task_Stack_Use.OSUsed*100)/(Insert_Task_Stack_Use.OSUsed+Insert_Task_Stack_Use.OSFree));		
-// 		printf("Refresh_Task_Stack_Use    used/free:%d/%d  usage:%%%d\r\n",Refresh_Task_Stack_Use.OSUsed,Refresh_Task_Stack_Use.OSFree,(Refresh_Task_Stack_Use.OSUsed*100)/(Refresh_Task_Stack_Use.OSUsed+Refresh_Task_Stack_Use.OSFree));		
 		printf("\r\n**********%d----------\n\r",MemInfo.OSNUsed);
 		printf("\r\n**********%d**********\n\r",MemInfo.OSNFree);
 		OSTimeDly(1000); 		/* 延时8000ms */
@@ -227,66 +226,19 @@ void App_TaskStart(void)//初始化UCOS，初始化SysTick节拍，并创建三个任务
 	INT8U err;
   
   int i  = 0;
-//	N_boat = 3;	
 
-	for(i=BOAT_LIST_SIZE_MAX;i>=0;i--)
-  {
-     boat_list[i].user_id  = 0;
-  }
-
-//   mntSetting_init();
-   
-   
-   mothership.latitude = 1927265;
-   mothership.longitude = 7128660;
-   mothership.true_heading  = 0;
-//	msg_18.user_id  = 777777772;
-//  msg_18.SOG      = 6;
-//  msg_18.COG      = 2;
-//  msg_18.longitude = 72630000;
-//  msg_18.latitude  = 72630000;
-//  
-//  
-//	test[0].user_id = 11029;
-//	test[0].SOG = 5;
-//	test[0].COG = 5;
-//	test[0].isVisible = 1;
-//	test[0].true_heading = 180;
-//	test[0].longitude = 7305545;
-//	test[0].latitude = 1940726;
-
-//	
-//	test[1].user_id = 19283;
-//	test[0].SOG = 6;
-//	test[0].COG = 8;
-//	test[1].isVisible = 0;
-//	test[1].true_heading = 60;
-//	test[1].longitude = 7295545;
-//	test[1].latitude = 1949726;
-
-
-//	test[2].user_id = 19289;
-//	test[0].SOG = 9;
-//	test[0].COG = 23;
-//	test[2].isVisible = 1;
-//	test[2].true_heading = 270;
-//	test[2].longitude = 7299545;
-//	test[2].latitude = 1955726;
-
-//	
-//// 	test_p = (_boat**)malloc(sizeof(_boat*)*3);
-//	test_p[0] = &test[0];
-//	test_p[1] = &test[1];
-//	test_p[2] = &test[2];
-
-//	test_p[0] = &test[0];
-//	test_p[1] = &test[1];
-//	test_p[2] = &test[2];
-//  
+  mothership.latitude = MOTHERShIP_LA;
+  mothership.longitude = MOTHERShIP_LG;
+  mothership.true_heading  = 0;
+ 
+ sysInit();
+	UART_Config(2);	
+	DMA_Config(1); 
   
-  
-	OSInit();
+	OSInit();  
 	SysTick_Init();/* 初始化SysTick定时器 */
+ Refresher  = OSMutexCreate(6,&myErr);
+ Updater    = OSMutexCreate(6,&myErr_2);
 	QSem = OSQCreate(&MsgQeueTb[0],MSG_QUEUE_TABNUM); //创建消息队列，10条消息
 	PartitionPt=OSMemCreate(Partition,MSG_QUEUE_TABNUM,100,&err);
 	
@@ -294,6 +246,8 @@ void App_TaskStart(void)//初始化UCOS，初始化SysTick节拍，并创建三个任务
 	OSTaskCreateExt(Insert_Task,(void *)0,(OS_STK *)&Insert_Task_Stack[TOUCH_TASK_STACK_SIZE-1],Insert_Task_PRIO,Insert_Task_PRIO,(OS_STK *)&Insert_Task_Stack[0],TOUCH_TASK_STACK_SIZE,(void*)0,OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR );/* 创建任务 Insert_Task */
 	OSTaskCreateExt(Refresh_Task,  (void *)0,(OS_STK *)&Refresh_Task_Stack[KEY_TASK_STACK_SIZE-1],    Refresh_Task_PRIO,  Refresh_Task_PRIO  ,(OS_STK *)&Refresh_Task_Stack[0],  KEY_TASK_STACK_SIZE,(void*)0,  OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR);/* 创建任务 Refresh_Task */
 //	OSTaskCreate(Task_Stack_Use,(void *)0,(OS_STK *)&Task_Stack_Use_Stack[Task_Stack_Use_STACK_SIZE-1],  Task_Stack_Use_PRIO);/* 创建任务 Refresh_Task */
+//lpc1788_DMA_Init();  
+//	DMA_Config(1);
 
 	OSStart();
 }
@@ -303,6 +257,9 @@ int translate_(unsigned char *text,message_18 *text_out,message_24_partA *text_o
 {
   int i=0,comma=0;
   int tmp  = 0;
+  unsigned long tempgprmc  = 0;
+  unsigned long shiftReg  = 0;
+  
   if((text[0]!='!')&&(text[0]!='$'))
     return 0;
   if((text[1]=='A')&&(text[2]==0x49)&&(text[3]=='V')&&(text[4]=='D')&&(text[5]=='M'))
@@ -339,12 +296,75 @@ int translate_(unsigned char *text,message_18 *text_out,message_24_partA *text_o
 	   }
    }
   }
-   else
-   return 0;
-return 0;
-   
-   
 
+	else if((text[1]=='G')&&(text[2]=='P')&&(text[3]=='R')&&(text[4]=='M')&&(text[5]=='C')) //GPS GPRMC
+	{
+
+//    tempgprmc = text[6]; mothership.latitude = tempgprmc << 24;
+//    tempgprmc = text[7]; mothership.latitude = mothership.latitude + (tempgprmc << 16);
+//    tempgprmc = text[8]; mothership.latitude = mothership.latitude + (tempgprmc << 8);
+//    mothership.latitude = mothership.latitude + text[9];
+//    mothership.latitude = mothership.latitude/10;
+    
+    shiftReg   = text[6];
+    shiftReg   = (shiftReg << 8) | text[7];
+    shiftReg   = (shiftReg << 8) | text[8];
+    shiftReg   = (shiftReg << 8) | text[9];
+    if(shiftReg)
+       mothership.latitude  = shiftReg / 10;
+    
+    
+//    tempgprmc = text[10]; mothership.longitude = tempgprmc << 24;
+//    tempgprmc = text[11]; mothership.longitude = mothership.longitude + (tempgprmc << 16);
+//    tempgprmc = text[12]; mothership.longitude = mothership.longitude + (tempgprmc << 8);
+//    mothership.longitude = mothership.longitude + text[13];
+//    mothership.longitude = mothership.longitude/10;
+      
+    shiftReg   = text[10];
+    shiftReg   = (shiftReg << 8) | text[11];
+    shiftReg   = (shiftReg << 8) | text[12];
+    shiftReg   = (shiftReg << 8) | text[13];
+    if(shiftReg)
+       mothership.longitude  = shiftReg / 10;
+    
+//    tempgprmc = text[14]; mothership.SOG = mothership.SOG + (tempgprmc << 8);
+//    mothership.SOG = mothership.SOG + text[15];
+
+      shiftReg   = text[14];
+      shiftReg   = (shiftReg << 8) | text[15];
+      mothership.SOG  = shiftReg;
+   
+//    tempgprmc = text[16]; mothership.COG = mothership.COG + (tempgprmc << 8);
+//    mothership.COG = mothership.COG + text[17];
+
+      shiftReg   = text[16];
+      shiftReg   = (shiftReg << 8) | text[17];
+      mothership.COG  = shiftReg;
+
+//    tempgprmc = text[18]; SYS_Date = tempgprmc << 24;
+//    tempgprmc = text[19]; SYS_Date = SYS_Date + (tempgprmc << 16);
+//    tempgprmc = text[20]; SYS_Date = SYS_Date + (tempgprmc << 8);
+//    SYS_Date = SYS_Date + text[21];
+
+      shiftReg   = text[18];
+      shiftReg   = (shiftReg << 8) | text[19];
+      shiftReg   = (shiftReg << 8) | text[20];
+      shiftReg   = (shiftReg << 8) | text[21];
+      SYS_Date   = shiftReg;
+   
+//    tempgprmc = text[22]; SYS_Time = tempgprmc << 24;
+//    tempgprmc = text[23]; SYS_Time = SYS_Time + (tempgprmc << 16);
+//    tempgprmc = text[24]; SYS_Time = SYS_Time + (tempgprmc << 8);
+//    SYS_Time = SYS_Time + text[25];	
+
+      shiftReg   = text[22];
+      shiftReg   = (shiftReg << 8) | text[23];
+      shiftReg   = (shiftReg << 8) | text[24];
+      shiftReg   = (shiftReg << 8) | text[25];
+      SYS_Time   = shiftReg;
+	}
+
+return 0;
 }
 
 /************************************* End *************************************/
