@@ -25,8 +25,11 @@
 #include "MainTask.h"
 #include "Config.h"
 #include "Setting.h"
-#include "SystemConfig.h"
+#include "sysConf.h"
 #include "GUI.h"
+#include "skinColor.h"
+#include "str.h"
+#include "dlg.h"
 
 /*********************************************************************
 *
@@ -55,41 +58,21 @@
 #define ID_BUTTON_5 (GUI_ID_USER + 0x15)
 #define ID_BUTTON_6 (GUI_ID_USER + 0x16)
 
+/*--------------------- Global variables -------------------------*/
+WM_HWIN mntSettingWin ;
 
-/*------------------- external variables ------------------------*/
-extern char * pStrBuf;
-
-extern WM_HWIN subWins[4];
-extern WM_HWIN confirmWin;
-extern WM_HWIN menuWin;
-
-extern short N_monitedBoat;
-
-extern CONF_SYS  SysConf;
-
-
-
-/*------------------- external functions ------------------------*/
 
 
 /*------------------- local    variables -------------------------*/
-WM_HWIN btWin ;
-WM_HWIN hBts[7];
+
+static WM_HWIN hBts[7];
 
 static int fdDist  = 0;
 static int zmDist  = 0;
 static void myButtonListener(WM_MESSAGE* pMsg);
 static void btReset(WM_HWIN thisWin);
 
-MNT_SETTING mntSetting;
-/*------------------- local    functions -------------------------*/
-//void printMoniteSetting(void);
-//void printSetting(MNT_SETTING * p_setting);
-//extern void mntSetting_init(void);
 
-
-
-// USER START (Optionally insert additional defines)
 
 
 
@@ -142,13 +125,8 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
 *
 **********************************************************************
 */
-MntSetWin_COLOR MntSetWinSkins[2]  = {
-///                                      bkColor         Label     BkUnpressed       Text          TxBk
-                                        { GUI_DARKGRAY,  GUI_BLACK,  GUI_DARKGREEN,   GUI_LIGHTGRAY, GUI_BLACK},
-                                        { GUI_GRAY,      GUI_GRAY,   GUI_LIGHTGREEN,  GUI_DARKGRAY,  GUI_LIGHTMAGENTA} 
-                                       };
 
-MntSetWin_COLOR * pMntSetWinSkin  = MntSetWinSkins;
+static const MntSetWin_COLOR * pSkin  = &MntSetWinSkins[0];
 // USER START (Optionally insert additional static code)
 // USER END
 
@@ -169,30 +147,30 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
   switch (pMsg->MsgId) {
   
   case USER_MSG_SKIN: 
-       pMntSetWinSkin  = &(MntSetWinSkins[pMsg->Data.v]);
+       pSkin  = &(MntSetWinSkins[pMsg->Data.v]);
        
-       WINDOW_SetBkColor(pMsg->hWin, pMntSetWinSkin->MntSetWin_BackGround);
+       WINDOW_SetBkColor(pMsg->hWin, pSkin->MntSetWin_BackGround);
        
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_0);
-       TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label);
+       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_1);
-       TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label);    
+       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_2);
-       TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label); 
+       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_3);
-       TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label);    
+       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_4);
-       TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label);    
+       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_5);
-       TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label);    
+       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_6);
-       TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label);    
+       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_7);
-       TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label);    
+       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_8);
-       TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label);    
+       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_9);
-       TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label);  
+       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);  
 
        for(i=0;i<7;i++)
        {
@@ -210,33 +188,33 @@ INFO("case user_msg_UNIT");
    
        
   case WM_INIT_DIALOG:
-       pMntSetWinSkin  = &(MntSetWinSkins[SysConf.Skin]);
+       pSkin  = &(MntSetWinSkins[SysConf.Skin]);
     //
     // Initialization of 'text'
     //    
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_0);
-    TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label);
+    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_1);
-    TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label);    
+    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_2);
-    TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label); 
+    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_3);
-    TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label);    
+    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_4);
-    TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label);    
+    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_5);
-    TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label);    
+    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_6);
-    TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label);    
+    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_7);
-    TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label);    
+    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
     
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_8);
     TEXT_SetFont(hItem, GUI_FONT_24_1);
     TEXT_SetText(hItem, SysConf.Unit==UNIT_km?"km":"nm");
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_9);
     TEXT_SetFont(hItem, GUI_FONT_24_1);
-    TEXT_SetTextColor(hItem, pMntSetWinSkin->MntSetWin_Label);   
+    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);   
     TEXT_SetText(hItem, SysConf.Unit==UNIT_km?"km":"nm");    
   
     //
@@ -287,7 +265,7 @@ INFO("case user_msg_UNIT");
     
     for(i=0;i<7;i++)
     {
-//       BUTTON_SetBkColor(hBts[i], BUTTON_CI_UNPRESSED, pMntSetWinSkin->);
+//       BUTTON_SetBkColor(hBts[i], BUTTON_CI_UNPRESSED, pSkin->);
        BUTTON_SetTextColor(hBts[i], BUTTON_CI_UNPRESSED,GUI_WHITE);
     } 
     // USER START (Optionally insert additional code for further widget initialization)
@@ -411,12 +389,10 @@ INFO("case user_msg_UNIT");
 *
 *       CreateETWin
 */
-WM_HWIN bttWinCreate(void);
-WM_HWIN btWinCreate(void) {
+WM_HWIN mntSettingWinCreate(void) {
 
-//  btWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, subWins[1], 0, 0);
-  btWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, WM_HBKWIN, 0, 0);
-  return btWin;
+  mntSettingWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, WM_HBKWIN, 0, 0);
+  return mntSettingWin;
 }
 
 // USER START (Optionally insert additional public code)
@@ -562,8 +538,8 @@ static void myButtonListener(WM_MESSAGE* pMsg)
        {
           case REPLY_OK:
                MNT_makeSettingUp(&mntSetting);  
-               MNT_initSetting(&mntSetting);
-               btReset(btWin);             
+               MNT_initSetting();
+               btReset(mntSettingWin);             
                WM_SetFocus(menuWin);
                break;
           case REPLY_CANCEL:         

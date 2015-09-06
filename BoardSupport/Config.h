@@ -114,7 +114,7 @@
 #define TIMESTAMP           60
 
 #define MAP_REFRESH_SLOT    500
-#define AUTO_ADAPTER_CNT    3  
+#define AUTO_ADAPTER_CNT    20  
 
 
 
@@ -123,7 +123,7 @@
  *              array size config
  */
 #define MSG_QUEUE_TABNUM    20
-#define BOAT_LIST_SIZE_MAX  500
+#define BOAT_NUM_MAX        500
 #define MNT_NUM_MAX         20
 #define INVD_NUM_MAX        100
 

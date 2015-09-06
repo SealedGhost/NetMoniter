@@ -9,7 +9,7 @@
 #include "Setting.h"
 #include "DMA.h"
 #include "Check.h"
-#include "SystemConfig.h"
+#include "sysConf.h"
 #include "uart.h"
 
 
@@ -47,26 +47,7 @@ static  OS_STK  Task_Stack_Use_Stack[Task_Stack_Use_STACK_SIZE];
 
 
 
-/*----------------- external variables ------------------*/
-extern volatile int myCnt ;
-static volatile int msgCnt  = 0;
-
-extern boat mothership;
-__IO unsigned long SYS_Date  = 0;
-__IO unsigned long SYS_Time  = 0;
-
-
-
-extern int N_monitedBoat;
-
-extern MNT_BERTH * pMntHeader;
 /*----------------- external function -------------------*/
-
-extern void MainTask(void);
-extern int insert_18(struct message_18 * p_msg);
-extern int insert_24A(struct message_24_partA * p_msg);
-extern void updateTimeStamp(void);
-extern void myPrint(void);
 void mntSetting_init(void);
 
 /*----------------- Global   variables --------------------*/
@@ -94,24 +75,33 @@ int list_endIndex  = -1;
 
 ///* ADDRESS: 0xAC000000  SIZE: 0x400000  */
 #pragma arm section rwdata = "SD_RAM1", zidata = "SD_RAM1"
-BERTH Berthes[BOAT_LIST_SIZE_MAX];
-SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
-_boat_m24A boat_list_24A[BOAT_LIST_SIZE_MAX];
-_boat_m24A *boat_list_p24A[BOAT_LIST_SIZE_MAX];
+BERTH Berthes[BOAT_NUM_MAX];
+SIMP_BERTH SimpBerthes[BOAT_NUM_MAX];
+_boat_m24A boat_list_24A[BOAT_NUM_MAX];
+_boat_m24A *boat_list_p24A[BOAT_NUM_MAX];
 
 
 #pragma arm section rwdata
 
 
-BERTH Berthes[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1D00000)));
-SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1E00000)));
+BERTH Berthes[BOAT_NUM_MAX]__attribute__((at(0xA1D00000)));
+SIMP_BERTH SimpBerthes[BOAT_NUM_MAX]__attribute__((at(0xA1E00000)));
 
-_boat_m24A boat_list_24A[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1F00000)));;
-_boat_m24A *boat_list_p24A[BOAT_LIST_SIZE_MAX]__attribute__((at(0xA1F80000)));
+_boat_m24A boat_list_24A[BOAT_NUM_MAX]__attribute__((at(0xA1F00000)));;
+_boat_m24A *boat_list_p24A[BOAT_NUM_MAX]__attribute__((at(0xA1F80000)));
 
 
-_boat_m24B boat_list_24B[BOAT_LIST_SIZE_MAX];
-_boat_m24B *boat_lisp_p24B[BOAT_LIST_SIZE_MAX];
+_boat_m24B boat_list_24B[BOAT_NUM_MAX];
+_boat_m24B *boat_lisp_p24B[BOAT_NUM_MAX];
+
+/*----------------- External functions -----------------------*/
+extern int insert_18(struct message_18 * p_msg);
+extern int insert_24A(struct message_24_partA * p_msg);
+extern void updateTimeStamp(void);
+
+/*----------------- External variables -----------------------*/
+extern boat mothership;
+
 
 
 struct message_18 msg_18;
@@ -162,8 +152,7 @@ void Insert_Task(void *p_arg)  //等待接收采集到的数据
   LPC_recCnt++; 
  
     tmp  = translate_(s,&text_out,&text_out_24A,&text_out_type_of_ship); 
-    OSMutexPend(Refresher, 0, &myErr);     
-//INFO("insert");    
+    OSMutexPend(Refresher, 0, &myErr);        
     switch(tmp)
     {
        case 18:
@@ -230,8 +219,8 @@ void App_TaskStart(void)//初始化UCOS，初始化SysTick节拍，并创建三个任务
   mothership.latitude = MOTHERShIP_LA;
   mothership.longitude = MOTHERShIP_LG;
   mothership.true_heading  = 0;
- 
- sysInit();
+  
+
 	UART_Config(2);	
 	DMA_Config(1); 
   
@@ -262,50 +251,58 @@ int translate_(unsigned char *text,message_18 *text_out,message_24_partA *text_o
   
   if((text[0]!='!')&&(text[0]!='$'))
     return 0;
-  if((text[1]=='A')&&(text[2]==0x49)&&(text[3]=='V')&&(text[4]=='D')&&(text[5]=='M'))
-  {
-    for(i=0;comma<6;i++){
-	   if(text[i]==',')
-	    comma++;
-	   if(comma==5){
-	    i++;
-      
-     tmp  = change_table(text[i])   ;
-     
-	   switch(tmp){
-	   case 18: 
-	          (*text_out)=translate_m18(text,i);
+  if((text[1]=='A')&&(text[2]=='I')&&(text[3]=='V')&&(text[4]=='D')&&(text[5]=='M'))
+  { 
+     for(i=6; i<20; i++)
+     {
+        if(text[i] == ',')
+        {
+           comma++;
+           if(comma == 5)
+              break;
+        }
+     }    
+     if(i<20)
+     {     
+          i++;     
+          tmp  = change_table(text[i]);
+           
+          switch(tmp)
+          {
+            case 18:           
+                 (*text_out)=translate_m18(text,i);
+                 return 18;
 
-								 return 18;
-
-			   case 24:
-                 if(change_table(text[i+6])&12){
-										*text_out_type_of_ship = translate_m24B(text,i);
-										return 241;
-								 }
-					       else
-								 {
-									 *text_out_24A = translate_m24A(text,i); 
-									 return 240;
-				         }
-                      
-					default:
-              return tmp;
-         
-	     }
-	   }
-   }
+            case 24:            
+                if(change_table(text[i+6])&12)
+                {
+                   *text_out_type_of_ship = translate_m24B(text,i);
+                   return 241;
+                }
+                else
+                {               
+                   *text_out_24A = translate_m24A(text,i); 
+                   return 240;
+                }
+                            
+           default:
+                return tmp;
+           
+         }
+      }
+      else
+      {
+         return 0;
+      }
   }
 
 	else if((text[1]=='G')&&(text[2]=='P')&&(text[3]=='R')&&(text[4]=='M')&&(text[5]=='C')) //GPS GPRMC
 	{
-
 //    tempgprmc = text[6]; mothership.latitude = tempgprmc << 24;
 //    tempgprmc = text[7]; mothership.latitude = mothership.latitude + (tempgprmc << 16);
 //    tempgprmc = text[8]; mothership.latitude = mothership.latitude + (tempgprmc << 8);
 //    mothership.latitude = mothership.latitude + text[9];
-//    mothership.latitude = mothership.latitude/10;
-    
+//    mothership.latitude = mothership.latitude/10;    
     shiftReg   = text[6];
     shiftReg   = (shiftReg << 8) | text[7];
     shiftReg   = (shiftReg << 8) | text[8];

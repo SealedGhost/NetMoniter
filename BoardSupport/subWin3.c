@@ -24,7 +24,10 @@
 #include "DIALOG.h"
 #include "Config.h"
 #include "MainTask.h"
-#include "SystemConfig.h"
+#include "sysConf.h"
+#include "dlg.h"
+#include "skinColor.h"
+#include "str.h"
 
 /*********************************************************************
 *
@@ -57,24 +60,14 @@
 #define ID_BUTTON_VERSION     (GUI_ID_USER + 0x29)
 #define ID_BUTTON_VER         (GUI_ID_USER + 0x2a)
 
-
+#define ID_SLIDER_NIGHT       (GUI_ID_USER + 0x31)
 
 /*-------------------- external variables -----------------------------*/
-/// Window
-extern WM_HWIN menuWin;
-extern WM_HWIN confirmWin;
-extern WM_HWIN subWins[4];
-extern WM_HWIN btWin;
-
-/// 
-extern CONF_SYS SysConf;
-extern MntSetWin_COLOR MntSetWinSkins[2];
 
 
-extern char * pStrBuf;
+
 
 /*------------------- external func -----------------------------*/
-extern  WM_HWIN messageCreate(void);
 
 
 
@@ -83,6 +76,7 @@ static void myButtonListener(WM_MESSAGE * pMsg);
 
 
 /*------------------ Local variables -------------------------*/
+static const MntSetWin_COLOR * pSkin  = &MntSetWinSkins[0];
 /// Widget
 WM_HWIN Buttons[9];
 WM_HWIN Texts[10];
@@ -132,6 +126,7 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
  { BUTTON_CreateIndirect, "单位设置", ID_BUTTON_UNIT,   120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5, 120,  30,  0, 0, 0},
  { BUTTON_CreateIndirect, "船位设置", ID_BUTTON_SHAPE,  120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6, 120,  30,  0, 0, 0},
  { BUTTON_CreateIndirect, "软件更新", ID_BUTTON_UPDATE, 120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*7, 120,  30,  0, 0, 0}
+// { SLIDER_CreateIndirect, "夜间"    , ID_SLIDER_NIGHT,  400,   40,                                                            120,  30,  0, 0, 0}
 // { BUTTON_CreateIndirect, "系统版本", ID_BUTTON_VERSION,120,   280,  120,  30,  0, 0, 0}
   // USER START (Optionally insert additional widgets)
   // USER END
@@ -179,25 +174,25 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        WINDOW_Callback(pMsg);     
        break;
 		case USER_MSG_SKIN:
-       pMntSetWinSkin  = &(MntSetWinSkins[pMsg->Data.v]);
+       pSkin  = &(MntSetWinSkins[pMsg->Data.v]);
        
-       WINDOW_SetBkColor(pMsg->hWin, pMntSetWinSkin->MntSetWin_BackGround);
+       WINDOW_SetBkColor(pMsg->hWin, pSkin->MntSetWin_BackGround);
        
        for(i=0;i<10;i++)
        {
-          TEXT_SetTextColor(Texts[i], pMntSetWinSkin->MntSetWin_Label);
-          TEXT_SetBkColor(Texts[i], pMntSetWinSkin->MntSetWin_bkUnpressed);
+          TEXT_SetTextColor(Texts[i], pSkin->MntSetWin_Label);
+          TEXT_SetBkColor(Texts[i], pSkin->MntSetWin_bkUnpressed);
        }
 
        for(i=0;i<8;i++)       
        {
-          BUTTON_SetBkColor(Buttons[i], BUTTON_CI_UNPRESSED, pMntSetWinSkin->MntSetWin_bkUnpressed);
-          BUTTON_SetTextColor(Buttons[i], BUTTON_CI_UNPRESSED, pMntSetWinSkin->MntSetWin_Text);          
+          BUTTON_SetBkColor(Buttons[i], BUTTON_CI_UNPRESSED, pSkin->MntSetWin_bkUnpressed);
+          BUTTON_SetTextColor(Buttons[i], BUTTON_CI_UNPRESSED, pSkin->MntSetWin_Text);          
        }
        break;
 			
   case WM_INIT_DIALOG:
-       pMntSetWinSkin  = &(MntSetWinSkins[SysConf.Skin]);
+       pSkin  = &(MntSetWinSkins[SysConf.Skin]);
 //     //
 //     // Initialization of 'Button'
 //     //
@@ -253,23 +248,32 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
      Buttons[7]  = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_UPDATE);
      BUTTON_SetFont(Buttons[7], &GUI_Font24_1);            
      BUTTON_SetText(Buttons[7], "OK");
+     
+     
+     /// Initialization of slider.
+//     hItem  = WM_GetDialogItem(pMsg->hWin, ID_SLIDER_NIGHT);
+//     SLIDER_SetNumTicks(hItem, 3);
+//     SLIDER_SetRange(hItem, 2, 1);
+//     SLIDER_SetBkColor(hItem,  GUI_LIGHTGRAY);
+//     SLIDER_SetBarColor(hItem, GUI_BLUE);
+//     SLIDER_SetFocusColor(hItem, GUI_RED);
 
 ///  Initialization of skin.
-     WINDOW_SetBkColor(pMsg->hWin, pMntSetWinSkin->MntSetWin_BackGround);
+     WINDOW_SetBkColor(pMsg->hWin, pSkin->MntSetWin_BackGround);
      
      for(i=0;i<10;i++)
     {
        Texts[i]  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_TITLE+i+1);
-       TEXT_SetTextColor(Texts[i], pMntSetWinSkin->MntSetWin_Label);
-       TEXT_SetBkColor(Texts[i], pMntSetWinSkin->MntSetWin_bkUnpressed);
+       TEXT_SetTextColor(Texts[i], pSkin->MntSetWin_Label);
+       TEXT_SetBkColor(Texts[i], pSkin->MntSetWin_bkUnpressed);
     }
     
     TEXT_SetText(Texts[9], GUI_GetVersionString());
      
      for(i=0;i<8;i++)       
      {
-        BUTTON_SetBkColor(Buttons[i], BUTTON_CI_UNPRESSED, pMntSetWinSkin->MntSetWin_bkUnpressed);
-        BUTTON_SetTextColor(Buttons[i], 0, pMntSetWinSkin->MntSetWin_Text);
+        BUTTON_SetBkColor(Buttons[i], BUTTON_CI_UNPRESSED, pSkin->MntSetWin_bkUnpressed);
+        BUTTON_SetTextColor(Buttons[i], 0, pSkin->MntSetWin_Text);
         WM_SetCallback(Buttons[i], &myButtonListener);
      }
      
@@ -297,7 +301,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
           
           if(agentConf.Shape != SysConf.Shape)
           {
-             myMsg.hWin  = hDlg_FishMap;
+             myMsg.hWin  = mapWin;
              myMsg.MsgId  = USER_MSG_SHAPE;
              myMsg.Data.v = agentConf.Shape;
              WM_SendMessage(myMsg.hWin, &myMsg);
@@ -307,8 +311,8 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
           {
              myMsg.MsgId  = USER_MSG_UNIT;
              myMsg.Data.v  = agentConf.Unit;
-             WM_SendMessage(hDlg_FishMap, &myMsg);
-             WM_SendMessage(btWin, &myMsg);
+             WM_SendMessage(mapWin, &myMsg);
+             WM_SendMessage(mntSettingWin, &myMsg);
           }
              SysConf.Brt  = agentConf.Brt;
              SysConf.Shape  = agentConf.Shape;
@@ -390,7 +394,6 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 *
 *       CreateWindow
 */
-WM_HWIN sub3WinCreate(void);
 WM_HWIN sub3WinCreate(void) {
   WM_HWIN hWin;
 	
@@ -424,8 +427,8 @@ static void myButtonListener(WM_MESSAGE * pMsg)
            
            if(pMsg->Data.v == 0)
            {
-              BUTTON_SetBkColor(Buttons[index], BUTTON_CI_UNPRESSED, pMntSetWinSkin->MntSetWin_bkUnpressed);
-              TEXT_SetBkColor(Texts[index], pMntSetWinSkin->MntSetWin_bkUnpressed);
+              BUTTON_SetBkColor(Buttons[index], BUTTON_CI_UNPRESSED, pSkin->MntSetWin_bkUnpressed);
+              TEXT_SetBkColor(Texts[index], pSkin->MntSetWin_bkUnpressed);
            }
            else
            {

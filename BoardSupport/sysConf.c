@@ -1,26 +1,22 @@
-#include "SystemConfig.h"
+#include "sysConf.h"
 #include "Config.h"
 #include "Setting.h"
 #include "string.h"
 #include "lpc177x_8x_eeprom.h"
 
-#define FLASH_SIZE (8*1024*1024)
 
+/*--------------------- External variables ------------------------*/
 extern MNT_BERTH MNT_Berthes[MNT_NUM_MAX];
 
 
-
-char text_Buf[10] = {'-'};
-
+unsigned long SYS_Date;
+unsigned long SYS_Time;
 ///                                        
 static  CONF_UI_COLOR UI_Skins[2] = {GUI_BLACK};
 
-uint8_t TEXT_Buffer[]={"1234567890"}; 
 
-uint8_t datatemp[sizeof(TEXT_Buffer)];
 
 CONF_SYS SysConf;
-CONF_SYS sysConf;
 
 const int SYSCONF_SIZE = sizeof(SysConf);
 

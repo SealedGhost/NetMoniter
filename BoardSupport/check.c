@@ -6,7 +6,7 @@
 #define MYABS(x)   ((x)>0?(x):(-(x)))
 
 /*----------------- external variables ------------------------*/
-extern SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
+extern SIMP_BERTH SimpBerthes[BOAT_NUM_MAX];
 extern int N_boat;
 extern MNT_BERTH * pMntHeader;
 extern MNT_BERTH MNT_Berthes[MNT_NUM_MAX];
@@ -486,8 +486,7 @@ INFO("invader %09ld delete,target:%09ld",pBC->MMSI,pBC->targetMMSI);
       pIterator  = pInvdHeader;
 	  
       while( pIterator && (pIterator!=pInvdTail) )
-      {
-INFO("reach");      
+      {     
          if(pIterator->pNext->targetMMSI == targetMMSI)
          {
              pBC  = pIterator->pNext;

@@ -1,5 +1,5 @@
-#ifndef _SYSTEM_CONFIG_H
-#define _SYSTEM_CONFIG_H
+#ifndef  _SYS_CONF_H
+#define _SYS_CONF_H
 
 
 
@@ -196,13 +196,12 @@ struct _CONF_SYS
   BOAT_SHAPES          Shape;       /// Shape config.
 };
 
-extern LVWin_COLOR lvWinSkins[2];
-extern LVWin_COLOR * pLVSkin;
+
+extern CONF_SYS SysConf;
 
 
-extern MntSetWin_COLOR EditWinSkins[2];
-extern MntSetWin_COLOR * pMntSetWinSkin;
-
+extern unsigned long SYS_Date;
+extern unsigned long SYS_Time;
 
 void sysInit(void);
 Bool sysLoad(void);

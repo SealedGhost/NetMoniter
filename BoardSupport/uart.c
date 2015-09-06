@@ -52,7 +52,7 @@ void lpc1788_Uart_Init(int port)//LPC1788_Uart_Init
    PINSEL_ConfigPin(0,10,1);
    PINSEL_ConfigPin(0,11,1);
    UART_ConfigStructInit(&UARTConfigStruct1);
-   UARTConfigStruct1.Baud_rate = 38400;
+   UARTConfigStruct1.Baud_rate = 115200;
    UART_Init((UART_ID_Type)channel, &UARTConfigStruct1);
    
    UART_FIFOConfigStructInit(&UARTFIFOConfigStruct1);

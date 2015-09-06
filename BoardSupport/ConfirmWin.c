@@ -26,7 +26,9 @@
 
 #include "Config.h"
 #include "Setting.h"
-#include "SystemConfig.h"
+#include "sysConf.h"
+#include "dlg.h"
+#include "28.h"
 
 /*********************************************************************
 *
@@ -39,19 +41,14 @@
 #define ID_BUTTON_CANCEL (GUI_ID_USER + 0x02)
 #define ID_TEXT_CONTENT  (GUI_ID_USER + 0x03)
 
+/*------------------------- Global variables ---------------------------*/
+WM_HWIN confirmWin;
+
+
 
 /*------------------------- external variables -------------------------*/
-extern short N_monitedBoat;
-extern WM_HWIN menuWin;
-extern WM_HWIN subWins[4];
-extern WM_HWIN confirmWin;
-extern MNT_SETTING mntSetting;
+extern SIMP_BERTH Simp_Berthes[BOAT_NUM_MAX];
 
-extern SIMP_BERTH Simp_Berthes[BOAT_LIST_SIZE_MAX];
-
-/*------------------------- external functions -------------------------*/
-//extern int MNT_deleteByIndex(MNT_BOAT * pMNT_Boat,int index, long id);
-extern int MNT_deleteById(MNT_BOAT * pMNT_Boat, long id);
 
 
 
@@ -60,17 +57,10 @@ static WM_HWIN dlgFrame;
 static WM_HWIN dlgTextContent;
 static WM_HWIN dlgBtOk;
 static WM_HWIN dlgBtCancel;
-static int userMsgChoose  = 0;
-static WM_HWIN myHWinSrc;
-static long ReceivedDatas[3] = {0};
 static int Option  = 0;
 static WM_MESSAGE myMsg;
 
-/*------------------------- local functions -----------------------------*/
-void mySB(WM_MESSAGE * pMsg);
-//extern void mntSetting_init(void);
-// USER START (Optionally insert additional defines)
-// USER END
+
 
 /*********************************************************************
 *
@@ -125,6 +115,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
   // USER END
 //INFO("MsgId:%d",pMsg->MsgId);  
   switch (pMsg->MsgId) {
+  
   case USER_MSG_SKIN:
        if(pMsg->Data.v == SKIN_Night)    
           WINDOW_SetBkColor(pMsg->hWin, GUI_DARKGRAY); 
@@ -253,7 +244,6 @@ INFO("Something error!");
 *
 *       CreateFrm_Confirm
 */
-WM_HWIN confirmWinCreate(void);
 WM_HWIN confirmWinCreate(void) {
   WM_HWIN hWin;
   hWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, WM_HBKWIN, 0, 0);

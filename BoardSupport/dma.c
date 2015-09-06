@@ -8,6 +8,7 @@
 //#include "WM.h"
 #include "MainTask.h"  
 #include "pwm.h"
+#include "Config.h"
 
 
 /*---------------------------- Macro defines --------------------------------------*/
@@ -32,7 +33,7 @@ extern int isKeyTrigged;
 
 /*-------------------------- Global Variables -------------------------------------*/
 
-Bool Doubleclick  = FALSE;
+volatile Bool Doubleclick  = FALSE;
 uint8_t DMADest_Buffer[DMA_SIZE]; 
 GPDMA_Channel_CFG_Type GPDMACfg;
 

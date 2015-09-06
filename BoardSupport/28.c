@@ -25,7 +25,7 @@
 **********************************************************************
 */
 
-#include "GUI.h"
+#include "28.h"
 
 #ifndef GUI_CONST_STORAGE
   #define GUI_CONST_STORAGE const
@@ -34,7 +34,7 @@
 /* The following line needs to be included in any file selecting the
    font.
 */
-extern GUI_CONST_STORAGE GUI_FONT GUI_Font28;
+
 
 /* Start of unicode area <Basic Latin> */
 GUI_CONST_STORAGE unsigned char acGUI_Font28_0022[ 56] = { /* code 0022, QUOTATION MARK */

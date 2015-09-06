@@ -26,41 +26,30 @@
 #include "Config.h"
 #include "MainTask.h"
 #include "Setting.h"
-#include "SystemConfig.h"
+#include "sysConf.h"
 #include "GUI_ARRAY.h"
 #include <stdlib.h>
 #include <string.h>
 #include "HEADER.h"
 #include "WIDGET.h"
 #include "SCROLLBAR.h"
-#include "LISTVIEW_Private.h"
 #include "WM_Intern.h"
+#include "dlg.h"
+#include "skinColor.h"
+#include "str.h"
 
 
-/* --- Macro defines ---*/
 
 
 /*--- external variables ---*/
-extern BERTH * pHeader;
-extern SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
-
-extern WM_HWIN confirmWin;
-
-extern MNT_BOAT MNT_Boats[MNT_NUM_MAX];
-extern MNT_SETTING mntSetting;
-
-extern CONF_SYS SysConf;
-
-/*--- external functions ---*/
-//extern boat* boat_list_p[BOAT_LIST_SIZE_MAX];
+extern SIMP_BERTH SimpBerthes[BOAT_NUM_MAX];
+extern int N_boat;
 
 /*--- local variables ---*/
 static long MMSI  = 0;
 
 /*--- local functions ---*/
 static void updateListViewContent(WM_HWIN thisHandle);
-int confirmWinExec(void);
-static void _Paint(LISTVIEW_Handle hObj, LISTVIEW_Obj* pObj, WM_MESSAGE* pMsg) ;
 
 
 
@@ -85,49 +74,23 @@ static void _Paint(LISTVIEW_Handle hObj, LISTVIEW_Obj* pObj, WM_MESSAGE* pMsg) ;
 #define ID_TEXT_8     (GUI_ID_USER + 0x0a)
 
 
-/*---------------- external variables ---------------------------*/
-//extern _boat* boat_list_p[BOAT_LIST_SIZE_MAX];
-extern _boat  boat_list[BOAT_LIST_SIZE_MAX];
-
-
-extern int N_boat;
-extern short N_monitedBoat;
-extern char* pStrBuf;
-
-extern WM_HWIN menuWin;
-extern WM_HWIN subWins[4];
-extern OS_EVENT * Updater;
-extern uint8_t myErr_2;
-
-
-
-
-/*---------------- external functions --------------------------*/
-extern void myftoa( char * str, float num);
-
-
-
-/*---------------- loacal variables ----------------------------*/
-
 
 /*---------------- local functions -----------------------------*/
 static void myListViewListener(WM_MESSAGE* pMsg);
 static void updateListViewContent(WM_HWIN thisHandle);
 //static void showSelectedBoatInfo(WM_HWIN thisHandle);
-int getSelectedBoatIndex(WM_HWIN thisHandle, int col, int row);
-void disttostr( char * str, int num);
-int getSelectedIndex(WM_HWIN thisListView,  int col);
+
 
 /*---------------- static variables ----------------------------*/
 static int Index  = -1; //模块变量
 static int TotalRows  = 0;
 static WM_HTIMER allListRefshTimer;
 
-static GUI_RECT infoRect  = {LV_AllList_WIDTH,LV_AllList_Y,Win_Main_WIDTH-MenuLabel_WIDTH,480};
-static GUI_RECT lvIndicate  ={LV_AllList_WIDTH-200,LV_AllList_Y-40,Win_Main_WIDTH-MenuLabel_WIDTH,480};
-static GUI_RECT lvRect   = {0,LV_AllList_Y,LV_AllList_WIDTH,LV_AllList_HEIGHT};
+static const GUI_RECT infoRect  =   {LV_AllList_WIDTH,LV_AllList_Y,Win_Main_WIDTH-MenuLabel_WIDTH,480};
+static const GUI_RECT lvIndicate  = {LV_AllList_WIDTH-200,LV_AllList_Y-40,Win_Main_WIDTH-MenuLabel_WIDTH,480};
+static const GUI_RECT lvRect   =    {0,LV_AllList_Y,LV_AllList_WIDTH,LV_AllList_HEIGHT};
 
-
+static const LVWin_COLOR * pSkin  = &lvWinSkins[0];
 
 
 
@@ -194,110 +157,106 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
   switch (pMsg->MsgId) {	
   
   case USER_MSG_SKIN:
-       pLVSkin  = &(lvWinSkins[pMsg->Data.v]);
+       pSkin  = &(lvWinSkins[pMsg->Data.v]);
        
-       WINDOW_SetBkColor(pMsg->hWin,pLVSkin->BackGround);
+       WINDOW_SetBkColor(pMsg->hWin,pSkin->BackGround);
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_0);
-       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+       TEXT_SetTextColor(hItem, pSkin->Win_Label);
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_1);
-       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+       TEXT_SetTextColor(hItem, pSkin->Win_Label);
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_2);
-       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+       TEXT_SetTextColor(hItem, pSkin->Win_Label);
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_3);
-       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+       TEXT_SetTextColor(hItem, pSkin->Win_Label);
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_4);
-       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+       TEXT_SetTextColor(hItem, pSkin->Win_Label);
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_5);
-       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);       
+       TEXT_SetTextColor(hItem, pSkin->Win_Label);       
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_6);
-       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
+       TEXT_SetTextColor(hItem, pSkin->Win_Label);
 //       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_7);
-//       TEXT_SetTextColor(hItem, pLVSkin->Win_Label); 
+//       TEXT_SetTextColor(hItem, pSkin->Win_Label); 
 //       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_8);
-//       TEXT_SetTextColor(hItem, pLVSkin->Win_Label);        
+//       TEXT_SetTextColor(hItem, pSkin->Win_Label);        
        
        
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0);
-       LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_UNSEL, pLVSkin->LV_bkUnsel);
-       LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SEL,   pLVSkin->LV_bkSel);
-       LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SELFOCUS, pLVSkin->LV_bkFocus);
+       LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_UNSEL, pSkin->LV_bkUnsel);
+       LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SEL,   pSkin->LV_bkSel);
+       LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SELFOCUS, pSkin->LV_bkFocus);
        
-       LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_UNSEL, pLVSkin->LV_tx_Unsel);
-       LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_SEL,   pLVSkin->LV_tx_Sel);
-       LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_SELFOCUS, pLVSkin->LV_tx_Focus);
+       LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_UNSEL, pSkin->LV_tx_Unsel);
+       LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_SEL,   pSkin->LV_tx_Sel);
+       LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_SELFOCUS, pSkin->LV_tx_Focus);
        
        hItem  = LISTVIEW_GetHeader(hItem);
-       HEADER_SetBkColor(hItem,pLVSkin->LV_Header_Bk);
-       HEADER_SetTextColor(hItem,pLVSkin->LV_Header_Text);
+       HEADER_SetBkColor(hItem,pSkin->LV_Header_Bk);
+       HEADER_SetTextColor(hItem,pSkin->LV_Header_Text);
        break; 
   
   case WM_INIT_DIALOG:
-    pLVSkin  = &(lvWinSkins[SysConf.Skin]);
-    //
-    // Initialization of 'Window'
-    //
-    hItem = pMsg->hWin;
-    WINDOW_SetBkColor(hItem, pLVSkin->BackGround);
-    
-    //
-    // Initialization of 'Text'
-    //
-    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_0);
-    TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
-    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_1);
-    TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
-    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_2);
-    TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
-    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_3);
-    TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
-    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_4);
-    TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
-    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_5);
-    TEXT_SetTextColor(hItem, pLVSkin->Win_Label);       
-    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_6);
-    TEXT_SetTextColor(hItem, pLVSkin->Win_Label);
-//    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_7);
-//    TEXT_SetTextColor(hItem, pLVSkin->Win_Label); 
-//    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_8);
-//    TEXT_SetTextColor(hItem, pLVSkin->Win_Label);     
-    
-    //
-    // Initialization of 'Listview'
-    //
-    hItem = WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0);
-	   WM_SetCallback(hItem, &myListViewListener);
-	  
-    LISTVIEW_AddColumn(hItem, LV_AllList_Col_0_WIDTH, "距离", GUI_TA_HCENTER | GUI_TA_VCENTER);
-//    LISTVIEW_AddColumn(hItem, LV_AllList_Col_1_WIDTH, "方位", GUI_TA_HCENTER | GUI_TA_VCENTER);
-    LISTVIEW_AddColumn(hItem, LV_AllList_Col_2_WIDTH, "MMSI", GUI_TA_HCENTER | GUI_TA_VCENTER);
-    LISTVIEW_AddColumn(hItem, LV_AllList_Col_3_WIDTH, "State", GUI_TA_HCENTER | GUI_TA_VCENTER);	
-    LISTVIEW_AddRow(hItem, NULL);
-    LISTVIEW_SetGridVis(hItem, 1);
-	   LISTVIEW_SetHeaderHeight(hItem,LV_MoniteList_Header_HEIGHT);
-	   LISTVIEW_SetRowHeight(hItem,LV_MoniteList_Row_HEIGHT);
-	   LISTVIEW_SetAutoScrollV(hItem,1);
-	  	LISTVIEW_SetFont(hItem,&GUI_Font24_1);
-    LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_UNSEL, pLVSkin->LV_bkUnsel);
-    LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SEL,   pLVSkin->LV_bkSel);
-    LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SELFOCUS, pLVSkin->LV_bkFocus);
-    
-    LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_UNSEL, pLVSkin->LV_tx_Unsel);
-    LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_SEL,   pLVSkin->LV_tx_Sel);
-    LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_SELFOCUS, pLVSkin->LV_tx_Focus);
-    
-    updateListViewContent(hItem);
-    
-    hItem  = LISTVIEW_GetHeader(hItem);
-    HEADER_SetBkColor(hItem,pLVSkin->LV_Header_Bk);
-    HEADER_SetTextColor(hItem,pLVSkin->LV_Header_Text);
-    //LISTVIEW_SetWrapMode();
-    //LISTVIEW_SetWrapMode(hItem,GUI_WRAPMODE_NONE);
+       pSkin  = &(lvWinSkins[SysConf.Skin]);
+       //
+       // Initialization of 'Window'
+       //
+       hItem = pMsg->hWin;
+       WINDOW_SetBkColor(hItem, pSkin->BackGround);
+       
+       //
+       // Initialization of 'Text'
+       //
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_0);
+       TEXT_SetTextColor(hItem, pSkin->Win_Label);
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_1);
+       TEXT_SetTextColor(hItem, pSkin->Win_Label);
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_2);
+       TEXT_SetTextColor(hItem, pSkin->Win_Label);
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_3);
+       TEXT_SetTextColor(hItem, pSkin->Win_Label);
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_4);
+       TEXT_SetTextColor(hItem, pSkin->Win_Label);
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_5);
+       TEXT_SetTextColor(hItem, pSkin->Win_Label);       
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_6);
+       TEXT_SetTextColor(hItem, pSkin->Win_Label);  
+       
+       //
+       // Initialization of 'Listview'
+       //
+       hItem = WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0);
+       WM_SetCallback(hItem, &myListViewListener);
+      
+       LISTVIEW_AddColumn(hItem, LV_AllList_Col_0_WIDTH, "距离", GUI_TA_HCENTER | GUI_TA_VCENTER);
+   //    LISTVIEW_AddColumn(hItem, LV_AllList_Col_1_WIDTH, "方位", GUI_TA_HCENTER | GUI_TA_VCENTER);
+       LISTVIEW_AddColumn(hItem, LV_AllList_Col_2_WIDTH, "MMSI", GUI_TA_HCENTER | GUI_TA_VCENTER);
+       LISTVIEW_AddColumn(hItem, LV_AllList_Col_3_WIDTH, "State", GUI_TA_HCENTER | GUI_TA_VCENTER);	
+       LISTVIEW_AddRow(hItem, NULL);
+       LISTVIEW_SetGridVis(hItem, 1);
+       LISTVIEW_SetHeaderHeight(hItem,LV_MoniteList_Header_HEIGHT);
+       LISTVIEW_SetRowHeight(hItem,LV_MoniteList_Row_HEIGHT);
+       LISTVIEW_SetAutoScrollV(hItem,1);
+       LISTVIEW_SetFont(hItem,&GUI_Font24_1);
+       LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_UNSEL, pSkin->LV_bkUnsel);
+       LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SEL,   pSkin->LV_bkSel);
+       LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SELFOCUS, pSkin->LV_bkFocus);
+       
+       LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_UNSEL, pSkin->LV_tx_Unsel);
+       LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_SEL,   pSkin->LV_tx_Sel);
+       LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_SELFOCUS, pSkin->LV_tx_Focus);
+       
+       updateListViewContent(hItem);
+       
+       hItem  = LISTVIEW_GetHeader(hItem);
+       HEADER_SetBkColor(hItem,pSkin->LV_Header_Bk);
+       HEADER_SetTextColor(hItem,pSkin->LV_Header_Text);
+       //LISTVIEW_SetWrapMode();
+       //LISTVIEW_SetWrapMode(hItem,GUI_WRAPMODE_NONE);
 
-    
-    allListRefshTimer  = WM_CreateTimer(pMsg->hWin, 1, 5000, 0);
-    // USER START (Optionally insert additional code for further widget initialization)
-    // USER END
-    break;
+       
+       allListRefshTimer  = WM_CreateTimer(pMsg->hWin, 1, 5000, 0);
+       // USER START (Optionally insert additional code for further widget initialization)
+       // USER END
+       break;
 case WM_TIMER:
    updateListViewContent(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0));
    WM_RestartTimer(allListRefshTimer,5000);
@@ -308,7 +267,7 @@ case WM_PAINT:
 //    updateListViewContent(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0));
 
      GUI_SetFont(&GUI_Font24_1);
-     GUI_SetColor(pLVSkin->String);
+     GUI_SetColor(pSkin->String);
      GUI_SetTextMode(GUI_TM_TRANS);
 	  
      SelectedRow  = LISTVIEW_GetSel(WM_GetDialogItem(pMsg->hWin,ID_LISTVIEW_0)); 
@@ -376,13 +335,12 @@ case WM_PAINT:
 *
 *       CreateWindow
 */
-WM_HWIN sub2WinCreate(void);
 WM_HWIN sub2WinCreate(void) {
   WM_HWIN hWin;
 	
 
 //  hWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, menuWin, 0, 0);
-hWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, WM_HBKWIN, 0, 0);
+  hWin = GUI_CreateDialogBox(_aDialogCreate, GUI_COUNTOF(_aDialogCreate), _cbDialog, WM_HBKWIN, 0, 0);
   return hWin;
 }
 
@@ -430,7 +388,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
         
     case WM_KEY:
 			pInfo  = (WM_KEY_INFO*)pMsg->Data.p; 
-		  switch(pInfo->Key)
+		 switch(pInfo->Key)
 			{
 				case GUI_KEY_UP:
 				case GUI_KEY_DOWN:
@@ -709,257 +667,22 @@ static void updateListViewContent(WM_HWIN thisHandle)
 }
 
 
-void disttostr( char * str, int num)
-{
 
-   if(num > 99999)
-      sprintf(str, "%s", "????");
-   else if(num > 9999)
-      sprintf(str, "%2d.%02d",num/1000, (num%1000)/10);
-   else 
-      sprintf(str, "%0d.%03d", num/1000, (num%1000));
-   
-//    int i  = 0;
-//    int j  = 0;
-//    int subVal  = 0;
-//    unsigned tmp  = 0;
-//    
-//    
-//    subVal  = (num*1000)/1;
-////printf("\r\nsubVal:%d",subVal);  
-//    for(i=0;i<3;i++)
-//    {
-//       str[i]  = '0'+subVal%10;
-//       subVal  = subVal/10;
-//    }
-//    str[i++]  = '.';
-//    subVal  = num/1;
-
-//    str[i++]  = subVal%10 + '0';
-//    
-//    subVal  = subVal/10;
-//    while(subVal)
-//    {
-//       str[i++]  = subVal%10 + '0';
-//       subVal  = subVal/10;
-//    }
-//    str[i]  = '\0';
-//    i--;
-//    for (j = 0; j<(i + 1) / 2; j++)
-//    {
-//     str[j] =      str[j] ^ str[i - j];
-//     str[i - j] =  str[j] ^ str[i - j];
-//     str[j] =      str[j] ^ str[i - j];
-
-//    }
-//    
-//    str[5]  = '\0';
-////printf("\r\nstr:%s",str);  
-}
+//int getSelectedIndex(WM_HWIN thisListView,  int col)
+//{
+//   int i  = -1;
+//   long Id  = 0;
+//   i  = LISTVIEW_GetSel(thisListView);
+//   LISTVIEW_GetItemText(thisListView, col, i, pStrBuf, 10);
+//   i  = strtoi(pStrBuf);
+//   for(Index=0;Index<N_boat;Index++)
+//   {
+//      if(SimpBerthes[i].pBerth->Boat.user_id == Id)
+//      {
+//         return i;      
+//      }
+//   }
+//   return -1;
+//}
 
 
-int getSelectedIndex(WM_HWIN thisListView,  int col)
-{
-   int i  = -1;
-   long Id  = 0;
-   i  = LISTVIEW_GetSel(thisListView);
-   LISTVIEW_GetItemText(thisListView, col, i, pStrBuf, 10);
-   i  = strtoi(pStrBuf);
-   for(Index=0;Index<N_boat;Index++)
-   {
-      if(SimpBerthes[i].pBerth->Boat.user_id == Id)
-      {
-         return i;      
-      }
-   }
-   return -1;
-}
-
-
-/*********************************************************************
-*
-*       _GetNumVisibleRows
-*
-* Purpose:
-*   Returns the number of visible rows according the header
-*   and (if exist) horizontal scrollbar.
-*
-* Return value:
-*   Number of visible rows. If no entire row can be displayed, this
-*   function will return one.
-*/
-static unsigned _GetNumVisibleRows(LISTVIEW_Handle hObj, const LISTVIEW_Obj* pObj) {
-  unsigned RowDistY, ySize, r = 1;
-  GUI_RECT Rect;
-  WM_GetInsideRectExScrollbar(hObj, &Rect);
-  ySize    = Rect.y1 - Rect.y0 + 1 - HEADER_GetHeight(pObj->hHeader);
-  RowDistY = LISTVIEW__GetRowDistY(pObj);
-  if (RowDistY) {
-    r = ySize / RowDistY;
-    r = (r == 0) ? 1 : r;
-  }
-  return r;
-}
-
-
-
-/*********************************************************************
-*
-*       GUI_ARRAY_GetpItem
-*
-* Purpose:
-*   Gets the pointer of specified item
-*
-* Notes:
-*   (1) Index out of bounds
-*       It is permitted to specify an index larger than the
-*       array size. In this case, a 0-handle is returned.
-*   (2) Locking
-*       It is the caller's responsibility to lock before calling this
-*       function.
-*/
-void* GUI_ARRAY_GetpItem(const GUI_ARRAY* pThis, unsigned int Index) {
-  void* p = NULL;
-  WM_HMEM h;
-
-  h = GUI_ARRAY_GethItem(*pThis, Index);
-  if (h) {
-    p = WM_H2P(h);
-  }
-  return p;
-}
-
-
-/*************************** End of file ****************************/
-static void _Paint(LISTVIEW_Handle hObj, LISTVIEW_Obj* pObj, WM_MESSAGE* pMsg) {
-  GUI_ARRAY* pRow;
-  GUI_RECT ClipRect, Rect;
-  int NumRows, NumVisRows, NumColumns;
-  int LBorder, RBorder, EffectSize;
-  int xPos, yPos, Width, RowDistY;
-  int Align, i, j, EndRow;
-  /* Init some values */
-  NumColumns = HEADER_GetNumItems(pObj->hHeader);
-  
-  NumVisRows = _GetNumVisibleRows(hObj, pObj);
-  RowDistY   = LISTVIEW__GetRowDistY(pObj);
-  LBorder    = pObj->LBorder;
-  RBorder    = pObj->RBorder;
-  EffectSize = pObj->Widget.pEffect->EffectSize;
-  yPos       = HEADER_GetHeight(pObj->hHeader) + EffectSize;
-  EndRow     = pObj->ScrollStateV.v + (((NumVisRows + 1) > NumRows) ? NumRows : NumVisRows + 1);
-  /* Calculate clipping rectangle */
-  ClipRect = *(const GUI_RECT*)pMsg->Data.p;
-  GUI_MoveRect(&ClipRect, -pObj->Widget.Win.Rect.x0, -pObj->Widget.Win.Rect.y0);
-  WM_GetInsideRectExScrollbar(hObj, &Rect);
-  GUI__IntersectRect(&ClipRect, &Rect);
-  /* Set drawing color, font and text mode */
-  LCD_SetColor(pObj->Props.aTextColor[0]);
-  GUI_SetFont(pObj->Props.pFont);
-  GUI_SetTextMode(GUI_TM_TRANS);
-  /* Do the drawing */
-  for (i = pObj->ScrollStateV.v; i < EndRow; i++) {
-//    pObj->RowArray
-//    pRow = (const GUI_ARRAY*)GUI_ARRAY_GetpItem(&pObj->RowArray, i);
-    pRow  = (GUI_ARRAY*)GUI_ARRAY_GetpItemLocked(pObj->RowArray, i);
-    if (pRow) {
-      Rect.y0 = yPos;
-      /* Break when all other rows are outside the drawing area */
-      if (Rect.y0 > ClipRect.y1) {
-        break;
-      }
-      Rect.y1 = yPos + RowDistY - 1;
-      /* Make sure that we draw only when row is in drawing area */
-      if (Rect.y1 >= ClipRect.y0) {
-        int ColorIndex;
-        /* Set background color */
-        if (i == pObj->Sel) {
-          ColorIndex = (pObj->Widget.State & WIDGET_STATE_FOCUS) ? 2 : 1;
-        } else {
-          ColorIndex = 0;
-        }
-        LCD_SetBkColor(pObj->Props.aBkColor[ColorIndex]);
-        /* Iterate over all columns */
-        if (pObj->ShowGrid) {
-          Rect.y1--;
-        }
-        xPos = EffectSize - pObj->ScrollStateH.v;
-        for (j = 0; j < NumColumns; j++) {
-          Width   = HEADER_GetItemWidth(pObj->hHeader, j);
-          Rect.x0 = xPos;
-          /* Break when all other columns are outside the drawing area */
-          if (Rect.x0 > ClipRect.x1) {
-            break;
-          }
-          Rect.x1 = xPos + Width - 1;
-          /* Make sure that we draw only when column is in drawing area */
-          if (Rect.x1 >= ClipRect.x0) {
-            LISTVIEW_ITEM * pItem;
-            pItem = (LISTVIEW_ITEM *)GUI_ARRAY_GetpItem(pRow, j);
-            if (pItem->hItemInfo) {
-              LISTVIEW_ITEM_INFO * pItemInfo;
-              pItemInfo = (LISTVIEW_ITEM_INFO *)GUI_ALLOC_h2p(pItem->hItemInfo);
-              LCD_SetBkColor(pItemInfo->aBkColor[ColorIndex]);
-              LCD_SetColor(pItemInfo->aTextColor[ColorIndex]);
-            } else {
-              LCD_SetColor(pObj->Props.aTextColor[ColorIndex]);
-            }
-            /* Clear background */
-            GUI_ClearRect(Rect.x0, Rect.y0, Rect.x1, Rect.y1);
-            /* Draw text */
-            Rect.x0 += LBorder;
-            Rect.x1 -= RBorder;
-            Align = *((int*)GUI_ARRAY_GetpItem(&pObj->AlignArray, j));
-            GUI_DispStringInRect(pItem->acText, &Rect, Align);
-INFO("%s",pItem->acText);            
-            if (pItem->hItemInfo) {
-              LCD_SetBkColor(pObj->Props.aBkColor[ColorIndex]);
-            }
-          }
-          xPos += Width;
-        }
-        /* Clear unused area to the right of items */
-        if (xPos <= ClipRect.x1) {
-          GUI_ClearRect(xPos, Rect.y0, ClipRect.x1, Rect.y1);
-        }
-      }
-      yPos += RowDistY;
-    }
-  }
-  /* Clear unused area below items */
-  if (yPos <= ClipRect.y1) {
-    LCD_SetBkColor(pObj->Props.aBkColor[0]);
-    GUI_ClearRect(ClipRect.x0, yPos, ClipRect.x1, ClipRect.y1);
-  }
-  /* Draw grid */
-//  if (pObj->ShowGrid) {
-    GUI_SetPenSize(6);
-    LCD_SetColor(pObj->Props.GridColor);
-    yPos = HEADER_GetHeight(pObj->hHeader) + EffectSize - 1;
-    for (i = 0; i < NumVisRows; i++) {
-      yPos += RowDistY;
-      /* Break when all other rows are outside the drawing area */
-      if (yPos > ClipRect.y1) {
-        break;
-      }
-      /* Make sure that we draw only when row is in drawing area */
-      if (yPos >= ClipRect.y0) {
-        GUI_DrawHLine(yPos, ClipRect.x0, ClipRect.x1);
-      }
-    }
-    xPos = EffectSize - pObj->ScrollStateH.v;
-    for (i = 0; i < NumColumns; i++) {
-      xPos += HEADER_GetItemWidth(pObj->hHeader, i);
-      /* Break when all other columns are outside the drawing area */
-      if (xPos > ClipRect.x1) {
-        break;
-      }
-      /* Make sure that we draw only when column is in drawing area */
-      if (xPos >= ClipRect.x0) {
-        GUI_DrawVLine(xPos, ClipRect.y0, ClipRect.y1);
-      }
-    }
-//  }
-  /* Draw the effect */
-  WIDGET__EFFECT_DrawDown(&pObj->Widget);
-}

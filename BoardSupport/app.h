@@ -192,8 +192,8 @@ type_of_ship translate_m24B(unsigned char *text,int start){
   message_text.repeat_indicator=(tmp_6_bin[1]>>4);
   message_text.user_id=((tmp_6_bin[1]&15)<<26)|(tmp_6_bin[2]<<20)|(tmp_6_bin[3]<<14)|(tmp_6_bin[4]<<8)|(tmp_6_bin[5]<<2)|(tmp_6_bin[6]>>4);
   message_text.part_number=((tmp_6_bin[6]&12)>>2);
-	message_text.type_of_ship_and_cargo_type = (tmp_6_bin[6]<<6)|(tmp_6_bin[7]);
-	return message_text;
+	 message_text.type_of_ship_and_cargo_type = (tmp_6_bin[6]<<6)|(tmp_6_bin[7]);
+	 return message_text;
 }
 
 //º¯ÊýÉùÃ÷

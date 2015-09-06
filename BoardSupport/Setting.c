@@ -1,6 +1,6 @@
 #include "Setting.h"
 #include <string.h>
-#include "SystemConfig.h"
+#include "sysConf.h"
 
 
 
@@ -11,10 +11,9 @@ MNT_BERTH MNT_Berthes[MNT_NUM_MAX];
 
 
 MNT_BERTH * pMntHeader  = NULL;
- 
-extern int N_boat; 
-extern SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
-extern CONF_SYS  SysConf;
+
+MNT_SETTING mntSetting; 
+
 
 
 
@@ -33,18 +32,6 @@ int MNT_getAddrOffset(uint8_t * addr)
    return offset;
 }
 
-
-/** @brief MNT_load
- *
- *  @dscrp Copy mnt array in flash to memory.
- *  @input 
- *  @output
- *  @return 
- */
-void MNT_load()
-{
-;
-}
 
 
 
@@ -67,33 +54,17 @@ void MNT_makeSettingUp (MNT_SETTING * pMNT_Setting)
           ||(pIterator->chsState == MNTState_Default)  )
       {
          pIterator->chsState  = MNTState_Monited;
-         pIterator->trgState  = MNTState_None;
+         pIterator->trgState  = MNTState_None;        
          
-         pIterator->mntBoat.mntSetting.DSP_Setting.isEnable  = 
-                   pMNT_Setting->DSP_Setting.isEnable;
-         
-         pIterator->mntBoat.mntSetting.BGL_Setting.isEnable  = 
-                   pMNT_Setting->BGL_Setting.isEnable;
-         pIterator->mntBoat.mntSetting.BGL_Setting.isSndEnable  = 
-                   pMNT_Setting->BGL_Setting.isSndEnable;
-                   
-         pIterator->mntBoat.mntSetting.DRG_Setting.isEnable  = 
-                   pMNT_Setting->DRG_Setting.isEnable;
-         pIterator->mntBoat.mntSetting.DRG_Setting.isSndEnable  = 
-                   pMNT_Setting->DRG_Setting.isSndEnable;  
-                 
-                   
          if(SysConf.Unit == UNIT_nm)
-         { 
-INFO("Unit:nm");         
+         {        
             pIterator->mntBoat.mntSetting.BGL_Setting.Dist  = 
                       pMNT_Setting->BGL_Setting.Dist*10;
             pIterator->mntBoat.mntSetting.DRG_Setting.Dist  = 
                       pMNT_Setting->DRG_Setting.Dist*10;                       
          }
          else if(SysConf.Unit == UNIT_km)
-         {   
-INFO("Unit:km");         
+         {           
             pIterator->mntBoat.mntSetting.BGL_Setting.Dist  =
                       pMNT_Setting->BGL_Setting.Dist*54/10;
             pIterator->mntBoat.mntSetting.DRG_Setting.Dist  = 
@@ -102,7 +73,39 @@ INFO("Unit:km");
          else
          {
 INFO("Error!");
-         } 
+         }  
+         
+         pIterator->mntBoat.mntSetting.DSP_Setting.isEnable  = 
+                   pMNT_Setting->DSP_Setting.isEnable;
+         
+         if(pMNT_Setting->BGL_Setting.Dist == 0)
+         {
+            pIterator->mntBoat.mntSetting.BGL_Setting.isEnable  = DISABLE;         
+         }
+         else
+         {
+            pIterator->mntBoat.mntSetting.BGL_Setting.isEnable  = 
+                     pMNT_Setting->BGL_Setting.isEnable;        
+         }
+
+         pIterator->mntBoat.mntSetting.BGL_Setting.isSndEnable  = 
+                   pMNT_Setting->BGL_Setting.isSndEnable;
+         
+         if(pMNT_Setting->DRG_Setting.Dist == 0)
+         {
+            pIterator->mntBoat.mntSetting.DRG_Setting.isEnable  = DISABLE;
+         }   
+         else
+         {
+            pIterator->mntBoat.mntSetting.DRG_Setting.isEnable  = 
+                      pMNT_Setting->DRG_Setting.isEnable;
+         }         
+
+         pIterator->mntBoat.mntSetting.DRG_Setting.isSndEnable  = 
+                   pMNT_Setting->DRG_Setting.isSndEnable;  
+                 
+                   
+ 
 
                    
       }
@@ -211,8 +214,7 @@ INFO("allco mnt berth failed!");
    else
    {
       pMntHeader  = buf;  
-   }
-INFO("offset of buf:%d",OFFSETOF(buf));   
+   }  
 //   EEPROM_Write( 0,MNT_PAGE_ID+(buf-MNT_Berthes),
 //               buf, MODE_8_BIT, sizeof(MNT_BERTH));   
    EEPROM_Write( 0, MNT_PAGE_ID+(buf-MNT_Berthes),
@@ -257,13 +259,12 @@ Bool MNT_removeById(long Id)
  *  @output
  *  @return 
  */
-void MNT_initSetting(MNT_SETTING * pMntSetting)
-{
-   memset((void*)pMntSetting, 0, sizeof(MNT_SETTING));
-   pMntSetting->DSP_Setting.isEnable  = ENABLE; 
-   pMntSetting->BGL_Setting.Dist  = 5;
-   pMntSetting->DRG_Setting.Dist  = 10;
-   
+void MNT_initSetting()
+{  
+   memset((void*)&mntSetting, 0, sizeof(mntSetting));
+   mntSetting.DSP_Setting.isEnable  = ENABLE;
+   mntSetting.BGL_Setting.Dist      = 5;
+   mntSetting.DRG_Setting.Dist      = 10;  
 }
 
 

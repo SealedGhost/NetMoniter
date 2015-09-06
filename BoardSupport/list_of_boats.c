@@ -21,10 +21,10 @@ extern int N_boat;
 extern int list_endIndex;
 extern int myCnt;
 extern char * pStrBuf;
-extern _boat* boat_list_p[BOAT_LIST_SIZE_MAX];
+extern _boat* boat_list_p[BOAT_NUM_MAX];
 extern boat mothership;
-extern BERTH Berthes[BOAT_LIST_SIZE_MAX];
-extern SIMP_BERTH SimpBerthes[BOAT_LIST_SIZE_MAX];
+extern BERTH Berthes[BOAT_NUM_MAX];
+extern SIMP_BERTH SimpBerthes[BOAT_NUM_MAX];
 extern MNT_BERTH * pMntHeader;
 extern Bool INVD_deleteByMMSI(long MMSI);
 /*----------------------- external functions -----------------------*/
@@ -66,7 +66,7 @@ int insert_18(struct message_18 * p_msg)
    if( (p_msg->latitude < mothership.latitude-30000)  ||  (p_msg->latitude > mothership.latitude+30000) )
         return 0; 
    /// Update existent berth
-   for(i=0;i<BOAT_LIST_SIZE_MAX;i++)
+   for(i=0;i<BOAT_NUM_MAX;i++)
    {
       if(Berthes[i].Boat.user_id == p_msg->user_id)
       {
@@ -107,7 +107,7 @@ int insert_24A(struct message_24_partA * p_msg)
    if(0 == p_msg->user_id)
       return 0;     
    /// This Id exist
-   for(i=0;i<BOAT_LIST_SIZE_MAX;i++)
+   for(i=0;i<BOAT_NUM_MAX;i++)
    {
       /// Update existent berth and add nonexistent one
       if(Berthes[i].Boat.user_id == p_msg->user_id)
@@ -503,7 +503,7 @@ void updateTimeStamp()
       }
       else
       { 
-printf("Delete %09ld\n\r", pCur->Boat.user_id); 
+//printf("Delete %09ld\n\r", pCur->Boat.user_id); 
          pIterator  = pMntHeader;
          while(pIterator)
          {
@@ -551,7 +551,7 @@ printf("Delete %09ld\n\r", pCur->Boat.user_id);
    N_boat  = i;    
 
 
-//   for(i=0;i<BOAT_LIST_SIZE_MAX;i++)
+//   for(i=0;i<BOAT_NUM_MAX;i++)
 //   {
 //      if(Berthes[i].Boat.user_id != 0)
 //      {
@@ -605,7 +605,7 @@ static int getSphereDist(long lt_1,long lg_1, long lt_2, long lg_2)
 static BERTH * allocOneBerth()
 {
    int i  = 0;
-   for(i=0;i<BOAT_LIST_SIZE_MAX;i++)
+   for(i=0;i<BOAT_NUM_MAX;i++)
    {
       if(Berthes[i].Boat.user_id == 0)
       {         

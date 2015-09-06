@@ -26,7 +26,9 @@
 #include "DIALOG.h"
 #include "Config.h"
 #include "WM.h"
-#include "SystemConfig.h"
+#include "sysConf.h"
+#include "dlg.h"
+#include "skinColor.h"
 
 /*********************************************************************
 *
@@ -40,35 +42,31 @@
 #define ID_BUTTON_2 (GUI_ID_USER + 0x03)
 #define ID_BUTTON_3 (GUI_ID_USER + 0x04)
 #define ID_TEXT_0   (GUI_ID_USER + 0x05)
-//#define ID_LISTVIEW_0 (GUI_ID_USER + 0x06)
-//#define ID_TEXT_0 (GUI_ID_USER + 0x07)
-//#define ID_TEXT_1 (GUI_ID_USER + 0x08)
-//#define ID_TEXT_2 (GUI_ID_USER + 0x09)
-//#define ID_TEXT_3 (GUI_ID_USER + 0x0A)
-//#define ID_EDIT_0 (GUI_ID_USER + 0x0B)
 
 
-// USER START (Optionally insert additional defines)
-//extern  void  UpdateListViewContent(WM_HWIN thisHandle);
-// USER END
+/*---------------------------- Global variables -------------------------------*/
+WM_HWIN menuWin;
+WM_HWIN subWins[4];
+
+
+static const MenuWin_COLOR * pSkin  = &menuWinSkins[0];
+
 
 /*********************************************************************
 *
 *       Static data
 *
-**********************************************************************
-*/
+**********************************************************************/
+static WM_HWIN hButtons[4];
 
-// USER START (Optionally insert additional static data)
+
 static void myButtonListener(WM_MESSAGE * pMsg);
-// USER END
 
 /*********************************************************************
 *
 *       _aDialogCreate
 */
 static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
-//  {TEXT_CreateAsChild(0, 0, 200, 40,  pMsg->hWin,  WM_CF_SHOW, TEXT_CF_LEFT,  GUI_ID_USER+0x20),
   { WINDOW_CreateIndirect, "Window", ID_WINDOW_0, 0, 0, MenuLabel_WIDTH, 480, 0, 0x0, 0 },
   
   { TEXT_CreateIndirect,   "MainMenu", ID_TEXT_0, 0, 0, MenuLabel_WIDTH, 40, 0, 0, 0},
@@ -77,31 +75,11 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
   { BUTTON_CreateIndirect, "bt_1", ID_BUTTON_1, MenuLabel_X, MenuLabel_Y+MenuButton_HEIGHT,  MenuButton_WIDTH, MenuButton_HEIGHT, 0, 0x0, 0 },
   { BUTTON_CreateIndirect, "bt_2", ID_BUTTON_2, MenuLabel_X, MenuLabel_Y+MenuButton_HEIGHT*2,MenuButton_WIDTH, MenuButton_HEIGHT, 0, 0x0, 0 },
   { BUTTON_CreateIndirect, "bt_3", ID_BUTTON_3, MenuLabel_X, MenuLabel_Y+MenuButton_HEIGHT*3,MenuButton_WIDTH, MenuButton_HEIGHT, 0, 0x0, 0 },
-  // USER START (Optionally insert additional widgets)
-  // USER END
 };
 
-static MenuWin_COLOR menuWinSkins[2]  = {
-///                                         bkColor     menu_label  bt_Sel         bt_Unsle      bt_text    bt_Focus
-                                          { GUI_BLACK, GUI_WHITE,  GUI_DARKGREEN,  GUI_DARKGRAY, GUI_WHITE, GUI_GRAY },
-///                                          
-                                          { GUI_WHITE, GUI_BLACK,  GUI_GRAY,       GUI_LIGHTGRAY,GUI_BLACK, GUI_DARKGRAY }                                          
-                                        };
-static MenuWin_COLOR * pMenuSkin  = menuWinSkins;
 
-WM_HWIN subWins[4];
-WM_HWIN hButtons[4];
 
-extern WM_HWIN  menuWin;
-extern WM_HWIN btWin;
-//extern WM_HWIN winTest;
-extern WM_HWIN hDlg_FishMap;
-extern WM_HWIN confirmWin;
-extern char editindex;
-extern WM_HWIN sub0WinCreate(void);
-extern WM_HWIN sub1WinCreate(void);
-extern WM_HWIN sub2WinCreate(void);
-extern WM_HWIN sub3WinCreate(void);
+
 
 
 static int btIndex  = 0;
@@ -110,11 +88,7 @@ static int btIndex  = 0;
 *
 *       Static code
 *
-**********************************************************************
-*/
-
-// USER START (Optionally insert additional static code)
-// USER END
+**********************************************************************/
 
 /*********************************************************************
 *
@@ -122,33 +96,26 @@ static int btIndex  = 0;
 */
 static void _cbDialog(WM_MESSAGE * pMsg) {
 	const WM_KEY_INFO * pInfo;
-//  WM_HWIN hItem;
   int     NCode;
   int     Id;
  	char     i;
-  // USER START (Optionally insert additional variables)
-  // USER END
-//  if(pMsg->MsgId == WM_POST_PAINT)
-//  {
-//INFO("case post_paint");  
-//  }
   
   switch (pMsg->MsgId) { 
     case USER_MSG_BRING:
-         BUTTON_SetBkColor(hButtons[pMsg->Data.v], BUTTON_CI_UNPRESSED, pMenuSkin->Bt_Sel);
+         BUTTON_SetBkColor(hButtons[pMsg->Data.v], BUTTON_CI_UNPRESSED, pSkin->Bt_Sel);
          break;    
     case USER_MSG_SKIN: 
-         pMenuSkin  = &(menuWinSkins[pMsg->Data.v]);
+         pSkin  = &(menuWinSkins[pMsg->Data.v]);
          
-         WINDOW_SetBkColor(pMsg->hWin,pMenuSkin->BackGround);         
+         WINDOW_SetBkColor(pMsg->hWin,pSkin->BackGround);         
          
-         TEXT_SetTextColor(WM_GetDialogItem(pMsg->hWin, ID_TEXT_0), pMenuSkin->Menu_Label);
+         TEXT_SetTextColor(WM_GetDialogItem(pMsg->hWin, ID_TEXT_0), pSkin->Menu_Label);
          
          for(i=0;i<4;i++)
          {
-            BUTTON_SetBkColor(hButtons[i],  BUTTON_CI_PRESSED,  pMenuSkin->Bt_Sel);
-            BUTTON_SetBkColor(hButtons[i]  ,BUTTON_CI_UNPRESSED,pMenuSkin->Bt_Unsel);
-            BUTTON_SetTextColor(hButtons[i],BUTTON_CI_UNPRESSED,pMenuSkin->Bt_Text);             
+            BUTTON_SetBkColor(hButtons[i],  BUTTON_CI_PRESSED,  pSkin->Bt_Sel);
+            BUTTON_SetBkColor(hButtons[i]  ,BUTTON_CI_UNPRESSED,pSkin->Bt_Unsel);
+            BUTTON_SetTextColor(hButtons[i],BUTTON_CI_UNPRESSED,pSkin->Bt_Text);             
          }
 
   case WM_INIT_DIALOG:
@@ -181,27 +148,18 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     BUTTON_SetText(hButtons[3], "系统设置");	
 		
   
-    WINDOW_SetBkColor(pMsg->hWin,pMenuSkin->BackGround);  
-    TEXT_SetTextColor(WM_GetDialogItem(pMsg->hWin, ID_TEXT_0), pMenuSkin->Menu_Label);
+    WINDOW_SetBkColor(pMsg->hWin,pSkin->BackGround);  
+    TEXT_SetTextColor(WM_GetDialogItem(pMsg->hWin, ID_TEXT_0), pSkin->Menu_Label);
     
 		  for (i = 0; i < 4; i++)
-	 	{		
-     WIDGET_SetEffect(hButtons[i],&WIDGET_Effect_Simple);
-     BUTTON_SetBkColor(hButtons[i],  BUTTON_CI_PRESSED,  pMenuSkin->Bt_Sel);
-     BUTTON_SetBkColor(hButtons[i]  ,BUTTON_CI_UNPRESSED,pMenuSkin->Bt_Unsel);
-     BUTTON_SetTextColor(hButtons[i],BUTTON_CI_UNPRESSED,pMenuSkin->Bt_Text); 
-     BUTTON_SetFocusColor(hButtons[i], pMenuSkin->Bt_Sel);
-     WM_SetCallback(hButtons[i],&myButtonListener);
-		 }
-		//
-		// initialization of subWindow
-		//
-//	  	subWins[0]  = sub0WinCreate(); 
-//		 	subWins[1]  = sub1WinCreate();
-//	 		subWins[2]  = sub2WinCreate();
-//	  	subWins[3]  = sub3WinCreate();
-    // USER START (Optionally insert additional code for further widget initialization)
-    // USER END
+	  	{		
+       WIDGET_SetEffect(hButtons[i],&WIDGET_Effect_Simple);
+       BUTTON_SetBkColor(hButtons[i],  BUTTON_CI_PRESSED,  pSkin->Bt_Sel);
+       BUTTON_SetBkColor(hButtons[i]  ,BUTTON_CI_UNPRESSED,pSkin->Bt_Unsel);
+       BUTTON_SetTextColor(hButtons[i],BUTTON_CI_UNPRESSED,pSkin->Bt_Text); 
+       BUTTON_SetFocusColor(hButtons[i], pSkin->Bt_Sel);
+       WM_SetCallback(hButtons[i],&myButtonListener);
+		  }
     break;
   case WM_NOTIFY_PARENT:
 		
@@ -290,7 +248,6 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 *
 *       CreateWindow
 */
-WM_HWIN menuWinCreate(void);
 WM_HWIN menuWinCreate(void) {
   WM_HWIN hWin;
 	
@@ -326,7 +283,7 @@ static void myButtonListener(WM_MESSAGE * pMsg)
             WM_BringToTop(subWins[btIndex]);
             if(btIndex == 1)
             {
-               WM_BringToTop(btWin);
+               WM_BringToTop(mntSettingWin);
             }
             if(btIndex<2)
             {
@@ -334,11 +291,11 @@ static void myButtonListener(WM_MESSAGE * pMsg)
             }
          }
          
-         BUTTON_SetBkColor(thisButton, BUTTON_CI_UNPRESSED, pMenuSkin->Bt_Sel);
+         BUTTON_SetBkColor(thisButton, BUTTON_CI_UNPRESSED, pSkin->Bt_Sel);
       }
       else
       {
-         BUTTON_SetBkColor(thisButton, BUTTON_CI_UNPRESSED, pMenuSkin->Bt_Unsel);
+         BUTTON_SetBkColor(thisButton, BUTTON_CI_UNPRESSED, pSkin->Bt_Unsel);
       }
       BUTTON_Callback(pMsg);
       break;
@@ -348,7 +305,7 @@ static void myButtonListener(WM_MESSAGE * pMsg)
 		  switch(pInfo->Key)
 			{
 				case GUI_KEY_DOWN:    
-//         BUTTON_SetBkColor(thisButton, BUTTON_CI_UNPRESSED, pMenuSkin->Bt_Unsel);
+//         BUTTON_SetBkColor(thisButton, BUTTON_CI_UNPRESSED, pSkin->Bt_Unsel);
          GUI_StoreKeyMsg(GUI_KEY_TAB,1);		
 				
 					break;
@@ -368,8 +325,8 @@ static void myButtonListener(WM_MESSAGE * pMsg)
 							WM_HideWindow(subWins[1]);
 							WM_HideWindow(subWins[2]);
 							WM_HideWindow(subWins[3]);
-							WM_HideWindow(btWin);     
-							WM_SetFocus(hDlg_FishMap);
+							WM_HideWindow(mntSettingWin);     
+							WM_SetFocus(mapWin);
        GUI_CURSOR_Show();
        
 					break;

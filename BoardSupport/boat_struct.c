@@ -277,8 +277,6 @@ void MNT_dispBoat(const scale_map * scale,  long center_lg, long center_lt, MNT_
    	draw_mothership(base_x,base_y);   
    
     disp_fish_boat(scale, center_lg, center_lt, SimpBerthes, N_boat);
-    
- 
 }
 
 
