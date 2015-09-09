@@ -127,6 +127,7 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 					        WM_ShowWindow(subWins[0]);
              WM_ShowWindow(subWins[1]);
              WM_ShowWindow(mntSettingWin);
+//             WM_ShowWindow(_mntSettingWin);
              WM_ShowWindow(subWins[2]);
              WM_ShowWindow(subWins[3]);
              WM_BringToTop(subWins[2]);

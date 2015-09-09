@@ -10,6 +10,7 @@
 #include "dlg.h"
 
 
+
 void MainTask(void)
 {
    GUI_MEMDEV_Handle hMem0;
@@ -48,15 +49,17 @@ void MainTask(void)
    EDIT_SetDefaultFont(&GUI_Font28);
    WIDGET_SetDefaultEffect(&WIDGET_Effect_None);
    //创建窗口 
-
-
+//   sldWinCreate();
+//     _sldWinCreate();
+//     WM_SetFocus(_sldWinCreate());
    confirmWin  = confirmWinCreate();
 
    mntSettingWin  = mntSettingWinCreate(); 
+//  _mntSettingWin  = _mntSettingWinCreate();
    subWins[0]  = sub0WinCreate(); 
    subWins[1]  = sub1WinCreate();
    subWins[2]  = sub2WinCreate();
-   subWins[3]  = sub3WinCreate();
+   subWins[3]  = _sub3WinCreate();
    menuWin  = menuWinCreate();
    mapWin = mapWinCreate();
 

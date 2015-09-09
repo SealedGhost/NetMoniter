@@ -28,6 +28,7 @@
 #include "dlg.h"
 #include "skinColor.h"
 #include "str.h"
+#include "HSD_SLIDER.h"
 
 /*********************************************************************
 *
@@ -80,6 +81,7 @@ static const MntSetWin_COLOR * pSkin  = &MntSetWinSkins[0];
 /// Widget
 WM_HWIN Buttons[9];
 WM_HWIN Texts[10];
+WM_HWIN Slider_Night;
 
 ///
 CONF_SYS agentConf;
@@ -125,8 +127,8 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
  { BUTTON_CreateIndirect, "按键  音", ID_BUTTON_KEYSND, 120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4, 120,  30,  0, 0, 0},
  { BUTTON_CreateIndirect, "单位设置", ID_BUTTON_UNIT,   120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5, 120,  30,  0, 0, 0},
  { BUTTON_CreateIndirect, "船位设置", ID_BUTTON_SHAPE,  120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6, 120,  30,  0, 0, 0},
- { BUTTON_CreateIndirect, "软件更新", ID_BUTTON_UPDATE, 120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*7, 120,  30,  0, 0, 0}
-// { SLIDER_CreateIndirect, "夜间"    , ID_SLIDER_NIGHT,  400,   40,                                                            120,  30,  0, 0, 0}
+ { BUTTON_CreateIndirect, "软件更新", ID_BUTTON_UPDATE, 120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*7, 120,  30,  0, 0, 0},
+ { HSD_SLIDER_CreateIndirect, "夜间"    , ID_SLIDER_NIGHT,  400,   40,                                                            120,  30,  0, 0, 0}
 // { BUTTON_CreateIndirect, "系统版本", ID_BUTTON_VERSION,120,   280,  120,  30,  0, 0, 0}
   // USER START (Optionally insert additional widgets)
   // USER END
@@ -173,23 +175,23 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        }
        WINDOW_Callback(pMsg);     
        break;
-		case USER_MSG_SKIN:
-       pSkin  = &(MntSetWinSkins[pMsg->Data.v]);
-       
-       WINDOW_SetBkColor(pMsg->hWin, pSkin->MntSetWin_BackGround);
-       
-       for(i=0;i<10;i++)
-       {
-          TEXT_SetTextColor(Texts[i], pSkin->MntSetWin_Label);
-          TEXT_SetBkColor(Texts[i], pSkin->MntSetWin_bkUnpressed);
-       }
+//		case USER_MSG_SKIN:
+//       pSkin  = &(MntSetWinSkins[pMsg->Data.v]);
+//       
+//          WINDOW_SetBkColor(pMsg->hWin, pSkin->MntSetWin_BackGround);
+//       
+//       for(i=0;i<10;i++)
+//       {
+//          TEXT_SetTextColor(Texts[i], pSkin->MntSetWin_Label);
+//          TEXT_SetBkColor(Texts[i], pSkin->MntSetWin_bkUnpressed);
+//       }
 
-       for(i=0;i<8;i++)       
-       {
-          BUTTON_SetBkColor(Buttons[i], BUTTON_CI_UNPRESSED, pSkin->MntSetWin_bkUnpressed);
-          BUTTON_SetTextColor(Buttons[i], BUTTON_CI_UNPRESSED, pSkin->MntSetWin_Text);          
-       }
-       break;
+//       for(i=0;i<8;i++)       
+//       {
+//          BUTTON_SetBkColor(Buttons[i], BUTTON_CI_UNPRESSED, pSkin->MntSetWin_bkUnpressed);
+//          BUTTON_SetTextColor(Buttons[i], BUTTON_CI_UNPRESSED, pSkin->MntSetWin_Text);          
+//       }
+//       break;
 			
   case WM_INIT_DIALOG:
        pSkin  = &(MntSetWinSkins[SysConf.Skin]);
@@ -259,23 +261,27 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 //     SLIDER_SetFocusColor(hItem, GUI_RED);
 
 ///  Initialization of skin.
-     WINDOW_SetBkColor(pMsg->hWin, pSkin->MntSetWin_BackGround);
-     
-     for(i=0;i<10;i++)
-    {
-       Texts[i]  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_TITLE+i+1);
-       TEXT_SetTextColor(Texts[i], pSkin->MntSetWin_Label);
-       TEXT_SetBkColor(Texts[i], pSkin->MntSetWin_bkUnpressed);
-    }
-    
-    TEXT_SetText(Texts[9], GUI_GetVersionString());
-     
-     for(i=0;i<8;i++)       
-     {
-        BUTTON_SetBkColor(Buttons[i], BUTTON_CI_UNPRESSED, pSkin->MntSetWin_bkUnpressed);
-        BUTTON_SetTextColor(Buttons[i], 0, pSkin->MntSetWin_Text);
-        WM_SetCallback(Buttons[i], &myButtonListener);
-     }
+//     WINDOW_SetBkColor(pMsg->hWin, pSkin->MntSetWin_BackGround);
+//     
+//     for(i=0;i<10;i++)
+//    {
+//       Texts[i]  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_TITLE+i+1);
+//       TEXT_SetTextColor(Texts[i], pSkin->MntSetWin_Label);
+//       TEXT_SetBkColor(Texts[i], pSkin->MntSetWin_bkUnpressed);
+//    }
+//    
+//    TEXT_SetText(Texts[9], GUI_GetVersionString());
+//    
+//    Slider_Night  = WM_GetDialogItem(pMsg->hWin, ID_SLIDER_NIGHT);
+//    HSD_SLIDER_SetFocusBkColor(Slider_Night, pSkin->MntSetWin_bkUnpressed);
+// 
+//     
+//     for(i=0;i<8;i++)       
+//     {
+//        BUTTON_SetBkColor(Buttons[i], BUTTON_CI_UNPRESSED, pSkin->MntSetWin_bkUnpressed);
+//        BUTTON_SetTextColor(Buttons[i], 0, pSkin->MntSetWin_Text);
+//        WM_SetCallback(Buttons[i], &myButtonListener);
+//     }
      
      agentConf.Skin              = SysConf.Skin;
      agentConf.Brt               = SysConf.Brt;
@@ -425,16 +431,16 @@ static void myButtonListener(WM_MESSAGE * pMsg)
       case WM_SET_FOCUS:
            index  = WM_GetId(pMsg->hWin) - ID_BUTTON_NIGHT;
            
-           if(pMsg->Data.v == 0)
-           {
-              BUTTON_SetBkColor(Buttons[index], BUTTON_CI_UNPRESSED, pSkin->MntSetWin_bkUnpressed);
-              TEXT_SetBkColor(Texts[index], pSkin->MntSetWin_bkUnpressed);
-           }
-           else
-           {
-             BUTTON_SetBkColor(Buttons[index], BUTTON_CI_UNPRESSED, GUI_DARKMAGENTA);
-             TEXT_SetBkColor(Texts[index], GUI_DARKMAGENTA); 
-           }
+//           if(pMsg->Data.v == 0)
+//           {
+//              BUTTON_SetBkColor(Buttons[index], BUTTON_CI_UNPRESSED, pSkin->MntSetWin_bkUnpressed);
+//              TEXT_SetBkColor(Texts[index], pSkin->MntSetWin_bkUnpressed);
+//           }
+//           else
+//           {
+//             BUTTON_SetBkColor(Buttons[index], BUTTON_CI_UNPRESSED, GUI_DARKMAGENTA);
+//             TEXT_SetBkColor(Texts[index], GUI_DARKMAGENTA); 
+//           }
            
            BUTTON_Callback(pMsg);
            break;

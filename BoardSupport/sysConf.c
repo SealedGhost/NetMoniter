@@ -12,7 +12,6 @@ extern MNT_BERTH MNT_Berthes[MNT_NUM_MAX];
 unsigned long SYS_Date;
 unsigned long SYS_Time;
 ///                                        
-static  CONF_UI_COLOR UI_Skins[2] = {GUI_BLACK};
 
 
 
@@ -40,43 +39,43 @@ static Bool checkSysConf()
    if(SysConf.Skin != SKIN_Day  &&  SysConf.Skin != SKIN_Night) 
    {
       flag  = FALSE;
-      printf("Skin load error!\n\r");
+      printf("Skin load error! load %d as skin\n\r",SysConf.Skin);
       SysConf.Skin  = SKIN_Night;
    }
    if(SysConf.Brt < 0  ||  SysConf.Brt > 4)                     
    {
       flag  = FALSE;   
-      printf("Brt  load error!\n\r");
+      printf("Brt  load error! load %d as brg\n\r",SysConf.Brt);
       SysConf.Brt  = 1;
    }
    if(SysConf.Snd.Vol < 0  ||  SysConf.Snd.Vol > 6)            
    {
       flag  = FALSE;   
-      printf("Vol  load error!\n\r");
+      printf("Vol  load error! load %d as vol\n\r",SysConf.Snd.Vol);
       SysConf.Snd.Vol  = 1;
    }
    if(SysConf.Snd.ArmSnd < 1  ||  SysConf.Snd.ArmSnd > 2)      
    {
       flag  = FALSE;   
-      printf("ArmSnd  load error!\n\r");
+      printf("ArmSnd  load error! load %d as arm snd\n\r",SysConf.Snd.ArmSnd);
       SysConf.Snd.ArmSnd  = 1;
    }
    if(SysConf.Snd.KeySnd < 0  || SysConf.Snd.KeySnd > 2)       
    {
       flag  = FALSE;   
-      printf("KeySnd  load error!\n\r");
+      printf("KeySnd  load error! load %d as key snd\n\r",SysConf.Snd.KeySnd);
       SysConf.Snd.KeySnd  = 1;
    }
    if(SysConf.Unit != UNIT_km  &&  SysConf.Unit != UNIT_nm)     
    {
       flag  = FALSE;   
-      printf("Unit load error!\n\r");
+      printf("Unit load error! load %d as unit\n\r",SysConf.Unit);
       SysConf.Unit  = UNIT_nm;
    }
    if(SysConf.Shape != SHAPE_Boat  &&  SysConf.Shape != SHAPE_Fish) 
    {
       flag  = FALSE;   
-      printf("Shape load error!\n\r");
+      printf("Shape load error! load %d as shape\n\r",SysConf.Shape);
       SysConf.Shape  = SHAPE_Fish;
    }
    return flag;

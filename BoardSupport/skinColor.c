@@ -33,7 +33,20 @@ const LVWin_COLOR lvWinSkins[2]  = {
                               };  
 
 const MntSetWin_COLOR MntSetWinSkins[2]  = {
-///                                      bkColor         Label     BkUnpressed       Text          TxBk
-                                        { GUI_DARKGRAY,  GUI_BLACK,  GUI_DARKGREEN,   GUI_LIGHTGRAY, GUI_BLACK},
-                                        { GUI_GRAY,      GUI_GRAY,   GUI_LIGHTGREEN,  GUI_DARKGRAY,  GUI_LIGHTMAGENTA} 
+///                                            bk            tx         sldBk         sldSlot    sldSlider   sldFocusSlider
+                                             { GUI_DARKGRAY, GUI_WHITE, GUI_DARKGRAY, GUI_BLACK, GUI_ORANGE, GUI_YELLOW}, 
+                                             { GUI_LIGHTGRAY,GUI_BLACK, GUI_LIGHTGRAY,GUI_WHITE, GUI_MAGENTA, GUI_DARKMAGENTA }
+                                       };  
+
+const MntSetting_COLOR MntSettingSkins[2]  = {
+///                                            bk            tx         sldBk         sldSlot    sldSlider   sldFocusSlider
+                                             { GUI_DARKGRAY, GUI_WHITE, GUI_DARKGRAY, GUI_BLACK, GUI_ORANGE, GUI_YELLOW}, 
+                                             { GUI_LIGHTGRAY,GUI_BLACK, GUI_LIGHTGRAY,GUI_WHITE, GUI_MAGENTA, GUI_DARKMAGENTA }
+                                       };                              
+
+
+const SysWin_COLOR SysWinSkins[2]  = {
+///                                            bk            tx         sldBk         sldSlot    sldSlider   sldFocusSlider
+                                             { GUI_DARKGRAY, GUI_WHITE, GUI_DARKGRAY, GUI_BLACK, GUI_ORANGE, GUI_YELLOW}, 
+                                             { GUI_LIGHTGRAY,GUI_BLACK, GUI_LIGHTGRAY,GUI_WHITE, GUI_MAGENTA, GUI_DARKMAGENTA }
                                        };                              

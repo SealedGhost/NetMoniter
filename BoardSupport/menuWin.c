@@ -284,6 +284,7 @@ static void myButtonListener(WM_MESSAGE * pMsg)
             if(btIndex == 1)
             {
                WM_BringToTop(mntSettingWin);
+//               WM_BringToTop(_mntSettingWin);
             }
             if(btIndex<2)
             {
@@ -326,6 +327,7 @@ static void myButtonListener(WM_MESSAGE * pMsg)
 							WM_HideWindow(subWins[2]);
 							WM_HideWindow(subWins[3]);
 							WM_HideWindow(mntSettingWin);     
+//       WM_HideWindow(_mntSettingWin);
 							WM_SetFocus(mapWin);
        GUI_CURSOR_Show();
        

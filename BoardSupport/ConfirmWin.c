@@ -222,6 +222,9 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 INFO("Something error!");         
               break;
       }
+      
+//      WM_BringToTop(pMsg->hWin);
+//      WM_SetFocus(pMsg->hWin);
       break;
    break;
 //   case USER_MSG_ID_CHOOSE:

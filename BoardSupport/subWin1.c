@@ -262,6 +262,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
        
        case GUI_KEY_RIGHT:
             WM_SetFocus(mntSettingWin);
+//            WM_SetFocus(_mntSettingWin);
             break;
           
        case GUI_KEY_ENTER:

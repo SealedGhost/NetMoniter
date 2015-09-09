@@ -21,10 +21,10 @@ typedef enum _SKINS SKINS;
 enum _SKINS {SKIN_Night=0, SKIN_Day};
 
 typedef enum _UNITS   UNITS;
-enum _UNITS{UNIT_km=0, UNIT_nm};
+enum _UNITS{UNIT_nm=0, UNIT_km};
 
 typedef enum _BOAT_SHAPES   BOAT_SHAPES;
-enum _BOAT_SHAPES{SHAPE_Fish=0, SHAPE_Boat};
+enum _BOAT_SHAPES{SHAPE_Boat=0, SHAPE_Fish};
 
 
 
@@ -133,12 +133,25 @@ struct _MntSetWin_COLOR
   GUI_COLOR MntSetWin_BackGround;
   
   GUI_COLOR MntSetWin_Label;
-  
-  GUI_COLOR MntSetWin_bkUnpressed;
-  GUI_COLOR MntSetWin_Text; 
-  GUI_COLOR MntSetWin_txBk;
+	
+	 GUI_COLOR MntSetWin_bkFOCUS;
+  GUI_COLOR MntSetWin_bkNOFOCUS;
+  GUI_COLOR MntSetWin_Text_FOCUS; 
+	 GUI_COLOR MntSetWin_Text_NOFOCUS;
 };
 
+
+typedef struct _MntSetting_COLOR MntSetting_COLOR;
+struct _MntSetting_COLOR
+{
+   GUI_COLOR bkColor;
+   GUI_COLOR txColor;
+   
+   GUI_COLOR sldBk;
+   GUI_COLOR sldSlot;
+   GUI_COLOR sldSlider;
+   GUI_COLOR sldFocusSlider;
+};
 
 typedef struct _CnfmWin_COLOR  CnfmWin_COLOR;
 struct _CnfmWin_COLOR
@@ -159,30 +172,30 @@ struct _CnfmWin_COLOR
 typedef struct _SysWin_COLOR  SysWin_COLOR;
 struct _SysWin_COLOR
 {
-  GUI_COLOR BackGround;
-  
-  GUI_COLOR Label;
-  
-  GUI_COLOR Edit_Enable;
-  GUI_COLOR Edit_Disable;
-  GUI_COLOR Edit_Text;  
+   GUI_COLOR bkColor;
+   GUI_COLOR txColor;
+   
+   
+   GUI_COLOR sldBk;
+   GUI_COLOR sldSlot;
+   GUI_COLOR sldSlider;
+   GUI_COLOR sldFocusSlider;
 };
 
 
-
-/// UI color config struct.
-typedef struct _CONF_UI_COLOR CONF_UI_COLOR;
-struct _CONF_UI_COLOR
-{
-   MapWin_COLOR     MapWinColor;      /// Map window color config.
-   MenuWin_COLOR    MenuWinColor;     /// Menu window color config.
-   LVWin_COLOR      Sub0WinColor;     /// Sub0 window color config.
-   LVWin_COLOR      Sub1WinColor;     /// Sub1 window color config.
-   LVWin_COLOR      Sub2WinColor;     /// Sub2 window color config.
-   LVWin_COLOR      Sub3WinColor;     /// Sub3 window color config.
-   MntSetWin_COLOR  EditWinCOLOR;     /// Edit window color config.
-   CnfmWin_COLOR    CnfmWinColor;     /// Confirm window color config.
-};
+///// UI color config struct.
+//typedef struct _CONF_UI_COLOR CONF_UI_COLOR;
+//struct _CONF_UI_COLOR
+//{
+//   MapWin_COLOR     MapWinColor;      /// Map window color config.
+//   MenuWin_COLOR    MenuWinColor;     /// Menu window color config.
+//   LVWin_COLOR      Sub0WinColor;     /// Sub0 window color config.
+//   LVWin_COLOR      Sub1WinColor;     /// Sub1 window color config.
+//   LVWin_COLOR      Sub2WinColor;     /// Sub2 window color config.
+//   LVWin_COLOR      Sub3WinColor;     /// Sub3 window color config.
+//   MntSetWin_COLOR  EditWinCOLOR;     /// Edit window color config.
+//   CnfmWin_COLOR    CnfmWinColor;     /// Confirm window color config.
+//};
 
 
 /// System setting config struct

@@ -130,6 +130,9 @@ static const MntSetWin_COLOR * pSkin  = &MntSetWinSkins[0];
 // USER START (Optionally insert additional static code)
 // USER END
 
+
+
+
 /*********************************************************************
 *
 *       _cbDialog
@@ -153,22 +156,31 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_0);
        TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);
+       
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_1);
-       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
+       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+       
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_2);
        TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+       
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_3);
-       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
+       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+       
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_4);
-       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
+       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);  
+       
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_5);
-       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
+       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+       
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_6);
-       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
+       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+       
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_7);
-       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
-       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_8);
-       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
+       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);  
+       
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_8);      
+       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+       
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_9);
        TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);  
 
@@ -194,24 +206,33 @@ INFO("case user_msg_UNIT");
     //    
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_0);
     TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);
+    
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_1);
-    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
+    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+    
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_2);
     TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+    
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_3);
-    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
+    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+    
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_4);
-    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
+    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+    
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_5);
-    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
+    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+    
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_6);
-    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
+    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+    
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_7);
     TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
     
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_8);
     TEXT_SetFont(hItem, GUI_FONT_24_1);
+    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);
     TEXT_SetText(hItem, SysConf.Unit==UNIT_km?"km":"nm");
+    
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_9);
     TEXT_SetFont(hItem, GUI_FONT_24_1);
     TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);   
@@ -235,7 +256,7 @@ INFO("case user_msg_UNIT");
     // Initialization of 'et_2'
     //
     hBts[2] = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_2);
-	  	sprintf(pStrBuf, "%d",mntSetting.BGL_Setting.Dist);
+    sprintf(pStrBuf, "%d.%02d", mntSetting.BGL_Setting.Dist/100, mntSetting.BGL_Setting.Dist%100);
 	  	BUTTON_SetText(hBts[2], pStrBuf);  
 	   WM_SetCallback(hBts[2],&myButtonListener);	
     //
@@ -254,7 +275,7 @@ INFO("case user_msg_UNIT");
     // Initialization of 'et_5'
     //
     hBts[5]  = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_5);   
-    sprintf(pStrBuf, "%d",mntSetting.DRG_Setting.Dist);
+    sprintf(pStrBuf, "%d.%02d", mntSetting.DRG_Setting.Dist/100, mntSetting.DRG_Setting.Dist%100);
     BUTTON_SetText(hBts[5], pStrBuf);     
     WM_SetCallback(hBts[5],&myButtonListener);
     
