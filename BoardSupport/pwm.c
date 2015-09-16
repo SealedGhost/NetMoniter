@@ -7,7 +7,6 @@
 #define _BACK_LIGHT_BASE_CLK (1000/4)
 	uint32_t pclk;
  
-int PWM_BkBrightness  = 0;
  
 void lpc1788_PWM_Init(void)//PWM³õÊ¼»¯º¯Êý
 {

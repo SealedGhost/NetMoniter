@@ -84,7 +84,7 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
        
        /// Initializaton of skin .
        pSkin  = &(mapSkins[SysConf.Skin]);
-        
+       setBoatSkin(SysConf.Skin); 
        /// Initializaton of center
 //       center.lgtude  = mothership.longitude;
 //       center.lttude  = mothership.latitude;
@@ -97,11 +97,11 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
        {
           myMsg.hWin  = WM_GetClientWindow(confirmWin);
           myMsg.hWinSrc  = pMsg->hWin;
-          myMsg.MsgId  = USER_MSG_ID_CHOOSE;
+          myMsg.MsgId  = USER_MSG_CHOOSE;
           myMsg.Data.v  = ADD_MONITED;
           WM_SendMessage(myMsg.hWin, &myMsg);
           WM_BringToTop(confirmWin);
-          WM_SetFocus(confirmWin); 
+          WM_SetFocus(WM_GetDialogItem (confirmWin,GUI_ID_BUTTON0)); 
        }
        else
        {
@@ -112,13 +112,14 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
     
   case USER_MSG_SKIN: 
        pSkin  = &(mapSkins[pMsg->Data.v]);
+       setBoatSkin(pMsg->Data.v);
        break;
        
   case USER_MSG_SHAPE:
        setShape(pMsg->Data.v);
        break;
        
-  case USER_MSG_ID_REPLY:
+  case USER_MSG_REPLY:
        switch(pMsg->Data.v)
        {
         case REPLY_OK:
@@ -165,9 +166,8 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 
 
 		case WM_KEY: 
-       pKeyInfo  = (WM_KEY_INFO*)(pMsg->Data.p);
-       
-     drawMapSwitchCnt  = 0;
+       pKeyInfo  = (WM_KEY_INFO*)(pMsg->Data.p);    
+       drawMapSwitchCnt  = 0;
        if(drawMapSwitch == 0)
        {
           drawMapSwitch  = 1;
@@ -202,22 +202,27 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
                   Dir_y  = 1;             
                   break;
           }
-          if(pKeyInfo->PressedCnt)
-          {
+//          if(pKeyInfo->PressedCnt)
+//          {
               WM_DeleteTimer(reTimer);
               cursorTimer  = WM_CreateTimer(mapWin, ID_TIMER_CURSOR, 500, 0);
               Doubleclick  = TRUE;             
               onCursorMoved();            
-          }
-          else
-          {
-              WM_DeleteTimer(cursorTimer);         
-              Doubleclick  = FALSE;
- 	            reTimer  = WM_CreateTimer(pMsg->hWin, ID_TIMER_MAP_REFRESH,MAP_REFRESH_SLOT, 0);          
-          }
+//          }
+//          else
+//          {
+//              WM_DeleteTimer(cursorTimer);         
+//              Doubleclick  = FALSE;
+// 	            reTimer  = WM_CreateTimer(pMsg->hWin, ID_TIMER_MAP_REFRESH,MAP_REFRESH_SLOT, 0);          
+//          }
        }
        else switch(pKeyInfo->Key)
        {
+         case GUI_KEY_RELEASE:        
+              WM_DeleteTimer(cursorTimer);         
+              Doubleclick  = FALSE;
+ 	            reTimer  = WM_CreateTimer(pMsg->hWin, ID_TIMER_MAP_REFRESH,MAP_REFRESH_SLOT, 0);          
+              break;
          /*----------------------   捕捉到中心按键按下的响应:    -----------------------*/
          /*   中心按键按下后：将本船位置和光标显示到map中心点 */
           
@@ -270,7 +275,7 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 /// Draw  map grid   
   
     
-    GUI_SetBkColor(pSkin->BackGround);
+    GUI_SetBkColor(pSkin->bkColor);
 //    GUI_ClearRect(0,40, 800, 480);
     GUI_ClearRectEx(Rect_Map);
 //    drawMapSwitch  = 1;
@@ -284,35 +289,38 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
     }
    
 /// Draw map title 
-    GUI_SetBkColor(pSkin->Title_Background);   
+//    GUI_SetBkColor(pSkin->ttl_Label);   
 //    GUI_ClearRect(0,0,800,40);
-    GUI_ClearRectEx(Rect_Title);
+//    GUI_ClearRectEx(Rect_Title);
     
-    GUI_SetColor(pSkin->Title_Label);
+    GUI_DrawGradientV(MAP_LEFT,0,MAP_RIGHT,MAP_TOP-1,pSkin->ttl_bkTop,pSkin->ttl_bkBottom);
+    
+    GUI_SetColor(pSkin->ttl_Label);
     GUI_SetFont(&GUI_Font24B_1);
-    GUI_DispStringAt("N:", 0, 0);
-    GUI_DispStringAt("E:", 150, 0);
-    GUI_DispStringAt("SOG:",300,0);
-    GUI_DispStringAt("COG:",450, 0);
+    GUI_SetTextMode(GUI_TEXTMODE_TRANS);
+    GUI_DispStringAt("N:",  0,   5);
+    GUI_DispStringAt("E:",  150, 5);
+    GUI_DispStringAt("SOG:",300, 5);
+    GUI_DispStringAt("COG:",450, 5);
     
-    GUI_SetColor(pSkin->Title_Context);
+    GUI_SetColor(pSkin->ttl_Context);
     
     lltostr(mothership.latitude, pStrBuf);
-    GUI_DispStringAt(pStrBuf, 20, 0);
+    GUI_DispStringAt(pStrBuf, 20, 5);
     lltostr(mothership.longitude, pStrBuf);
-    GUI_DispStringAt(pStrBuf, 170, 0);
+    GUI_DispStringAt(pStrBuf, 170, 5);
     sprintf(pStrBuf, "%d", mothership.SOG);   
-    GUI_DispStringAt(pStrBuf, 360, 0);
+    GUI_DispStringAt(pStrBuf, 360, 5);
     sprintf(pStrBuf, "%d", mothership.COG);
-    GUI_DispStringAt(pStrBuf, 510, 0);
+    GUI_DispStringAt(pStrBuf, 510, 5);
     
     sprintf(pStrBuf, "%02ld-%02ld/%02ld  %02ld:%02ld",(SYS_Date%10000)/100,SYS_Date/10000,  SYS_Date%100, 
                                            SYS_Time/10000+8, (SYS_Time%10000)/100);                                            
-    GUI_DispStringAt(pStrBuf, 600, 0);
+    GUI_DispStringAt(pStrBuf, 600, 5);
    
-    GUI_SetPenSize(3);
-    GUI_SetColor(pSkin->Title_HorLine);
-    GUI_DrawLine(0, MAP_TOP-2, 800, MAP_TOP-2); 
+//    GUI_SetPenSize(3);
+//    GUI_SetColor(pSkin->Title_HorLine);
+//    GUI_DrawLine(0, MAP_TOP-2, 800, MAP_TOP-2); 
 
     GUI_SetPenSize(1);
     GUI_SetColor(GUI_DARKGRAY);

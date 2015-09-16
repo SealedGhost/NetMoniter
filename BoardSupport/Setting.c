@@ -44,9 +44,10 @@ int MNT_getAddrOffset(uint8_t * addr)
  * @Output 
  * @return Times of copy. 
  */
-void MNT_makeSettingUp (MNT_SETTING * pMNT_Setting)
+int MNT_makeSettingUp (MNT_SETTING * pMNT_Setting)
 {
    int i  = 0;
+   int Cnt  = 0;
    MNT_BERTH * pIterator  = pMntHeader;
    while(pIterator)
    {    
@@ -103,25 +104,25 @@ INFO("Error!");
 
          pIterator->mntBoat.mntSetting.DRG_Setting.isSndEnable  = 
                    pMNT_Setting->DRG_Setting.isSndEnable;  
-                 
-                   
- 
 
-                   
+         EEPROM_Write( 0, MNT_PAGE_ID+(pIterator-MNT_Berthes),
+                       &(pIterator->mntBoat),MODE_8_BIT,sizeof(MNT_BOAT));                   
       }
       
       else if(pIterator->chsState == MNTState_None)
       {
          pIterator->chsState  = MNTState_Default;
          
-         pIterator->mntBoat.mntSetting.DSP_Setting.isEnable  = ENABLE;     
-
+         pIterator->mntBoat.mntSetting.DSP_Setting.isEnable  = ENABLE;   
+                
+         Cnt++;
       }
       
       pIterator  = pIterator->pNext;
    }
    
    MNT_printSetting();
+   return Cnt;
 }
 
 

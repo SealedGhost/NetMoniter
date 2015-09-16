@@ -8,7 +8,8 @@
 #include "HSD_SLIDER.h"
 #include "28.h"
 #include "GUI.h"
-
+#include "pwm.h"
+//#include "fish.c"
 
 #define ID_WINDOW_0         (GUI_ID_USER + 0x00)
 
@@ -32,6 +33,14 @@
 #define ID_SLIDER_UNIT      (GUI_ID_USER + 0x25)
 #define ID_SLIDER_SHAPE     (GUI_ID_USER + 0x26)
 
+extern GUI_CONST_STORAGE GUI_BITMAP bmfish;
+GUI_POINT pPoint[] = {
+	{0,0},
+	{25,0},
+	{35,8},
+	{25,16},
+	{0,16}
+};
 
 static void sldListenter(WM_MESSAGE * pMsg);
 
@@ -71,9 +80,9 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[]  =
 // { TEXT_CreateIndirect, "船位设置", ID_TEXT_SHAPE,  0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6, 120,  30,  0, 0, 0},
 // { TEXT_CreateIndirect, "软件更新", ID_TEXT_UPDATE, 0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*7, 120,  30,  0, 0, 0},
 // { TEXT_CreateIndirect, "系统版本", ID_TEXT_VERSION,0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*8, 120,  30,  0, 0, 0},
-// { TEXT_CreateIndirect, "0.0",       ID_TEXT_VER,    120, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*8, 120,  30, 0,  0, 0},
+ { TEXT_CreateIndirect, "左右",       ID_TEXT_VER,    75, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*7+10, 120,  30, 0,  0, 0},
 // 
- { HSD_SLIDER_CreateIndirect, " " ,ID_SLIDER_SKIN,   180,   40,                                                            120,  30,  0, 0, 0},
+ { HSD_SLIDER_CreateIndirect, " " ,ID_SLIDER_SKIN,   180,   Win_SysSet_txOrg,                                              120,  30,  0, 0, 0},
  { HSD_SLIDER_CreateIndirect, " ", ID_SLIDER_BRT  ,  180,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap),   120,  30,  0, 0, 0},
  { HSD_SLIDER_CreateIndirect, " ", ID_SLIDER_VOL,    180,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*2, 120,  30,  0, 0, 0},
  { HSD_SLIDER_CreateIndirect, " ", ID_SLIDER_SNDARM, 180,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3, 120,  30,  0, 0, 0},
@@ -101,51 +110,65 @@ static void  _cbDialog(WM_MESSAGE * pMsg)
    int Id;
    int i;
    GUI_RECT r;
-   
-   WM_Obj * pObj  = GUI_ALLOC_h2p(pMsg->hWin);
-   
+      
    switch(pMsg->MsgId)
-   {
-      case WM_SET_FOCUS:
-           if(pMsg->Data.v)
+   {   
+      case GUI_KEY_PWM_INC:
+INFO("case pwm_inc");      
+           if(agentConf.Brt < 5)        
            {
-              myMsg.hWin  = menuWin;
-              myMsg.hWinSrc  = pMsg->hWin;
-              myMsg.MsgId  = USER_MSG_BRING;
-              myMsg.Data.v  = 3;
-              WM_SendMessage(myMsg.hWin, &myMsg);
+              agentConf.Brt++;
+              PWM_SET(agentConf.Brt*2);
+              HSD_SLIDER_SetValue(Slideres[1],agentConf.Brt);
            }
-           WINDOW_Callback(pMsg);
+           break;
+      case GUI_KEY_PWM_DEC:
+INFO("case pwm_dec");      
+           if(agentConf.Brt > 1)
+           {
+              agentConf.Brt--;
+              PWM_SET(agentConf.Brt*2);
+              HSD_SLIDER_SetValue(Slideres[1],agentConf.Brt);              
+           }
            break;
            
       case USER_MSG_SKIN:
-           pSkin  = &(SysWinSkins[pMsg->Data.v - SKIN_Night]);
+INFO("case msg skin");      
+           pSkin  = &(SysWinSkins[pMsg->Data.v]);
            
            WINDOW_SetBkColor(pMsg->hWin, pSkin->bkColor);
-           
            for(i=7; i;)
            {
               i--;
               HSD_SLIDER_SetBkColor(Slideres[i], pSkin->sldBk);
+						        HSD_SLIDER_SetFocusBkColor (Slideres[i], pSkin->sldBk);		
               HSD_SLIDER_SetSlotColor(Slideres[i], pSkin->sldSlot);
+              HSD_SLIDER_SetFocusSlotColor(Slideres[i], pSkin->sldSlot); 
+						 
               HSD_SLIDER_SetSliderColor(Slideres[i], pSkin->sldSlider);
-              HSD_SLIDER_SetFocusBkColor(Slideres[i], pSkin->sldFocusSlider);
+              HSD_SLIDER_SetFocusSliderColor(Slideres[i], pSkin->sldFocusSlider);
            }
            
            break;
            
       case WM_INIT_DIALOG:
-           pSkin  = &(SysWinSkins[SysConf.Skin - SKIN_Night]);
+           pSkin  = &(SysWinSkins[SysConf.Skin]);
+                //text
+           hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_VER);
+           TEXT_SetFont(hItem,&GUI_Font24);
+           TEXT_SetTextColor(hItem, pSkin->sldSlider);
            
+						//WINDOW_SetBkColor(pMsg->hWin, pSkin->bkColor);
+			
            Slideres[0]  = WM_GetDialogItem(pMsg->hWin, ID_SLIDER_SKIN);
            WM_SetCallback(Slideres[0], &sldListenter);
-           HSD_SLIDER_SetRange(Slideres[0], SKIN_Night, SKIN_Day); 
+           HSD_SLIDER_SetRange(Slideres[0], SKIN_Day, SKIN_Night); 
            HSD_SLIDER_SetValue(Slideres[0], SysConf.Skin);
            
            Slideres[1]  = WM_GetDialogItem(pMsg->hWin, ID_SLIDER_BRT);
            WM_SetCallback(Slideres[1], &sldListenter);
            HSD_SLIDER_SetNumTicks(Slideres[1], 5);
-           HSD_SLIDER_SetRange(Slideres[1], 0, 4);
+           HSD_SLIDER_SetRange(Slideres[1], 1, 5);
            HSD_SLIDER_SetValue(Slideres[1], SysConf.Brt);
            
            Slideres[2]  = WM_GetDialogItem(pMsg->hWin, ID_SLIDER_VOL);
@@ -182,7 +205,11 @@ static void  _cbDialog(WM_MESSAGE * pMsg)
            {
               i--;
               HSD_SLIDER_SetBkColor(Slideres[i], pSkin->sldBk);
+						        HSD_SLIDER_SetFocusBkColor (Slideres[i], pSkin->sldBk);		
+						 
               HSD_SLIDER_SetSlotColor(Slideres[i], pSkin->sldSlot);
+              HSD_SLIDER_SetFocusSlotColor(Slideres[i], pSkin->sldSlot); 
+						 
               HSD_SLIDER_SetSliderColor(Slideres[i], pSkin->sldSlider);
               HSD_SLIDER_SetFocusSliderColor(Slideres[i], pSkin->sldFocusSlider);
            }           
@@ -198,7 +225,7 @@ static void  _cbDialog(WM_MESSAGE * pMsg)
            break;
            
            
-       case USER_MSG_ID_REPLY:
+       case USER_MSG_REPLY:
             if(pMsg->Data.v == REPLY_OK)
             {
                if(agentConf.Skin != SysConf.Skin)
@@ -215,8 +242,7 @@ static void  _cbDialog(WM_MESSAGE * pMsg)
                   WM_SendMessage(myMsg.hWin, &myMsg);
                }
                if(agentConf.Unit != SysConf.Unit)
-               {
-INFO("unit changed !");               
+               {              
                   myMsg.MsgId  = USER_MSG_UNIT;
                   myMsg.Data.v  = agentConf.Unit;
                   WM_SendMessage(mapWin, &myMsg);
@@ -236,14 +262,6 @@ INFO("unit changed !");
             else 
             {
                /// Roll back
-               agentConf.Skin  = SysConf.Skin;
-               agentConf.Brt   = SysConf.Brt;
-               agentConf.Snd.Vol  = SysConf.Snd.Vol;
-               agentConf.Snd.ArmSnd  = SysConf.Snd.ArmSnd;
-               agentConf.Snd.KeySnd  = SysConf.Snd.KeySnd;
-               agentConf.Unit        = SysConf.Unit;
-               agentConf.Shape       = SysConf.Shape; 
-               
                HSD_SLIDER_SetValue(Slideres[0], agentConf.Skin);
                HSD_SLIDER_SetValue(Slideres[1], agentConf.Brt);
                HSD_SLIDER_SetValue(Slideres[2], agentConf.Snd.Vol);
@@ -251,6 +269,16 @@ INFO("unit changed !");
                HSD_SLIDER_SetValue(Slideres[4], agentConf.Snd.KeySnd);
                HSD_SLIDER_SetValue(Slideres[5], agentConf.Unit);
                HSD_SLIDER_SetValue(Slideres[6], agentConf.Shape);
+              
+               ProcChanging[0](NULL, SysConf.Skin);
+               ProcChanging[1](NULL, SysConf.Brt);
+               ProcChanging[2](NULL, SysConf.Snd.Vol);
+               ProcChanging[3](NULL, SysConf.Snd.ArmSnd);
+               ProcChanging[4](NULL, SysConf.Snd.KeySnd);
+               ProcChanging[5](NULL, SysConf.Unit);
+               ProcChanging[6](NULL, SysConf.Shape);
+
+               PWM_SET(agentConf.Brt * 2);
             }
             WM_SetFocus(menuWin);
             break;
@@ -266,8 +294,7 @@ INFO("unit changed !");
                        ProcChanging[Id](pMsg, HSD_SLIDER_GetValue(Slideres[Id]));
                     }
                     else
-                    {
-INFO("Error!!!");                    
+                    {                   
                     }
                     break;                   
                              
@@ -278,36 +305,46 @@ INFO("Error!!!");
             break;
           
        case WM_PAINT:
-       
+						
             WM_GetClientRectEx(pMsg->hWin, &r);
             GUI_SetColor(pSkin->bkColor);
             GUI_FillRectEx(&r);
-            GUI_SetFont(&GUI_Font28);
+            GUI_SetColor(pSkin->ClientbkColor);
+            r.x0 = r.x0 + 10;
+            r.x1 = r.x1 - 10;
+            r.y0 = r.y0 + 40;
+            r.y1 = r.y1 - 40;
+            GUI_FillRectEx(&r);
+			 
+            GUI_SetFont(&GUI_Font30);
+					      	GUI_SetTextMode(GUI_TEXTMODE_TRANS);
             GUI_SetColor(pSkin->txColor);
-            GUI_DispStringAt("夜间模式", 0,   Win_SysSet_txOrg );
-            GUI_DispStringAt("亮度设置", 0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap));
-            GUI_DispStringAt("音量设置", 0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*2);
-            GUI_DispStringAt("报警音"  , 0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3);
-            GUI_DispStringAt("按键音"  , 0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4);
-            GUI_DispStringAt("单位设置", 0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5);
-            GUI_DispStringAt("船位设置", 0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6);
+            GUI_DispStringAt("夜间模式:", 30,   Win_SysSet_txOrg );
+            GUI_DispStringAt("亮度设置:", 30,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap));
+            GUI_DispStringAt("音量设置:", 30,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*2);
+            GUI_DispStringAt("报警音:"  , 30,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3);
+            GUI_DispStringAt("按键音:"  , 30,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4);
+            GUI_DispStringAt("单位设置:", 30,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5);
+            GUI_DispStringAt("船位设置:", 30,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6);
             
-            GUI_SetFont(&GUI_Font16_1);
+            GUI_SetFont(&GUI_Font30);
             
-            GUI_DispStringAt("OFF", 140,Win_SysSet_txOrg+8);
-            GUI_DispStringAt("ON",  310,Win_SysSet_txOrg+8);
-            
-//            GUI_DispDecAt(1, 120, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3, 1);
-//            GUI_DispDecAt(2, 300, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3, 1);
-//            
-//            GUI_DispDecAt(1, 120, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4, 1);
-//            GUI_DispDecAt(2, 300, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4, 1);            
-           
-            GUI_DispStringAt("nm", 140,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5+8);           
-            GUI_DispStringAt("km", 310,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5+8);
-            
-            GUI_DispStringAt("Boat",140,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+8);
-            GUI_DispStringAt("Fish",310,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+8);
+            GUI_DispStringAt("关闭", 130,Win_SysSet_txOrg);
+            GUI_DispStringAt("开启",  310,Win_SysSet_txOrg);
+						      GUI_SetFont(&GUI_Font24);
+            GUI_DispStringAt("使用",30, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*7+10);
+	      					GUI_DispStringAt("选择选项及调整音量亮度数字",118, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*7+10);
+         
+            GUI_SetFont (&GUI_Font32_1);
+            GUI_SetColor(pSkin->txColor);
+            GUI_DrawPolygon(&pPoint[0],5,310,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+8);
+            GUI_DispStringAt("nm", 140,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5);           
+            GUI_DispStringAt("km", 310,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5);
+            GUI_DrawBitmap(&bmfish,130,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+7);
+						
+						
+//             GUI_DispStringAt("Boat",140,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+8);
+//             GUI_DispStringAt("Fish",310,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+8);
             break;
        default:
            WM_DefaultProc(pMsg);
@@ -329,7 +366,6 @@ static void sldListenter(WM_MESSAGE * pMsg)
    const WM_KEY_INFO * pInfo;
    WM_MESSAGE myMsg;
    
-   WM_Obj * pObj  = (WM_Obj*)(GUI_ALLOC_h2p(pMsg->hWin));
    
    switch(pMsg->MsgId)
    {
@@ -340,12 +376,12 @@ static void sldListenter(WM_MESSAGE * pMsg)
               case GUI_KEY_BACKSPACE:
                    myMsg.hWin  = WM_GetClientWindow(confirmWin);
                    myMsg.hWinSrc  = subWins[3];
-                   myMsg.MsgId  = USER_MSG_ID_CHOOSE;
+                   myMsg.MsgId  = USER_MSG_CHOOSE;
                    myMsg.Data.v  = SYS_SETTING;
                    WM_SendMessage(myMsg.hWin, &myMsg);
                    
                    WM_BringToTop(confirmWin);
-                   WM_SetFocus(confirmWin);
+                   WM_SetFocus(WM_GetDialogItem (confirmWin,GUI_ID_BUTTON0)); 
                    break;
               default:
                    HSD_SLIDER_Callback(pMsg);
@@ -364,20 +400,31 @@ static void sldListenter(WM_MESSAGE * pMsg)
 static void _OnSkinChanged(WM_MESSAGE * pMsg,int val)
 {
    int i  = 0;
+	 WM_MESSAGE myMsg;
    if(agentConf.Skin  != val)
    {
+		 
       agentConf.Skin  = val;
-      pSkin  = &(SysWinSkins[val-SKIN_Night]);
+      pSkin  = &(SysWinSkins[val]);
       
       WINDOW_SetBkColor(pMsg->hWin, pSkin->bkColor);
-      
       for(i=0; i<7; i++)
       {
          HSD_SLIDER_SetBkColor(Slideres[i], pSkin->sldBk);
+				     HSD_SLIDER_SetFocusBkColor(Slideres[i], pSkin->sldBk);
          HSD_SLIDER_SetSlotColor(Slideres[i],pSkin->sldSlot);
          HSD_SLIDER_SetFocusSliderColor(Slideres[i], pSkin->sldFocusSlider);
-         HSD_SLIDER_SetSlotColor(Slideres[i], pSkin->sldSlot);
+         HSD_SLIDER_SetFocusSlotColor(Slideres[i], pSkin->sldSlot);
       }
+      
+	     myMsg.hWin = WM_GetClientWindow(menuWin);		
+      myMsg.Data.v = val;
+      myMsg.MsgId = USER_MSG_SKIN;
+      WM_SendMessage (myMsg.hWin, &myMsg);
+      
+      myMsg.hWin  = confirmWin;
+      WM_SendMessage (myMsg.hWin, &myMsg);
+			
    }
 
 INFO("Skin changed .skin:%d",agentConf.Skin);
@@ -388,6 +435,7 @@ static void _OnBrtChanged(WM_MESSAGE * pMsg,int val)
    if(agentConf.Brt != val)
    {
       agentConf.Brt  = val;
+      PWM_SET(val * 2);
    }
 INFO("Brightness changed .brt:%d",agentConf.Brt);
 }

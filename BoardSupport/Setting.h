@@ -66,7 +66,7 @@ int MNT_getAddrOffset(uint8_t * addr);
 Bool MNT_add(boat * pBoat);
 void MNT_initSetting(void);
 void MNT_load(void);
-void MNT_makeSettingUp(MNT_SETTING * pMNT_Setting);
+int MNT_makeSettingUp(MNT_SETTING * pMNT_Setting);
 void MNT_printSetting(void);
 Bool MNT_removeById(long Id);
 

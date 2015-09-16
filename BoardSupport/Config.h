@@ -28,16 +28,16 @@
 #define SubWin_HEIGHT   Win_Main_HEIGHT
 
 /// UI --- ET window
-#define ETWin_X   (MenuLabel_WIDTH+LV_MoniteSet_WIDTH)
+#define ETWin_X   (MenuLabel_WIDTH+LV_MoniteSet_WIDTH+10)
 #define ETWin_Y   SubWin_Y
-#define ETWin_WIDHT  (SubWin_WIDTH-LV_MoniteSet_WIDTH)
+#define ETWin_WIDHT  (SubWin_WIDTH-LV_MoniteSet_WIDTH-5)
 #define ETWin_HEIGHT  SubWin_HEIGHT
 
 /// UI --- Monite list lV
-#define LV_MoniteList_X         0
+#define LV_MoniteList_X         5
 #define LV_MoniteList_WIDTH     330
 #define LV_MoniteList_Y         40
-#define LV_MoniteList_HEIGHT    440
+#define LV_MoniteList_HEIGHT    400
 
 #define LV_MoniteList_Col_0_WIDTH    90
 #define LV_MoniteList_Col_1_WIDTH    170
@@ -48,23 +48,23 @@
 
 
 /// UI --- Monite set
-#define LV_MoniteSet_X         0
+#define LV_MoniteSet_X         5
 #define LV_MoniteSet_WIDTH     440
 #define LV_MoniteSet_Y         40
-#define LV_MoniteSet_HEIGHT    440
+#define LV_MoniteSet_HEIGHT    400
 
-#define LV_MoniteSet_Col_0_WIDTH    280
+#define LV_MoniteSet_Col_0_WIDTH    250
 #define LV_MoniteSet_Col_1_WIDTH    120
-#define LV_MoniteSet_Col_2_WIDTH    40
+#define LV_MoniteSet_Col_2_WIDTH    70
 #define LV_MoniteSet_Row_HEIGHT     40
 #define LV_MoniteSet_Header_HEIGHT  40
 
 
 /// UI --- All list
-#define LV_AllList_X            0
+#define LV_AllList_X            5
 #define LV_AllList_WIDTH        320
 #define LV_AllList_Y            40
-#define LV_AllList_HEIGHT       444
+#define LV_AllList_HEIGHT       400  
 
 #define LV_AllList_Col_0_WIDTH    80
 //#define LV_AllList_Col_1_WIDTH    80
@@ -78,14 +78,14 @@
 
 
 /// UI  --- Sys set
-#define Win_SysSet_X             0
+#define Win_SysSet_X             5
 #define Win_SysSet_WIDHT         (Win_Main_WIDTH-MenuLabel_RIGHT)
 #define Win_SysSet_Y             0
 #define Win_SysSet_BOTTOM        (Win_Main_HEIGT)
 #define Win_SysSet_Text_HEIGHT   30
 #define Win_SysSet_Text_WIDTH    120
-#define Win_SysSet_txOrg         40
-#define Win_SysSet_txGrap        2
+#define Win_SysSet_txOrg         55
+#define Win_SysSet_txGrap        15
 
 /********************************************************************
  *

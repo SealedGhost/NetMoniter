@@ -30,6 +30,8 @@
 #include "skinColor.h"
 #include "str.h"
 #include "dlg.h"
+#include "28.h"
+
 
 /*********************************************************************
 *
@@ -71,8 +73,8 @@ static int fdDist  = 0;
 static int zmDist  = 0;
 static void myButtonListener(WM_MESSAGE* pMsg);
 static void btReset(WM_HWIN thisWin);
-
-
+extern GUI_CONST_STORAGE GUI_BITMAP bmyu;
+extern GUI_CONST_STORAGE GUI_BITMAP bmmao;
 
 
 
@@ -93,27 +95,27 @@ static void btReset(WM_HWIN thisWin);
 *       _aDialogCreate
 */
 static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
-  { WINDOW_CreateIndirect, "ETWin", ID_WINDOW_0, ETWin_X, SubWin_Y+40, ETWin_WIDHT, ETWin_HEIGHT-40, 0, 0x0, 0 },
+  { WINDOW_CreateIndirect, "ETWin", ID_WINDOW_0, ETWin_X, SubWin_Y+40, ETWin_WIDHT, ETWin_HEIGHT-81, 0, 0x0, 0 },
 	
-	{ TEXT_CreateIndirect, "监控设置项:",  ID_TEXT_0, 0,    0,                  ETWin_WIDHT,30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "消失报警:",   ID_TEXT_1, 0,    LV_MoniteSet_Y,     160,        30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "防盗报警:",   ID_TEXT_2, 0,    LV_MoniteSet_Y+60,  200,        30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "报警距离:",   ID_TEXT_3, 0,   LV_MoniteSet_Y+100,  200,         0, 0, 0x0, 0},
- { TEXT_CreateIndirect, "nm",           ID_TEXT_8, 200,  LV_MoniteSet_Y+100,   50,        30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "报警声音:",   ID_TEXT_4, 0,   LV_MoniteSet_Y+140, 200,        30, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "走锚报警:",   ID_TEXT_5, 0,    LV_MoniteSet_Y+200, 200,        40, 0, 0x0, 0},
-	{ TEXT_CreateIndirect, "报警距离:",   ID_TEXT_6, 0,   LV_MoniteSet_Y+240, 200,        40,  0, 0x0, 0},
- { TEXT_CreateIndirect, "nm",           ID_TEXT_9, 200,  LV_MoniteSet_Y+240, 50,         40,  0, 0x0,0},
- { TEXT_CreateIndirect, "报警声音:",   ID_TEXT_7, 0,   LV_MoniteSet_Y+280, 200,        40,  0, 0x0, 0},
-
+	//{ TEXT_CreateIndirect, "监控设置项:",  ID_TEXT_0, 0,    0,                  ETWin_WIDHT,30, 0, 0x0, 0},
+	//{ TEXT_CreateIndirect, "消失报警:",   ID_TEXT_1,     10,    10,    130,   30, 0, 0x0, 0},
+	//{ TEXT_CreateIndirect, "防盗报警功能:",   ID_TEXT_2, 10,    45 ,   140,   30, 0, 0x0, 0},
+	//{ TEXT_CreateIndirect, "距离:",        ID_TEXT_3,    100,   80,    70,    30, 0, 0x0, 0},
+  { TEXT_CreateIndirect, "nm",           ID_TEXT_8,    200,   82,    70,    30, 0, 0x0, 0},
+	//{ TEXT_CreateIndirect, "声音:",        ID_TEXT_4,    100,   160,   70,    30, 0x0, 0},
+	//{ TEXT_CreateIndirect, "走锚报警功能:",ID_TEXT_5,    10,    190,   140,   30, 0, 0x0, 0},
+	//{ TEXT_CreateIndirect, "距离:",        ID_TEXT_6,    100,   225,   70,    30,  0, 0x0, 0},
+  { TEXT_CreateIndirect, "nm",           ID_TEXT_9,    200,   227,   70,    30,  0, 0x0,0},
+  //{ TEXT_CreateIndirect, "声音:",        ID_TEXT_7,    100,   305,   70,    30,  0, 0x0, 0},
+	//{ TEXT_CreateIndirect, "使用左右切换设置",        ID_TEXT_0,    50,   350,   300,    30,  0, 0x0, 0},
  
- { BUTTON_CreateIndirect, "bt_0", ID_BUTTON_0, 130, LV_MoniteSet_Y,     70, 30, 0, 0xa,  0 },
- { BUTTON_CreateIndirect, "bt_1", ID_BUTTON_1, 130, LV_MoniteSet_Y+60,  70, 30, 0, 0x64, 0 },
- { BUTTON_CreateIndirect, "bt_2", ID_BUTTON_2, 130, LV_MoniteSet_Y+100, 70, 30, 0, 0x64, 0 },
- { BUTTON_CreateIndirect, "bt_3", ID_BUTTON_3, 130, LV_MoniteSet_Y+140, 70, 30, 0, 0x64, 0 },
- { BUTTON_CreateIndirect, "bt_4", ID_BUTTON_4, 130, LV_MoniteSet_Y+200, 70, 30, 0, 0x64, 0 },
- { BUTTON_CreateIndirect, "bt_5", ID_BUTTON_5, 130, LV_MoniteSet_Y+240, 70, 30, 0, 0x64, 0},
-	{ BUTTON_CreateIndirect, "bt_6", ID_BUTTON_6, 130, LV_MoniteSet_Y+280, 70, 30, 0, 0x64, 0}
+ { BUTTON_CreateIndirect, "bt_0", ID_BUTTON_0, 115, 10,  70, 30, 0, 0xa,  0 },
+ { BUTTON_CreateIndirect, "bt_1", ID_BUTTON_1, 150, 45,  70, 30, 0, 0x64, 0 },
+ { BUTTON_CreateIndirect, "bt_2", ID_BUTTON_2, 150, 80,  50, 30, 0, 0x64, 0 },
+ { BUTTON_CreateIndirect, "bt_3", ID_BUTTON_3, 150, 160, 70, 30, 0, 0x64, 0 },
+ { BUTTON_CreateIndirect, "bt_4", ID_BUTTON_4, 150, 190, 70, 30, 0, 0x64, 0 },
+ { BUTTON_CreateIndirect, "bt_5", ID_BUTTON_5, 150, 225, 50, 30, 0, 0x64, 0},
+ { BUTTON_CreateIndirect, "bt_6", ID_BUTTON_6, 150, 305, 70, 30, 0, 0x64, 0}
 	
   // USER START (Optionally insert additional widgets)
   // USER END
@@ -148,46 +150,89 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
   // USER START (Optionally insert additional variables)
   // USER END
   switch (pMsg->MsgId) {
+		
+		case WM_PAINT:
+			
+				GUI_SetFont(&GUI_Font30);
+				GUI_SetColor(pSkin->txColor);
+				GUI_SetTextMode(GUI_TM_TRANS);
+				GUI_DispStringAt("消失报警:",10,10);
+				GUI_DispStringAt("防盗报警功能:",10,45);
+				GUI_DispStringAt("距离:",100,80);
+				GUI_DispStringAt("声音:",100,160);
+				GUI_DispStringAt("走锚报警功能:",10,190);
+				GUI_DispStringAt("距离:",100,225);
+				GUI_DispStringAt("声音:",100,305);
+				GUI_SetFont(&GUI_Font24);
+				GUI_DispStringAt("使用空空切换设置:",43,350);
+				GUI_SetFont(&GUI_Font24);
+				GUI_SetColor(pSkin->bt_txColor);
+				GUI_DispStringAt("左右",80,350);
+				GUI_SetColor(GUI_WHITE);
+				GUI_DrawBitmap(&bmyu,45,110);
+				GUI_DrawBitmap(&bmmao,33,260);
+				
+				//GUI_SetPenSize(3);
+    GUI_SetColor(BGL_BOAT_COLOR);
+				GUI_DrawCircle(53,130,40);
+    GUI_SetColor(DRG_BOAT_COLOR);
+				GUI_DrawCircle(53,280,40);
+    
+    GUI_SetColor(GUI_BROWN);
+    GUI_DrawHLine(130, 53, 93);
+    GUI_DrawLine(80, 130, 93, 110);
+    GUI_DrawHLine(110, 93, 150);
+    
+    GUI_DrawHLine(276, 53, 93);
+    GUI_DrawLine(80, 276, 93, 256);
+    GUI_DrawHLine(256, 93, 150);
+				
+//  				GUI_DispStringAt("是",30,250);
+// 				GUI_DispStringAt("否",30,290);
+				
+				
+			break;
   
   case USER_MSG_SKIN: 
        pSkin  = &(MntSetWinSkins[pMsg->Data.v]);
        
-       WINDOW_SetBkColor(pMsg->hWin, pSkin->MntSetWin_BackGround);
+       WINDOW_SetBkColor(pMsg->hWin, pSkin->bkColor);
        
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_0);
-       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);
+			 TEXT_SetFont(hItem,&GUI_Font24);
+       TEXT_SetTextColor(hItem, pSkin->bt_bkFocus);
        
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_1);
-       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+       TEXT_SetTextColor(hItem, pSkin->txColor); 
        
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_2);
-       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+       TEXT_SetTextColor(hItem, pSkin->txColor); 
        
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_3);
-       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+       TEXT_SetTextColor(hItem, pSkin->txColor); 
        
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_4);
-       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);  
+       TEXT_SetTextColor(hItem, pSkin->txColor);  
        
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_5);
-       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+       TEXT_SetTextColor(hItem, pSkin->txColor); 
        
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_6);
-       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+       TEXT_SetTextColor(hItem, pSkin->txColor); 
        
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_7);
-       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);  
+       TEXT_SetTextColor(hItem, pSkin->txColor);  
        
-       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_8);      
-       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_8);
+       TEXT_SetTextColor(hItem, pSkin->txColor); 
        
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_9);
-       TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);  
+       TEXT_SetTextColor(hItem, pSkin->txColor);  
 
        for(i=0;i<7;i++)
        {
-          BUTTON_SetBkColor(hBts[i], BUTTON_CI_UNPRESSED, GUI_GRAY);
-          BUTTON_SetTextColor(hBts[i], BUTTON_CI_UNPRESSED,GUI_WHITE);
+          BUTTON_SetBkColor(hBts[i], BUTTON_CI_UNPRESSED, pSkin->bt_bkColor);
+          BUTTON_SetTextColor(hBts[i], BUTTON_CI_UNPRESSED,pSkin->bt_txColor);
        } 
        break;
        
@@ -201,41 +246,45 @@ INFO("case user_msg_UNIT");
        
   case WM_INIT_DIALOG:
        pSkin  = &(MntSetWinSkins[SysConf.Skin]);
+	
+		WINDOW_SetBkColor(pMsg->hWin, pSkin->bkColor);
+		
     //
     // Initialization of 'text'
     //    
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_0);
-    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);
+		TEXT_SetFont(hItem,&GUI_Font24);
+    TEXT_SetTextColor(hItem, pSkin->bt_bkColor);
     
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_1);
-    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+    TEXT_SetTextColor(hItem, pSkin->txColor); 
     
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_2);
-    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+    TEXT_SetTextColor(hItem, pSkin->txColor); 
     
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_3);
-    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+    TEXT_SetTextColor(hItem, pSkin->txColor); 
     
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_4);
-    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+    TEXT_SetTextColor(hItem, pSkin->txColor); 
     
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_5);
-    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+    TEXT_SetTextColor(hItem, pSkin->txColor); 
     
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_6);
-    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label); 
+    TEXT_SetTextColor(hItem, pSkin->txColor); 
     
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_7);
-    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);    
+    TEXT_SetTextColor(hItem, pSkin->txColor);    
     
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_8);
     TEXT_SetFont(hItem, GUI_FONT_24_1);
-    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);
+    TEXT_SetTextColor(hItem, pSkin->txColor);
     TEXT_SetText(hItem, SysConf.Unit==UNIT_km?"km":"nm");
     
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_9);
     TEXT_SetFont(hItem, GUI_FONT_24_1);
-    TEXT_SetTextColor(hItem, pSkin->MntSetWin_Label);   
+    TEXT_SetTextColor(hItem, pSkin->txColor);   
     TEXT_SetText(hItem, SysConf.Unit==UNIT_km?"km":"nm");    
   
     //
@@ -286,8 +335,8 @@ INFO("case user_msg_UNIT");
     
     for(i=0;i<7;i++)
     {
-//       BUTTON_SetBkColor(hBts[i], BUTTON_CI_UNPRESSED, pSkin->);
-       BUTTON_SetTextColor(hBts[i], BUTTON_CI_UNPRESSED,GUI_WHITE);
+       BUTTON_SetBkColor(hBts[i], BUTTON_CI_UNPRESSED, pSkin->bt_bkColor);
+       BUTTON_SetTextColor(hBts[i], BUTTON_CI_UNPRESSED,pSkin->bt_txColor);
     } 
     // USER START (Optionally insert additional code for further widget initialization)
     // USER END
@@ -432,6 +481,22 @@ static void myButtonListener(WM_MESSAGE* pMsg)
 	
 	switch(pMsg->MsgId)
 	{
+      case WM_SET_FOCUS:
+           i  = WM_GetId(pMsg->hWin) - ID_BUTTON_0;
+           
+           if(pMsg->Data.v)
+           {
+              BUTTON_SetBkColor(hBts[i], BUTTON_CI_UNPRESSED, pSkin->bt_bkFocus);
+							BUTTON_SetTextColor(hBts[i], BUTTON_CI_UNPRESSED,pSkin->bt_txFocus);
+           }
+           else
+           {
+             BUTTON_SetBkColor(hBts[i], BUTTON_CI_UNPRESSED, pSkin->bt_bkColor);
+						 BUTTON_SetTextColor(hBts[i], BUTTON_CI_UNPRESSED,pSkin->bt_txColor);
+           }
+           BUTTON_Callback(pMsg);
+           break;				
+		
 		case WM_KEY:
 			pInfo  = (WM_KEY_INFO*)pMsg->Data.p;
 		
@@ -540,12 +605,12 @@ static void myButtonListener(WM_MESSAGE* pMsg)
     case GUI_KEY_BACKSPACE:
          myMsg.hWin  = WM_GetClientWindow(confirmWin);
          myMsg.hWinSrc  = pMsg->hWin;
-         myMsg.MsgId  = USER_MSG_ID_CHOOSE;
+         myMsg.MsgId  = USER_MSG_CHOOSE;
          myMsg.Data.v = STORE_SETTING;
          WM_SendMessage(myMsg.hWin, &myMsg);
          
          WM_BringToTop(confirmWin);
-         WM_SetFocus(confirmWin);
+         WM_SetFocus(WM_GetDialogItem (confirmWin,GUI_ID_BUTTON0));
     break; 
          
 				default:
@@ -554,13 +619,17 @@ static void myButtonListener(WM_MESSAGE* pMsg)
 			}
    break;
 			
-   case USER_MSG_ID_REPLY:
+   case USER_MSG_REPLY:
        switch(pMsg->Data.v)
        {
           case REPLY_OK:
-               MNT_makeSettingUp(&mntSetting);  
+               i  = MNT_makeSettingUp(&mntSetting);  
                MNT_initSetting();
-               btReset(mntSettingWin);             
+               btReset(mntSettingWin);  
+               myMsg.hWin  = WM_GetClientWindow(menuWin);               
+               myMsg.MsgId  = USER_MSG_DFULT_CNT;
+               myMsg.Data.v  = i;
+               WM_SendMessage(myMsg.hWin, &myMsg);
                WM_SetFocus(menuWin);
                break;
           case REPLY_CANCEL:         

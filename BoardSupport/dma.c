@@ -9,10 +9,11 @@
 #include "MainTask.h"  
 #include "pwm.h"
 #include "Config.h"
+#include "dlg.h"
 
 
 /*---------------------------- Macro defines --------------------------------------*/
-#define DMA_SIZE		3
+#define DMA_SIZE		1
 
 
 /*---------------------------- External  variables --------------------------------*/
@@ -32,7 +33,7 @@ extern int isKeyTrigged;
 
 
 /*-------------------------- Global Variables -------------------------------------*/
-
+volatile uint8_t Brightness  = 3;
 volatile Bool Doubleclick  = FALSE;
 uint8_t DMADest_Buffer[DMA_SIZE]; 
 GPDMA_Channel_CFG_Type GPDMACfg;
@@ -56,87 +57,121 @@ void DMA_IRQHandler (void)
  
 		if(GPDMA_IntGetStatus(GPDMA_STAT_INTTC, 0))/* 检查DMA通道0终端计数请求状态，读取DMACIntTCStatus寄存器来判断中断是否因为传输的结束而产生（终端计数） */ 
 		{			
-//			GPDMA_ClearIntPending (GPDMA_STATCLR_INTTC, 0);/* 清除DMA通道0终端计数中断请求 */				
-     switch (DMADest_Buffer[0])
-			{
-			
-				case 0x4E: //按下
+//			GPDMA_ClearIntPending (GPDMA_STATCLR_INTTC, 0);/* 清除DMA通道0终端计数中断请求 */			
 
-								switch (DMADest_Buffer[1])
-								{
-									case 0x61://放大
-										        if(DMADest_Buffer[2]==0x81)
-										        {printf("a");GUI_StoreKeyMsg(GUI_KEY_LARGE ,1);}    else printf("error 0x4E 0x61 but not 0x81");break;
-									case 0x62://归中
-									          if(DMADest_Buffer[2]==0x80)
-										        {printf("b");GUI_StoreKeyMsg(GUI_KEY_LARGE ,1);isKeyTrigged  = 1; }else printf("error 0x4E 0x62 but not 0x80");break;										
-									case 0x63://缩小
-										       if(DMADest_Buffer[2]==0x7F)
-										       {printf("c");GUI_StoreKeyMsg(GUI_KEY_REDUCE,1);}     else printf("error 0x4E 0x63 but not 0x7F");break;										
-									case 0x65://PWM++
-                           if(DMADest_Buffer[2]==0x7D)
-                           {printf("e");PWM_BkBrightness--;if(PWM_BkBrightness==-1)PWM_BkBrightness=0;PWM_SET(PWM_BkBrightness);}else printf("error 0x4E 0x65 but not 0x7D");break;													 
-									case 0x66://PWM--
-                           if(DMADest_Buffer[2]==0x7C)
-                           {printf("f");PWM_BkBrightness++;if(PWM_BkBrightness==11)PWM_BkBrightness=10;PWM_SET(PWM_BkBrightness);}else printf("error 0x4E 0x66 but not 0x7C");break;
-									case 0x67://航迹关
-                           if(DMADest_Buffer[2]==0x7B)
-                           {printf("g");/*BACK_PWM--;if(BACK_PWM==-1)BACK_PWM=0;PWM_SET(BACK_PWM);*/}else printf("error 0x4E 0x67 but not 0x7B");break;													 
-									case 0x68://航迹开
-                           if(DMADest_Buffer[2]==0x7A)
-                           {printf("h");/*BACK_PWM++;if(BACK_PWM==11)BACK_PWM=10;PWM_SET(BACK_PWM);*/}else printf("error 0x4E 0x68 but not 0x7A");break;
-									case 0x69://监控关
-										       if(DMADest_Buffer[2]==0x79)
-										       {printf("i");GUI_StoreKeyMsg(GUI_KEY_CANCEL,1);}    else printf("error 0x4E 0x69 but not 0x79");break;													 
-									case 0x6A://监控开
-										       if(DMADest_Buffer[2]==0x78)
-										       {printf("j");GUI_StoreKeyMsg(GUI_KEY_MONITORING,1);}else printf("error 0x4E 0x6A but not 0x78");break;		
-									case 0x6B://左
-										       if(DMADest_Buffer[2]==0x77)
-										       {printf("k");GUI_StoreKeyMsg(GUI_KEY_LEFT    ,1); }else printf("error 0x4E 0x6B but not 0x77");break;
-									case 0x6C://上
-										       if(DMADest_Buffer[2]==0x76)
-										       {printf("l");GUI_StoreKeyMsg(GUI_KEY_UP    ,1); }else printf("error 0x4E 0x6C but not 0x76");break;
-									case 0x6D://下
-													 if(DMADest_Buffer[2]==0x75)
-													 {printf("m");GUI_StoreKeyMsg(GUI_KEY_DOWN ,1);}else printf("error 0x4E 0x6D but not 0x75");break;
-									case 0x6E://确定
-													 if(DMADest_Buffer[2]==0x74)
-													 {printf("n");GUI_StoreKeyMsg(GUI_KEY_ENTER ,1); }else printf("error 0x4E 0x6E but not 0x74");break;
-									case 0x6F://右
-													 if(DMADest_Buffer[2]==0x73)
-													 {printf("o");GUI_StoreKeyMsg(GUI_KEY_RIGHT ,1); }else printf("error 0x4E 0x6F but not 0x73");break;												
-									case 0x70://菜单
-													 if(DMADest_Buffer[2]==0x72)
-													 {printf("                                             ");GUI_StoreKeyMsg(GUI_KEY_MENU  ,1);}else printf("error 0x4E 0x70 but not 0x72");break;
-									case 0x71://返回
-													 if(DMADest_Buffer[2]==0x71)
-													 {printf("q");GUI_StoreKeyMsg(GUI_KEY_BACKSPACE,1);}else printf("error 0x4E 0x71 but not 0x71");break;
-// 									case 0x3A://F1
-// 										if(DMADest_Buffer[2]==0x78)
-// 										{printf("F1:");GUI_StoreKeyMsg(GUI_KEY_F1,1);}else printf("error 0x4E 0x3A but not 0x78");break;
-// 									case 0x3B://F2
-// 										if(DMADest_Buffer[2]==0x77)
-// 										{printf("F2;");GUI_StoreKeyMsg(GUI_KEY_F2,1);}else printf("error 0x4E 0x3B but not 0x77");break;
-									default:printf("ERROR DEFAULT 0x4E");break;
-								}break;
-								
-				case 0x43: //松开
-			   		if(Doubleclick)
-								switch (DMADest_Buffer[1])
-								{
-										case 0x6C:if(DMADest_Buffer[2]==0x76){printf("5");GUI_StoreKeyMsg(GUI_KEY_UP    ,0);}else printf("error 0x43 0x6C but not 0x76");break;
-										case 0x6B:if(DMADest_Buffer[2]==0x77){printf("7");GUI_StoreKeyMsg(GUI_KEY_LEFT  ,0);}else printf("error 0x43 0x6B but not 0x77");break;
-										case 0x6F:if(DMADest_Buffer[2]==0x73){printf("9");GUI_StoreKeyMsg(GUI_KEY_RIGHT ,0);}else printf("error 0x43 0x6F but not 0x73");break;
-										case 0x6D:if(DMADest_Buffer[2]==0x75){printf("0");GUI_StoreKeyMsg(GUI_KEY_DOWN  ,0);}else printf("error 0x43 0x6D but not 0x75");break;
-										
-									default:printf("ERROR DEFAULT 0x43");break;
-								}break;
-				default:
-//       printf("ERROR UNDEFINE THIS KEY");
-//       lpc1788_DMA_Init();
-       break;									
-			}		
+
+//     switch (DMADest_Buffer[0])
+//			{
+//			
+//				case 0x4E: //按下
+
+//								switch (DMADest_Buffer[1])
+//								{
+//									case 0x61://放大
+//										        if(DMADest_Buffer[2]==0x81)
+//										        {printf("a");GUI_StoreKeyMsg(GUI_KEY_LARGE ,1);}    else printf("error 0x4E 0x61 but not 0x81");break;
+//									case 0x62://归中
+//									          if(DMADest_Buffer[2]==0x80)
+//										        {printf("b");GUI_StoreKeyMsg(GUI_KEY_LARGE ,1);isKeyTrigged  = 1; }else printf("error 0x4E 0x62 but not 0x80");break;										
+//									case 0x63://缩小
+//										       if(DMADest_Buffer[2]==0x7F)
+//										       {printf("c");GUI_StoreKeyMsg(GUI_KEY_REDUCE,1);}     else printf("error 0x4E 0x63 but not 0x7F");break;										
+//									case 0x65://PWM++
+//                           if(DMADest_Buffer[2]==0x7D)
+//                           {printf("e");PWM_BkBrightness--;if(PWM_BkBrightness==-1)PWM_BkBrightness=0;PWM_SET(PWM_BkBrightness);}else printf("error 0x4E 0x65 but not 0x7D");break;													 
+//									case 0x66://PWM--
+//                           if(DMADest_Buffer[2]==0x7C)
+//                           {printf("f");PWM_BkBrightness++;if(PWM_BkBrightness==11)PWM_BkBrightness=10;PWM_SET(PWM_BkBrightness);}else printf("error 0x4E 0x66 but not 0x7C");break;
+//									case 0x67://航迹关
+//                           if(DMADest_Buffer[2]==0x7B)
+//                           {printf("g");/*BACK_PWM--;if(BACK_PWM==-1)BACK_PWM=0;PWM_SET(BACK_PWM);*/}else printf("error 0x4E 0x67 but not 0x7B");break;													 
+//									case 0x68://航迹开
+//                           if(DMADest_Buffer[2]==0x7A)
+//                           {printf("h");/*BACK_PWM++;if(BACK_PWM==11)BACK_PWM=10;PWM_SET(BACK_PWM);*/}else printf("error 0x4E 0x68 but not 0x7A");break;
+//									case 0x69://监控关
+//										       if(DMADest_Buffer[2]==0x79)
+//										       {printf("i");GUI_StoreKeyMsg(GUI_KEY_CANCEL,1);}    else printf("error 0x4E 0x69 but not 0x79");break;													 
+//									case 0x6A://监控开
+//										       if(DMADest_Buffer[2]==0x78)
+//										       {printf("j");GUI_StoreKeyMsg(GUI_KEY_MONITORING,1);}else printf("error 0x4E 0x6A but not 0x78");break;		
+//									case 0x6B://左
+//										       if(DMADest_Buffer[2]==0x77)
+//										       {printf("k");GUI_StoreKeyMsg(GUI_KEY_LEFT    ,1); }else printf("error 0x4E 0x6B but not 0x77");break;
+//									case 0x4E://上
+//										       if(DMADest_Buffer[2]==0x4E)
+//										       {printf("l");GUI_StoreKeyMsg(GUI_KEY_UP    ,1); }else printf("error 0x4E 0x6C but not 0x76");break;
+//									case 0x6D://下
+//													 if(DMADest_Buffer[2]==0x75)
+//													 {printf("m");GUI_StoreKeyMsg(GUI_KEY_DOWN ,1);}else printf("error 0x4E 0x6D but not 0x75");break;
+//									case 0x6E://确定
+//													 if(DMADest_Buffer[2]==0x74)
+//													 {printf("n");GUI_StoreKeyMsg(GUI_KEY_ENTER ,1); }else printf("error 0x4E 0x6E but not 0x74");break;
+//									case 0x6F://右
+//													 if(DMADest_Buffer[2]==0x73)
+//													 {printf("o");GUI_StoreKeyMsg(GUI_KEY_RIGHT ,1); }else printf("error 0x4E 0x6F but not 0x73");break;												
+//									case 0x70://菜单
+//													 if(DMADest_Buffer[2]==0x72)
+//													 {printf("p");GUI_StoreKeyMsg(GUI_KEY_MENU  ,1);}else printf("error 0x4E 0x70 but not 0x72");break;
+//									case 0x71://返回
+//													 if(DMADest_Buffer[2]==0x71)
+//													 {printf("q");GUI_StoreKeyMsg(GUI_KEY_BACKSPACE,1);}else printf("error 0x4E 0x71 but not 0x71");break;
+//// 									case 0x3A://F1
+//// 										if(DMADest_Buffer[2]==0x78)
+//// 										{printf("F1:");GUI_StoreKeyMsg(GUI_KEY_F1,1);}else printf("error 0x4E 0x3A but not 0x78");break;
+//// 									case 0x3B://F2
+//// 										if(DMADest_Buffer[2]==0x77)
+//// 										{printf("F2;");GUI_StoreKeyMsg(GUI_KEY_F2,1);}else printf("error 0x4E 0x3B but not 0x77");break;
+//									default:printf("ERROR DEFAULT 0x4E");break;
+//								}break;
+//								
+//				case 0x43: //松开
+//			   		if(Doubleclick)
+//								switch (DMADest_Buffer[1])
+//								{
+//										case 0x6C:if(DMADest_Buffer[2]==0x76){printf("5");GUI_StoreKeyMsg(GUI_KEY_UP    ,0);}else printf("error 0x43 0x6C but not 0x76");break;
+//										case 0x6B:if(DMADest_Buffer[2]==0x77){printf("7");GUI_StoreKeyMsg(GUI_KEY_LEFT  ,0);}else printf("error 0x43 0x6B but not 0x77");break;
+//										case 0x6F:if(DMADest_Buffer[2]==0x73){printf("9");GUI_StoreKeyMsg(GUI_KEY_RIGHT ,0);}else printf("error 0x43 0x6F but not 0x73");break;
+//										case 0x6D:if(DMADest_Buffer[2]==0x75){printf("0");GUI_StoreKeyMsg(GUI_KEY_DOWN  ,0);}else printf("error 0x43 0x6D but not 0x75");break;
+//										
+//									default:printf("ERROR DEFAULT 0x43");break;
+//								}break;
+//				default:
+////       printf("ERROR UNDEFINE THIS KEY");
+////       lpc1788_DMA_Init();
+//       break;									
+//			}		
+   if(DMADest_Buffer[0] >= GUI_KEY_MENU  &&  DMADest_Buffer[0] <= GUI_KEY_PGDOWN)   
+   {
+      switch(DMADest_Buffer[0])
+      {
+         case GUI_KEY_PWM_INC:
+              WM_SendMessageNoPara(WM_GetClientWindow(subWins[3]), GUI_KEY_PWM_INC);
+              break;
+              
+         case GUI_KEY_PWM_DEC:
+              WM_SendMessageNoPara(WM_GetClientWindow(subWins[3]), GUI_KEY_PWM_DEC);
+              break;
+         
+         case GUI_KEY_TRACE_ENABLE:
+              break;
+         case GUI_KEY_TRACE_DISABLE:
+              break;
+      }
+      GUI_StoreKeyMsg(DMADest_Buffer[0], 1);
+      printf("keyValue:%d\n\r",DMADest_Buffer[0]);
+   }   
+   else if(DMADest_Buffer[0] == GUI_KEY_RELEASE)
+   {
+      if(Doubleclick)
+      {
+         GUI_StoreKeyMsg(GUI_KEY_RELEASE, 1);
+         printf("key release\n\r");
+      }
+   }
+   else
+   {
+      printf("err key\n\r"); 
+   }
 			LPC_GPDMACH0->CDestAddr = GPDMACfg.DstMemAddr;// Assign memory destination address
 			LPC_GPDMACH0->CControl= GPDMA_DMACCxControl_TransferSize((uint32_t)GPDMACfg.TransferSize) \
 														| GPDMA_DMACCxControl_SBSize((uint32_t)GPDMA_LUTPerBurst[GPDMACfg.SrcConn]) \
@@ -173,15 +208,21 @@ void DMA_IRQHandler (void)
 //           pt++;
 //        }
 //        OSQPost(QSem,(void *)pt0);		
-        
-       for(index=0;index<50;index++)	
+       if(UART2_RX[0] == '!'  ||  UART2_RX[0] == '$')
        {
-         Partition[myCnt][index]=UART2_RX[index];
-       }
+          for(index=0;index<50;index++)	
+          {
+            Partition[myCnt][index]=UART2_RX[index];
+          }
 
-       OSQPost(QSem,(void *)Partition[myCnt]); 
-       myCnt++;
-       myCnt  = myCnt%(MSG_QUEUE_TABNUM);  
+          OSQPost(QSem,(void *)Partition[myCnt]); 
+          myCnt++;
+          myCnt  = myCnt%(MSG_QUEUE_TABNUM);
+       } 
+       else
+       {
+          printf("dma error\n\r");
+       }       
 //printf("myCnt:%d",myCnt);       
       
        LPC_GPDMACH1->CControl = (LPC_GPDMACH1->CControl & 0xfffff000)|(sizeof(UART2_RX) &0x0fff);

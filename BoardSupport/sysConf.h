@@ -18,7 +18,7 @@
 
 
 typedef enum _SKINS SKINS;
-enum _SKINS {SKIN_Night=0, SKIN_Day};
+enum _SKINS {SKIN_Day=0, SKIN_Night};
 
 typedef enum _UNITS   UNITS;
 enum _UNITS{UNIT_nm=0, UNIT_km};
@@ -70,74 +70,140 @@ struct _CONF_BOAT_SHAPE
 
 
 typedef struct _MapWin_COLOR MapWin_COLOR;
+//struct _MapWin_COLOR
+//{
+//  GUI_COLOR BackGround;
+//    
+//  GUI_COLOR Title_Background;    /// 
+//	 GUI_COLOR Title_Label;
+// 	GUI_COLOR Title_Context;
+// 	GUI_COLOR Title_HorLine;
+//	
+//	 GUI_COLOR Map_Grid;            /// Color of grid.
+//	 GUI_COLOR Map_Text;            /// Color of text.
+//     
+//  GUI_COLOR Boat_ORG;            /// Color of boat with nono setting.
+//  GUI_COLOR Boat_Dsp;            /// Color of boat with DSP setting.
+//  GUI_COLOR Boat_Bgl;            /// Color of boat with BGL setting.
+//  GUI_COLOR Boat_Drg;            /// Color of boat with DRG setting.
+//  GUI_COLOR Boat_Tip_Border;     /// Color of tip's border.
+//  GUI_COLOR Boat_Name;           /// Color of boat's name in tip.
+//  GUI_COLOR Boat_Cdnt;           /// Color of boat's coordiate in tip.
+//};
+
 struct _MapWin_COLOR
 {
-  GUI_COLOR BackGround;
-    
-  GUI_COLOR Title_Background;    /// 
-	 GUI_COLOR Title_Label;
- 	GUI_COLOR Title_Context;
- 	GUI_COLOR Title_HorLine;
+   GUI_COLOR bkColor;
+   
+   GUI_COLOR ttl_bkTop;
+   GUI_COLOR ttl_bkBottom;
+   GUI_COLOR ttl_Label;
+   GUI_COLOR ttl_Context;
+   
+   GUI_COLOR map_Grid;
+   GUI_COLOR map_tip_Text;
+   GUI_COLOR map_tip_Bat;
+   
+   GUI_COLOR boat_Mom;
+   GUI_COLOR boat_Org;
+   GUI_COLOR boat_Dsp;
+   GUI_COLOR boat_Bgl;
+   GUI_COLOR boat_Drg;
+   
+   GUI_COLOR sclColor;
 	
-	 GUI_COLOR Map_Grid;            /// Color of grid.
-	 GUI_COLOR Map_Text;            /// Color of text.
-     
-  GUI_COLOR Boat_ORG;            /// Color of boat with nono setting.
-  GUI_COLOR Boat_Dsp;            /// Color of boat with DSP setting.
-  GUI_COLOR Boat_Bgl;            /// Color of boat with BGL setting.
-  GUI_COLOR Boat_Drg;            /// Color of boat with DRG setting.
-  GUI_COLOR Boat_Tip_Border;     /// Color of tip's border.
-  GUI_COLOR Boat_Name;           /// Color of boat's name in tip.
-  GUI_COLOR Boat_Cdnt;           /// Color of boat's coordiate in tip.
+	  GUI_COLOR net_lab;
 };
 
 
+
+
 typedef struct _MenuWin_COLOR MenuWin_COLOR;
-struct _MenuWin_COLOR 
+//struct _MenuWin_COLOR 
+//{
+//  GUI_COLOR BackGround;
+//  
+//  GUI_COLOR Menu_Label;           /// Color of string "Main Menu".
+//  
+//  GUI_COLOR Bt_Sel;
+//  GUI_COLOR Bt_Unsel;
+//  GUI_COLOR Bt_Text;
+//  GUI_COLOR Bt_Focus;
+//};
+
+struct _MenuWin_COLOR
 {
-  GUI_COLOR BackGround;
-  
-  GUI_COLOR Menu_Label;           /// Color of string "Main Menu".
-  
-  GUI_COLOR Bt_Sel;
-  GUI_COLOR Bt_Unsel;
-  GUI_COLOR Bt_Text;
-  GUI_COLOR Bt_Focus;
+   GUI_COLOR bkColor;
+   GUI_COLOR tbColor;
+   
+   GUI_COLOR ttl_bkTop;
+   GUI_COLOR ttl_bkBottom;
+   GUI_COLOR ttl_Text;
+   
+   GUI_COLOR btBkColor; 
+   GUI_COLOR btBkSel;   
+   GUI_COLOR btBkFocus;
+   GUI_COLOR btTxColor;
+   GUI_COLOR btTxFocus;
 };
 
 
 typedef struct _LVWin_COLOR LVWin_COLOR;
-struct _LVWin_COLOR
+//struct _LVWin_COLOR
+//{
+//  GUI_COLOR BackGround;
+//    
+//  GUI_COLOR Win_Label;
+//  
+//  GUI_COLOR LV_Header_Bk;
+//  GUI_COLOR LV_Header_Text;
+//  GUI_COLOR LV_Header_Grid;
+//  
+//  GUI_COLOR LV_bkUnsel;
+//  GUI_COLOR LV_bkSel; 
+//  GUI_COLOR LV_bkFocus;
+//  GUI_COLOR LV_tx_Unsel;
+//  GUI_COLOR LV_tx_Sel;
+//  GUI_COLOR LV_tx_Focus;
+//  
+//  GUI_COLOR String;   
+//};
+struct _LVWin_COLOR 
 {
-  GUI_COLOR BackGround;
-    
-  GUI_COLOR Win_Label;
-  
-  GUI_COLOR LV_Header_Bk;
-  GUI_COLOR LV_Header_Text;
-  GUI_COLOR LV_Header_Grid;
-  
-  GUI_COLOR LV_bkUnsel;
-  GUI_COLOR LV_bkSel; 
-  GUI_COLOR LV_bkFocus;
-  GUI_COLOR LV_tx_Unsel;
-  GUI_COLOR LV_tx_Sel;
-  GUI_COLOR LV_tx_Focus;
-  
-  GUI_COLOR String;   
+   GUI_COLOR bkColor; 
+   
+   GUI_COLOR ttl_Text;
+   
+   GUI_COLOR Header_Bk;
+   GUI_COLOR Header_Text;
+   
+   GUI_COLOR itm_bkUnsel;
+   GUI_COLOR itm_bkSel;
+   GUI_COLOR itm_bkFocus;
+   
+   GUI_COLOR itm_txUnsel;
+   GUI_COLOR itm_txSel;
+   GUI_COLOR itm_txFocus;
+   
+   GUI_COLOR inf_bkColor;
+   GUI_COLOR inf_Label;
+   GUI_COLOR inf_txColor;
 };
+
 
 typedef struct _MntSetWin_COLOR MntSetWin_COLOR;
 struct _MntSetWin_COLOR
 {
-  GUI_COLOR MntSetWin_BackGround;
+  GUI_COLOR bkColor;
   
-  GUI_COLOR MntSetWin_Label;
+  GUI_COLOR ttl_Label;
 	
-	 GUI_COLOR MntSetWin_bkFOCUS;
-  GUI_COLOR MntSetWin_bkNOFOCUS;
-  GUI_COLOR MntSetWin_Text_FOCUS; 
-	 GUI_COLOR MntSetWin_Text_NOFOCUS;
+	 GUI_COLOR bt_bkColor;
+  GUI_COLOR bt_bkFocus;
+  GUI_COLOR bt_txColor;
+  GUI_COLOR bt_txFocus;
+  
+	 GUI_COLOR txColor;
 };
 
 
@@ -154,18 +220,31 @@ struct _MntSetting_COLOR
 };
 
 typedef struct _CnfmWin_COLOR  CnfmWin_COLOR;
+//struct _CnfmWin_COLOR
+//{
+//  GUI_COLOR BackGround;
+//    
+//  GUI_COLOR Title;
+//  
+//  GUI_COLOR Text;
+//  
+//  GUI_COLOR Bt_PRESSED;
+//  GUI_COLOR Bt_UNPRESSED;
+//  GUI_COLOR Bt_Text;
+//  GUI_COLOR Bt_Focus;
+//};
+
 struct _CnfmWin_COLOR
 {
-  GUI_COLOR BackGround;
-    
-  GUI_COLOR Title;
-  
-  GUI_COLOR Text;
-  
-  GUI_COLOR Bt_PRESSED;
-  GUI_COLOR Bt_UNPRESSED;
-  GUI_COLOR Bt_Text;
-  GUI_COLOR Bt_Focus;
+   GUI_COLOR bkTop;
+   GUI_COLOR bkBottom;
+   
+   GUI_COLOR text;
+   
+   GUI_COLOR bt_bkColor;
+   GUI_COLOR bt_bkFocus;
+   GUI_COLOR bt_txColor;
+   GUI_COLOR bt_txFocus;
 };
 
 
@@ -173,6 +252,7 @@ typedef struct _SysWin_COLOR  SysWin_COLOR;
 struct _SysWin_COLOR
 {
    GUI_COLOR bkColor;
+	 GUI_COLOR ClientbkColor;
    GUI_COLOR txColor;
    
    

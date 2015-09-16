@@ -45,7 +45,7 @@ static void draw_scale(const map_scale * pScale)
     length  = pScale->pixel * 5 /9;
  }
 
-	GUI_SetColor(GUI_LIGHTGREEN);
+	GUI_SetColor(pSkin->sclColor);
  GUI_SetPenSize(1);
  GUI_SetLineStyle(GUI_LS_SOLID);
  
@@ -57,7 +57,10 @@ static void draw_scale(const map_scale * pScale)
 
 }
 
-
+void setBoatSkin(SKINS skin)
+{
+   pSkin  = &(mapSkins[skin]);
+}
 
 void setShape(BOAT_SHAPES shape)
 {
@@ -103,19 +106,16 @@ static void draw_boatInfo( short base_x, short base_y, boat * pBoat)
 
    fixPos(&base_x, &base_y);
 
-   GUI_SetColor(pSkin->BackGround);
+   GUI_SetColor(pSkin->bkColor);
 
    GUI_ClearRect(base_x, base_y-20, base_x+180,base_y+80);
    
-   GUI_SetColor(GUI_GREEN);
-   GUI_DrawRect(base_x+20, base_y-20, base_x+40,base_y-10);
-   GUI_FillRect(base_x+41,base_y-17,base_x+42,base_y-13);
-   
+   GUI_SetColor(pSkin->map_tip_Text);
+ 
    GUI_SetFont(&GUI_Font16_1);
-   GUI_SetColor(pSkin->Boat_Name);
    GUI_DispStringAt(pBoat->name, base_x+10, base_y+1); 
    
-   GUI_SetColor(pSkin->Boat_Cdnt);
+   GUI_SetColor(pSkin->map_tip_Text);
    GUI_SetFont(&GUI_Font24_1);
    
    lltostr(pBoat->latitude, pStrBuf);
@@ -139,11 +139,11 @@ static void draw_boat(boat* pBoat,short basePoint_x,short basePoint_y,  const GU
    if(pBoat == NULL)
       return ;
    
-   GUI_RotatePolygon(aEnlargedPoints,pPoints,PointNum,pBoat->COG*3.14/180);
+   GUI_RotatePolygon(aEnlargedPoints,pPoints,count,pBoat->COG*3.14/180);
 
 //   if((basePoint_x >=MAP_LEFT)&&(basePoint_x<= MAP_RIGHT)&&(basePoint_y >=MAP_TOP)&&(basePoint_y <= MAP_BOTTOM))
 //   {
-     GUI_DrawPolygon(aEnlargedPoints,PointNum,basePoint_x,basePoint_y);
+     GUI_DrawPolygon(aEnlargedPoints,count,basePoint_x,basePoint_y);
 //   }
 }
 
@@ -184,7 +184,7 @@ static void draw_mothership(const long lg, const long lt,const map_scale * pScal
 	  if(     (basePoint_x>= MAP_LEFT)  &&  (basePoint_x <= MAP_RIGHT) 
 						&&  (basePoint_y >= MAP_TOP)  &&  (basePoint_y <= MAP_BOTTOM)  )
 		 {
-      GUI_SetColor(MM_BOAT_COLOR);
+      GUI_SetColor(pSkin->boat_Mom);
       GUI_SetPenSize(MM_BOAT_PENSIZE);
       
       GUI_DrawPolygon(aEnlargedPoints,GUI_COUNTOF(bPoints),basePoint_x, basePoint_y);
@@ -200,7 +200,7 @@ static void disp_boat(const long lg, const long lt, const map_scale * pScale,sho
  short base_x = 0;
  short base_y = 0;
  
- GUI_SetColor(GUI_RED);
+ GUI_SetColor(BGL_BOAT_COLOR);
 	for(i=0;i<N;i++)
 	{
     base_x  = pScale->pixel * (SimpBerthes[i].longitude-lg) / pScale->minute;
@@ -240,13 +240,13 @@ static void disp_mntBoat(const long center_lg,const long center_lt, const map_sc
          base_x  = (MAP_LEFT/2 + MAP_RIGHT/2) + base_x;
          base_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - base_y;
     
-         GUI_SetColor(GUI_LIGHTGRAY);    
+         GUI_SetColor(pSkin->boat_Org);    
          GUI_SetPenSize(2); 
          
 ///   DSP boat conf.      
          if(pIterator->mntBoat.mntSetting.DSP_Setting.isEnable == ENABLE) 
          {
-            GUI_SetColor(GUI_LIGHTCYAN);    
+            GUI_SetColor(pSkin->boat_Dsp);    
          }
          if((base_x >=MAP_LEFT)&&(base_x<= MAP_RIGHT)&&(base_y >=MAP_TOP)&&(base_y <= MAP_BOTTOM))
          {
@@ -258,7 +258,7 @@ static void disp_mntBoat(const long center_lg,const long center_lt, const map_sc
 ///   BGL circle conf.
          if(pIterator->mntBoat.mntSetting.BGL_Setting.isEnable == ENABLE)
          {
-            GUI_SetColor(BGL_BOAT_COLOR);
+            GUI_SetColor(pSkin->boat_Bgl);
             GUI_SetPenSize(1); 
             
             GUI_DrawCircle(base_x, base_y,pIterator->mntBoat.mntSetting.BGL_Setting.Dist*pScale->pixel/pScale->minute);            
@@ -273,7 +273,7 @@ static void disp_mntBoat(const long center_lg,const long center_lt, const map_sc
             base_x  = (MAP_LEFT/2 + MAP_RIGHT/2) + base_x;
             base_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - base_y;
             
-            GUI_SetColor(DRG_BOAT_COLOR);
+            GUI_SetColor(pSkin->boat_Drg);
             GUI_SetPenSize(DRG_PENSIZE);        
             GUI_DrawCircle(base_x, base_y, pIterator->mntBoat.mntSetting.DRG_Setting.Dist*pScale->pixel/pScale->minute);
          }
@@ -308,7 +308,7 @@ static void draw_map_grid(mapping gridAnchor,const map_scale * pScale)
    y  = gridAnchor.y;
    
    GUI_SetLineStyle(GUI_LS_DASH);
-   GUI_SetColor(pSkin->Map_Grid);
+   GUI_SetColor(pSkin->map_Grid);
      
    
    while(x<MAP_LEFT)
@@ -511,7 +511,7 @@ static void disp_map(const long longitude, const long latitude,const map_scale *
 		 tmp_lgtude  = anchor.lgtude;
 		 tmp_lttude  = anchor.lttude;
 
-		 GUI_SetColor (pSkin->Map_Text);  
+		 GUI_SetColor (pSkin->net_lab);  
    GUI_SetFont(&GUI_Font16B_1);
    
    
@@ -655,6 +655,7 @@ void setAutoView()
    
    disp_map(lg, lt, &autoScale);
    disp_mntBoat(lg, lt, &autoScale);  
+   disp_boat(lg, lt, &autoScale, N_boat);
    draw_mothership(lg,lt,&autoScale);
    draw_scale(&autoScale);
 }

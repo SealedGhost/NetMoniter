@@ -41,19 +41,19 @@ void MainTask(void)
    //创建字体
    GUI_UC_SetEncodeUTF8();	
    //字体设置	//GUI_SetDefaultFont (&SIF_Font);
-   GUI_SetDefaultFont (&GUI_Font28);	
-   TEXT_SetDefaultFont(&GUI_Font28);
-   BUTTON_SetDefaultFont (&GUI_Font28);
-   HEADER_SetDefaultFont(&GUI_Font28);
+   GUI_SetDefaultFont (&GUI_Font30);	
+   TEXT_SetDefaultFont(&GUI_Font30);
+   BUTTON_SetDefaultFont (&GUI_Font30);
+   HEADER_SetDefaultFont(&GUI_Font30);
    HEADER_SetDefaultBkColor(GUI_BLUE);
-   EDIT_SetDefaultFont(&GUI_Font28);
+   //EDIT_SetDefaultFont(&GUI_Font30);
    WIDGET_SetDefaultEffect(&WIDGET_Effect_None);
    //创建窗口 
 //   sldWinCreate();
 //     _sldWinCreate();
 //     WM_SetFocus(_sldWinCreate());
    confirmWin  = confirmWinCreate();
-
+	 WM_ShowWindow (confirmWin);
    mntSettingWin  = mntSettingWinCreate(); 
 //  _mntSettingWin  = _mntSettingWinCreate();
    subWins[0]  = sub0WinCreate(); 

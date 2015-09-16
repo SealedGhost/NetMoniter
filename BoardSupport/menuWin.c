@@ -29,6 +29,8 @@
 #include "sysConf.h"
 #include "dlg.h"
 #include "skinColor.h"
+#include "HSD_BUTTON.h"
+#include "28.h"
 
 /*********************************************************************
 *
@@ -41,7 +43,7 @@
 #define ID_BUTTON_1 (GUI_ID_USER + 0x02)
 #define ID_BUTTON_2 (GUI_ID_USER + 0x03)
 #define ID_BUTTON_3 (GUI_ID_USER + 0x04)
-#define ID_TEXT_0   (GUI_ID_USER + 0x05)
+
 
 
 /*---------------------------- Global variables -------------------------------*/
@@ -69,12 +71,12 @@ static void myButtonListener(WM_MESSAGE * pMsg);
 static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
   { WINDOW_CreateIndirect, "Window", ID_WINDOW_0, 0, 0, MenuLabel_WIDTH, 480, 0, 0x0, 0 },
   
-  { TEXT_CreateIndirect,   "MainMenu", ID_TEXT_0, 0, 0, MenuLabel_WIDTH, 40, 0, 0, 0},
+//  { TEXT_CreateIndirect,   "MainMenu", ID_TEXT_0, 0, 10, MenuLabel_WIDTH, 40, 0, 0, 0},
   
-  { BUTTON_CreateIndirect, "bt_0", ID_BUTTON_0, MenuLabel_X, MenuLabel_Y,                    MenuButton_WIDTH, MenuButton_HEIGHT, 0, 0x0, 0 },
-  { BUTTON_CreateIndirect, "bt_1", ID_BUTTON_1, MenuLabel_X, MenuLabel_Y+MenuButton_HEIGHT,  MenuButton_WIDTH, MenuButton_HEIGHT, 0, 0x0, 0 },
-  { BUTTON_CreateIndirect, "bt_2", ID_BUTTON_2, MenuLabel_X, MenuLabel_Y+MenuButton_HEIGHT*2,MenuButton_WIDTH, MenuButton_HEIGHT, 0, 0x0, 0 },
-  { BUTTON_CreateIndirect, "bt_3", ID_BUTTON_3, MenuLabel_X, MenuLabel_Y+MenuButton_HEIGHT*3,MenuButton_WIDTH, MenuButton_HEIGHT, 0, 0x0, 0 },
+  { HSD_BUTTON_CreateIndirect, "bt_0", ID_BUTTON_0, MenuLabel_X, MenuLabel_Y,                    MenuButton_WIDTH, MenuButton_HEIGHT, 0, 0x0, 0 },
+  { HSD_BUTTON_CreateIndirect, "bt_1", ID_BUTTON_1, MenuLabel_X, MenuLabel_Y+MenuButton_HEIGHT,  MenuButton_WIDTH, MenuButton_HEIGHT, 0, 0x0, 0 },
+  { HSD_BUTTON_CreateIndirect, "bt_2", ID_BUTTON_2, MenuLabel_X, MenuLabel_Y+MenuButton_HEIGHT*2,MenuButton_WIDTH, MenuButton_HEIGHT, 0, 0x0, 0 },
+  { HSD_BUTTON_CreateIndirect, "bt_3", ID_BUTTON_3, MenuLabel_X, MenuLabel_Y+MenuButton_HEIGHT*3,MenuButton_WIDTH, MenuButton_HEIGHT, 0, 0x0, 0 },
 };
 
 
@@ -102,63 +104,87 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
   
   switch (pMsg->MsgId) { 
     case USER_MSG_BRING:
-         BUTTON_SetBkColor(hButtons[pMsg->Data.v], BUTTON_CI_UNPRESSED, pSkin->Bt_Sel);
-         break;    
+         HSD_BUTTON_SetBkColor(hButtons[pMsg->Data.v], pSkin->btBkFocus);
+INFO("Case BRING");         
+         break; 
+     
+    case USER_MSG_DFULT_CNT:
+         HSD_BUTTON_SetValue(hButtons[1], pMsg->Data.v);
+         break;
+              
     case USER_MSG_SKIN: 
+INFO("case msg skin");    
          pSkin  = &(menuWinSkins[pMsg->Data.v]);
          
-         WINDOW_SetBkColor(pMsg->hWin,pSkin->BackGround);         
-         
-         TEXT_SetTextColor(WM_GetDialogItem(pMsg->hWin, ID_TEXT_0), pSkin->Menu_Label);
-         
-         for(i=0;i<4;i++)
+         WINDOW_SetBkColor(pMsg->hWin,pSkin->bkColor);         
+                 
+         for(i=4; i>>0; )
          {
-            BUTTON_SetBkColor(hButtons[i],  BUTTON_CI_PRESSED,  pSkin->Bt_Sel);
-            BUTTON_SetBkColor(hButtons[i]  ,BUTTON_CI_UNPRESSED,pSkin->Bt_Unsel);
-            BUTTON_SetTextColor(hButtons[i],BUTTON_CI_UNPRESSED,pSkin->Bt_Text);             
+            i--;
+            HSD_BUTTON_SetBkColor(hButtons[i], pSkin->btBkColor);
+            HSD_BUTTON_SetTBLineColor(hButtons[i], pSkin->tbColor);
+            HSD_BUTTON_SetFocusBkColor(hButtons[i], pSkin->btBkFocus);
+            HSD_BUTTON_SetTextColor(hButtons[i], pSkin->btTxColor);
+            HSD_BUTTON_SetTextFocusColor(hButtons[i], pSkin->btTxFocus);
+            HSD_BUTTON_SetVColor(hButtons[i], pSkin->btTxColor);
+            HSD_BUTTON_SetVFocusColor(hButtons[i], pSkin->btTxFocus);           
          }
-
+         break;
+         
+   case WM_PAINT:
+        GUI_DrawGradientV(0,0,MenuLabel_WIDTH,40,pSkin->ttl_bkTop,pSkin->ttl_bkBottom);
+        
+        GUI_SetColor(pSkin->ttl_Text);
+        GUI_SetTextMode(GUI_TEXTMODE_TRANS);
+        GUI_DispStringAt("主菜单",25,5);      
+        break;
+        
   case WM_INIT_DIALOG:
-		 
-    //
-    // Initialization of 'text'
-    //
-    TEXT_SetText(WM_GetDialogItem(pMsg->hWin, ID_TEXT_0), "主菜单");
-    
-   
+		
+	  	pSkin  = &(menuWinSkins[SysConf.Skin]);
     //
     // Initialization of 'bt_0'
     //
     hButtons[0] = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_0);
-    BUTTON_SetText(hButtons[0], "监控列表");
+    HSD_BUTTON_SetText(hButtons[0], "监控列表");
     //
     // Initialization of 'bt_1'
     //
     hButtons[1] = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_1);
-    BUTTON_SetText(hButtons[1], "监控设置");
-    //
-    // Initialization of 'bt_2'
-    //
-    hButtons[2] = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_2);
-    BUTTON_SetText(hButtons[2], "船舶列表");
+    HSD_BUTTON_SetText(hButtons[1], "监控设置");
+
     //
     // Initialization of 'bt_3'
     //
     hButtons[3] = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_3);
-    BUTTON_SetText(hButtons[3], "系统设置");	
-		
-  
-    WINDOW_SetBkColor(pMsg->hWin,pSkin->BackGround);  
-    TEXT_SetTextColor(WM_GetDialogItem(pMsg->hWin, ID_TEXT_0), pSkin->Menu_Label);
+    HSD_BUTTON_SetText(hButtons[3], "系统设置");	
     
-		  for (i = 0; i < 4; i++)
+    //
+    // Initialization of 'bt_2'
+    //
+    hButtons[2] = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_2);
+    HSD_BUTTON_SetText(hButtons[2], "船舶列表");	
+    
+/**
+ *  emWin Bug
+ */  
+  WM_SetFocus(hButtons[1]);
+  
+    WINDOW_SetBkColor(pMsg->hWin,pSkin->bkColor);  
+//    TEXT_SetTextColor(WM_GetDialogItem(pMsg->hWin, ID_TEXT_0), pSkin->Menu_Label);
+    
+		  for (i=4; i;)
 	  	{		
-       WIDGET_SetEffect(hButtons[i],&WIDGET_Effect_Simple);
-       BUTTON_SetBkColor(hButtons[i],  BUTTON_CI_PRESSED,  pSkin->Bt_Sel);
-       BUTTON_SetBkColor(hButtons[i]  ,BUTTON_CI_UNPRESSED,pSkin->Bt_Unsel);
-       BUTTON_SetTextColor(hButtons[i],BUTTON_CI_UNPRESSED,pSkin->Bt_Text); 
-       BUTTON_SetFocusColor(hButtons[i], pSkin->Bt_Sel);
-       WM_SetCallback(hButtons[i],&myButtonListener);
+       i--;
+       HSD_BUTTON_SetTxFont(hButtons[i], &GUI_Font30);
+       HSD_BUTTON_SetBkColor(hButtons[i], pSkin->btBkColor);
+       HSD_BUTTON_SetTBLineColor(hButtons[i], pSkin->tbColor);
+       HSD_BUTTON_SetFocusBkColor(hButtons[i], pSkin->btBkFocus);
+       HSD_BUTTON_SetTextColor(hButtons[i], pSkin->btTxColor);
+       HSD_BUTTON_SetTextFocusColor(hButtons[i], pSkin->btTxFocus);
+       HSD_BUTTON_SetVColor(hButtons[i], pSkin->btTxColor);
+       HSD_BUTTON_SetVFocusColor(hButtons[i], pSkin->btTxFocus); 
+       WM_SetCallback(hButtons[i], &myButtonListener);
 		  }
     break;
   case WM_NOTIFY_PARENT:
@@ -261,7 +287,7 @@ WM_HWIN menuWinCreate(void) {
 
 static void myButtonListener(WM_MESSAGE * pMsg)
 {
- static 
+ static int selIndex  = 2;
 	const WM_KEY_INFO * pInfo;
 	WM_HWIN thisButton  = pMsg->hWin;
 	WM_HWIN handle;
@@ -271,76 +297,84 @@ static void myButtonListener(WM_MESSAGE * pMsg)
 	{
  
  case WM_SET_FOCUS:
-      if(pMsg->Data.v)
-      {   
-         for(btIndex=0;btIndex<4;btIndex++)
-         {
-            if(pMsg->hWin == hButtons[btIndex])
-               break;
-         }
-         if(btIndex<4)
-         {
+      btIndex  = WM_GetId(pMsg->hWin) - ID_BUTTON_0;
+      if(btIndex < 4  &&  btIndex >= 0)
+      {
+         if(pMsg->Data.v)
+         {      
+            selIndex  = btIndex;   
+            HSD_BUTTON_SetBkColor(thisButton, pSkin->btBkFocus);    
             WM_BringToTop(subWins[btIndex]);
-            if(btIndex == 1)
+            if(btIndex < 2)
             {
-               WM_BringToTop(mntSettingWin);
-//               WM_BringToTop(_mntSettingWin);
+               if(btIndex)
+               {
+                  WM_BringToTop(mntSettingWin);
+               }
+               WM_SendMessageNoPara(subWins[btIndex], USER_MSG_BRING);
             }
-            if(btIndex<2)
+         }
+         else
+         {      
+            if(selIndex == btIndex)
             {
-               WM_SendMessageNoPara(subWins[btIndex],  USER_MSG_BRING);
+               HSD_BUTTON_SetBkColor(thisButton, pSkin->btBkSel);
+            }
+            else
+            {
+               HSD_BUTTON_SetBkColor(thisButton, pSkin->btBkColor);
             }
          }
          
-         BUTTON_SetBkColor(thisButton, BUTTON_CI_UNPRESSED, pSkin->Bt_Sel);
+         HSD_BUTTON_Callback(pMsg);
       }
       else
       {
-         BUTTON_SetBkColor(thisButton, BUTTON_CI_UNPRESSED, pSkin->Bt_Unsel);
+INFO("focus err!");      
       }
-      BUTTON_Callback(pMsg);
       break;
 
 		case WM_KEY:
 			pInfo  = (WM_KEY_INFO*)pMsg->Data.p;
 		  switch(pInfo->Key)
 			{
-				case GUI_KEY_DOWN:    
-//         BUTTON_SetBkColor(thisButton, BUTTON_CI_UNPRESSED, pSkin->Bt_Unsel);
-         GUI_StoreKeyMsg(GUI_KEY_TAB,1);		
+				case GUI_KEY_DOWN:  
+         selIndex = -1;  
+         HSD_BUTTON_Callback(pMsg);
+					    break;
 				
-					break;
+				case GUI_KEY_UP:
+         selIndex  = -1;
+         HSD_BUTTON_Callback(pMsg);
+		     		break;
 				
-				case GUI_KEY_UP:         
-				    	GUI_StoreKeyMsg(GUI_KEY_BACKTAB,1);
-					break;
-				
-				case GUI_KEY_RIGHT:
-          WM_SetFocus(subWins[btIndex]);
-         
+				case GUI_KEY_RIGHT: 
+         HSD_BUTTON_SetBkColor(thisButton, pSkin->btBkSel);
+         WM_SetFocus(subWins[btIndex]); 
 				     break;
+         
 				case GUI_KEY_MENU:       
     case GUI_KEY_BACKSPACE:
-							WM_BringToBottom(menuWin);
-							WM_HideWindow(subWins[0]);
-							WM_HideWindow(subWins[1]);
-							WM_HideWindow(subWins[2]);
-							WM_HideWindow(subWins[3]);
-							WM_HideWindow(mntSettingWin);     
-//       WM_HideWindow(_mntSettingWin);
-							WM_SetFocus(mapWin);
-       GUI_CURSOR_Show();
-       
-					break;
+         WM_BringToBottom(menuWin);
+         WM_HideWindow(subWins[0]);
+         WM_HideWindow(subWins[1]);
+         WM_HideWindow(subWins[2]);
+         WM_HideWindow(subWins[3]);
+         WM_HideWindow(mntSettingWin);     
+         HSD_BUTTON_SetBkColor(thisButton, pSkin->btBkColor);    
+         WM_SetFocus(mapWin);
+         GUI_CURSOR_Show();   
+		    			break;
 				
-				default:
-					BUTTON_Callback(pMsg);
-				break;
+     default:
+         HSD_BUTTON_Callback(pMsg);
+         break;
 			}
 			break;
+   
 				default:
-					BUTTON_Callback(pMsg);
-				break;
+				  	HSD_BUTTON_Callback(pMsg);
+			   	break;
 	}
 }
 

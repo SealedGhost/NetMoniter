@@ -3,6 +3,7 @@
 #include "Setting.h"
 #include "string.h"
 #include "lpc177x_8x_eeprom.h"
+#include "pwm.h"
 
 
 /*--------------------- External variables ------------------------*/
@@ -23,7 +24,7 @@ const int SYSCONF_SIZE = sizeof(SysConf);
 void printSysConf(CONF_SYS * p)
 {
    printf("\n\r");
-   printf("Skin:           %s-%d\n\r",p->Skin?"Day":"Night",p->Skin);
+   printf("Skin:           %s-%d\n\r",p->Skin?"Night":"Day",p->Skin);
    printf("Snd -- Vol      %d\n\r",p->Snd.Vol);
    printf("Brightness      %d\n\r",p->Brt);
    printf("Snd -- ArmSnd   %d\n\r",p->Snd.ArmSnd);
@@ -42,11 +43,11 @@ static Bool checkSysConf()
       printf("Skin load error! load %d as skin\n\r",SysConf.Skin);
       SysConf.Skin  = SKIN_Night;
    }
-   if(SysConf.Brt < 0  ||  SysConf.Brt > 4)                     
+   if(SysConf.Brt < 1  ||  SysConf.Brt > 5)                     
    {
       flag  = FALSE;   
       printf("Brt  load error! load %d as brg\n\r",SysConf.Brt);
-      SysConf.Brt  = 1;
+      SysConf.Brt  = 3;
    }
    if(SysConf.Snd.Vol < 0  ||  SysConf.Snd.Vol > 6)            
    {
@@ -183,6 +184,7 @@ INFO("Error happened when system load.System will be configed with default value
       pIterator  = pIterator->pNext;
    }
    printf("\n\r");
-   
+  
+   PWM_SET(SysConf.Brt * 2); 
 }
 

@@ -40,6 +40,7 @@ void lpc1788_Uart_Init(int port)//LPC1788_Uart_Init
 	
 	UART_IntConfig(UART_0, UART_INTCFG_RBR, ENABLE);
 	UART_IntConfig(UART_0, UART_INTCFG_RLS, ENABLE);
+
 	NVIC_DisableIRQ(UART0_IRQn);
 		
 }
@@ -56,10 +57,12 @@ void lpc1788_Uart_Init(int port)//LPC1788_Uart_Init
    UART_Init((UART_ID_Type)channel, &UARTConfigStruct1);
    
    UART_FIFOConfigStructInit(&UARTFIFOConfigStruct1);
-   UARTFIFOConfigStruct1.FIFO_DMAMode = ENABLE;
+   UARTFIFOConfigStruct1.FIFO_DMAMode = DISABLE;
    UART_FIFOConfig((UART_ID_Type)channel, &UARTFIFOConfigStruct1);
    UART_TxCmd((UART_ID_Type)channel, ENABLE);
 }
+
+
 
 // static void DMA_Config(unsigned char channel)
 // {
