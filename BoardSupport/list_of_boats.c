@@ -48,6 +48,10 @@ int insert_24A(struct message_24_partA * p_msg);
 int update_24A(BERTH * pBerth, struct message_24_partA * p_msg);
 int add_24A(struct message_24_partA * p_msg);
 
+int insert_24B(type_of_ship * p_msg);
+int update_24B(BERTH * pBerth, type_of_ship * p_msg);
+int add_24B(type_of_ship * p_msg);
+
 static int getSphereDist(long lg_1,long lt_1, long lg_2, long lt_2);
 void updateTimeStamp(void);
 static BERTH * allocOneBerth(void);
@@ -129,6 +133,39 @@ int insert_24A(struct message_24_partA * p_msg)
    }
    return -1;
 }
+
+
+int insert_24B(type_of_ship * p_msg)
+{
+   int i  = 0;
+   
+   if(0 == p_msg->user_id)
+      return 0;
+   
+   for(i=0; i<BOAT_NUM_MAX; i++)
+   {
+      if(Berthes[i].Boat.user_id == p_msg->user_id)
+      {
+         if(update_24B(&Berthes[i], p_msg))
+         {
+            return 1;
+         }
+         else
+         {
+            return -1;
+         }
+      }
+   }
+   
+   if(add_24B(p_msg))
+   {
+      return 1;
+   }
+   return  -1;
+}
+
+
+
 
 
 int update_18(BERTH * pBerth, struct message_18 * p_msg)
@@ -472,7 +509,68 @@ INFO("alloc berth failed!");
 }
 
 
+int update_24B(BERTH * pBerth, type_of_ship * p_msg)
+{
+   int i  = 0;  
+   pBerth->Boat.time_cnt  = TIMESTAMP;
 
+   if(    p_msg->vender_id[0] == 8
+       && p_msg->vender_id[1] == 19
+       && p_msg->vender_id[2] == 4)
+   {
+   
+      pBerth->Boat.isHSD  = TRUE;
+      return 0;
+   }
+   
+   return 1;
+}
+
+
+
+int add_24B(type_of_ship * p_msg)
+{
+   BERTH * buf  = NULL;
+   BERTH * tmp  = NULL;
+   
+   int i  = 0;
+ 
+   buf  = allocOneBerth();
+   
+   if(buf == NULL)
+   {
+INFO("alloc berth failed!");      
+       return -1;
+   }
+   
+   buf->Boat.user_id  = p_msg->user_id;
+   buf->Boat.dist  = 999999;
+   buf->Boat.time_cnt   = TIMESTAMP;
+
+   
+   if(    p_msg->vender_id[0] == 8
+       && p_msg->vender_id[1] == 19
+       && p_msg->vender_id[2] == 4)
+   {
+      buf->Boat.isHSD  = TRUE;
+   }
+   buf->Boat.isHSD  = TRUE;
+   
+   if(pHeader == NULL)
+   {
+      pHeader  = buf;
+      pTail    = buf;
+      return 1;
+   }
+   
+   pTail->pNext  = buf;
+   buf->pLast    = pTail;
+   
+   buf->pNext  = NULL;
+   pTail       = buf;
+   
+   return 1;
+}
 
 
 

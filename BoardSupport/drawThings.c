@@ -11,6 +11,77 @@
 #define MYABS(x)   ((x)>0?(x):(-(x)))
 
 
+/*--------------------------------- Global variables ----------------------------------*/
+const GUI_POINT  Points_boat[3]  = {
+                                           { 6, 12},
+                                           {-6, 12},
+                                           { 0,-12}
+                                                         };
+                                           
+
+/*
+   (-20,190)  (20,190)
+         /\          /\
+        /  \        /  \
+       /    \      /    \ 
+      /      \____/      \
+     /(-10,160) (10,160)  \
+    /                      \
+   /                        \
+  /                          \
+ /                            \
+/ (-100,30)           (100,30) \
+\                              /
+ \                            /
+  \                          /
+   \                        /
+    \                      /
+     \                    /
+      \                  /
+       \                / 
+        \(-20,-110)    /(20,-110)
+        /              \
+       /                \
+      /     (0,-150)     \
+     /         ^          \
+    /       .     .        \
+   /     .           .      \
+  /   .                 .    \
+ / .                       .  \
+/ (-80,-190)          (80,-190)\
+  
+*/                                               
+const GUI_POINT  Points_fish[11]  = {   {  0, 15},
+                                        {  8, 19},
+                                        {  2, 11},
+                                        { 10, -3},
+                                        {  2,-19},
+                                        {  1,-16},
+                                        { -1,-16},
+                                        { -2,-19},
+                                        {-10, -3},
+                                        { -2, 11},
+                                        { -8, 19}
+                                       }; 
+
+ /* The shape of mothership */                                                          
+//                *                                                                                          
+//              *   *
+//            *       *
+//          *           *
+//           *         *
+//            *       *
+//             *     *
+ //             *****      
+const GUI_POINT bPoints[5] = {              
+		                                      {0,-18},
+																																								{9,-3},  
+																																								{6,18}, 
+																																								{-6,18}, 
+																																								{-9,-3}  
+	};
+
+
 /*-------------------------------- External variables ---------------------------------*/
 extern SIMP_BERTH SimpBerthes[BOAT_NUM_MAX];
 extern int N_boat;
@@ -18,7 +89,7 @@ extern boat mothership;
 extern char scale_choose;
 
 /*-------------------------------- Local variables ------------------------------------*/
-static GUI_POINT * pPoints  = Points_fish;
+static const GUI_POINT * pPoints  = Points_fish;
 static  int PointNum  = 11;
 
 static const MapWin_COLOR * pSkin  = mapSkins;
@@ -52,7 +123,7 @@ static void draw_scale(const map_scale * pScale)
  GUI_DrawLine(800-160, 480-10,  800-160+length, 480-10);
  GUI_DrawLine(800-160, 480-10,  800-160, 480-20);
  GUI_DrawLine(800-160+length, 480-10, 800-160+length, 480-20);
- sprintf(pStrBuf, "%ld.%ld%s",pScale->minute/1000,(pScale->minute%1000)/100,SysConf.Unit==UNIT_nm?"nm":"km");
+ sprintf(pStrBuf, "%ld.%02ld%s",pScale->minute/1000,(pScale->minute%1000)/10,SysConf.Unit==UNIT_nm?"nm":"km");
  GUI_DispStringAt(pStrBuf, 800-160+10, 480-10-20);
 
 }
@@ -107,9 +178,29 @@ static void draw_boatInfo( short base_x, short base_y, boat * pBoat)
    fixPos(&base_x, &base_y);
 
    GUI_SetColor(pSkin->bkColor);
-
-   GUI_ClearRect(base_x, base_y-20, base_x+180,base_y+80);
+//   GUI_ClearRect(base_x, base_y-20, base_x+180,base_y+80);   
+   /**
+    *     Draw Battery
+    **/
+   if(pBoat->isHSD)
+   {
+      unsigned char power  = pBoat->SOG % 10;
+      short         batBody_x;
+      short         batBody_y;
+      
+      batBody_x  = base_x +10;
+      batBody_y  = base_y -10;
+      
+      GUI_SetColor(pSkin->map_tip_Bat);
+      
+      GUI_DrawRect(batBody_x, batBody_y, batBody_x+20, batBody_y+8);      
+      GUI_DrawVLine(batBody_x+21, batBody_y+2 ,batBody_y+6);
+      GUI_FillRect(batBody_x, batBody_y+1, batBody_x+power*2, batBody_y+7);     
+   }
    
+   
+
+   GUI_SetTextMode(GUI_TM_NORMAL);
    GUI_SetColor(pSkin->map_tip_Text);
  
    GUI_SetFont(&GUI_Font16_1);
@@ -401,67 +492,11 @@ static unsigned int getAreaIdByLL(long lg,  long lt)
             return 0;
          }
       }
-//      else 
-//      {
-//         return 0;
-//      }
+
    }
 }
 
-/*
-static unsigned int getFishingAreaId(long longitude, long latitude )
-{
-   int index  = 0;
-   int counterAreaNum  = 0;
-   int originalAreaNum  = 0;
-   unsigned int fishingAreaId  = 0;
-   unsigned int exp_id  = 0;
-   
-   int row  = 0;
-   int col  = 0;
-	
-   if(fishing_area[index].latitude_fish < latitude)
-      return 0;
-	
-   for(index=0;index < num_fish;)
-   {
-      if(fishing_area[index].latitude_fish<latitude)
-      {
-         index--;
-         
-         if(longitude < fishing_area[index].longitude_fish)
-            return 0;
 
-         ///不含拓展渔区的渔区数量,即原有渔区数量
-         counterAreaNum  = (longitude-fishing_area[index].longitude_fish ) / distance;
-         originalAreaNum  = fishing_area[index+1].fish_number - fishing_area[index].fish_number;
-          
-         if(counterAreaNum < originalAreaNum)			
-            fishingAreaId = fishing_area[index].fish_number + counterAreaNum;
-         else if(counterAreaNum < originalAreaNum+fishing_area[index].exp_num)
-            fishingAreaId  = (fishing_area[index].fish_number+originalAreaNum-1)*10 + counterAreaNum-originalAreaNum+1;
-         else
-            fishingAreaId  = 0;
-         
-         if( (scale_choose==1) && (fishingAreaId!=0))
-         {
-            row  = (fishing_area[index].latitude_fish-latitude)/10000 ;
-            col  = (longitude-fishing_area[index].longitude_fish)%30000 /10000 + 1;
-            exp_id  = row*3+col;
-            exp_id  = exp_id<<(sizeof(int)-4);
-            fishingAreaId  = fishingAreaId | exp_id<<(8*sizeof(int)-4);
-         }
-         return fishingAreaId;
-      }
-      else
-      {
-         index++;
-      }
-   }
-   
-	  return 0;
-}
-*/
 
 
 static void disp_map(const long longitude, const long latitude,const map_scale * pScale)
@@ -611,8 +646,8 @@ static void getMntWrapPara(long *halfDiff_lg, long* halfDiff_lt, map_scale* pSca
       pIterator  = pIterator->pNext;
    }
    
-   maxDiff_lg  = max_lg - min_lg + 1000;
-   maxDiff_lt  = max_lt - min_lt + 1000;
+   maxDiff_lg  = max_lg - min_lg + 20;
+   maxDiff_lt  = max_lt - min_lt + 20;
    
    *halfDiff_lg  = max_lg/2 + min_lg/2;
    *halfDiff_lt  = max_lt/2 + min_lt/2;
@@ -623,12 +658,12 @@ static void getMntWrapPara(long *halfDiff_lg, long* halfDiff_lt, map_scale* pSca
    ///若适配区域的宽度大于高度的两倍，则以map的宽来适配
     if(( maxDiff_lg/2) > maxDiff_lt)
     {
-       pScale->minute  = ( maxDiff_lg/(8*100) + 1)*100;  ///这种写法保证所得到的scale.minute为100的整数倍
+       pScale->minute  = ( maxDiff_lg/(8*10) + 1)*10;  ///这种写法保证所得到的scale.minute为100的整数倍
     }
     ///否则以map的高来适配
     else
     {
-       pScale->minute  = ( maxDiff_lt/(4*100) + 1)*100;
+       pScale->minute  = ( maxDiff_lt/(4*10) + 1)*10;
     }
 }
 
@@ -656,6 +691,6 @@ void setAutoView()
    disp_map(lg, lt, &autoScale);
    disp_mntBoat(lg, lt, &autoScale);  
    disp_boat(lg, lt, &autoScale, N_boat);
-   draw_mothership(lg,lt,&autoScale);
+//   draw_mothership(lg,lt,&autoScale);
    draw_scale(&autoScale);
 }

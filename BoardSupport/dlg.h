@@ -1,6 +1,6 @@
 #ifndef _DLG_H
 #define _DLG_H
-
+#include "WM.h"
 extern WM_HWIN mapWin;
 extern WM_HWIN menuWin;
 extern WM_HWIN subWins[4];

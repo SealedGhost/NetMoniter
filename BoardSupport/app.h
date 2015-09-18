@@ -182,19 +182,43 @@ message_24_partA translate_m24A(unsigned char *text,int start){
   return message_text;
 }
 
-type_of_ship translate_m24B(unsigned char *text,int start){
-	type_of_ship message_text;
-  int i=0,tmp_6_bin[28];
-  for(i=0;(text[start]!=',')&&(i<28);i++,start++)
-		tmp_6_bin[i]=change_table(text[start]);
-	
-  message_text.message_id=tmp_6_bin[0];
-  message_text.repeat_indicator=(tmp_6_bin[1]>>4);
-  message_text.user_id=((tmp_6_bin[1]&15)<<26)|(tmp_6_bin[2]<<20)|(tmp_6_bin[3]<<14)|(tmp_6_bin[4]<<8)|(tmp_6_bin[5]<<2)|(tmp_6_bin[6]>>4);
-  message_text.part_number=((tmp_6_bin[6]&12)>>2);
-	 message_text.type_of_ship_and_cargo_type = (tmp_6_bin[6]<<6)|(tmp_6_bin[7]);
-	 return message_text;
+//type_of_ship translate_m24B(unsigned char *text,int start){
+//	type_of_ship message_text;
+//  int i=0,tmp_6_bin[28];
+//  for(i=0;(text[start]!=',')&&(i<28);i++,start++)
+//		tmp_6_bin[i]=change_table(text[start]);
+//	
+//  message_text.message_id=tmp_6_bin[0];
+//  message_text.repeat_indicator=(tmp_6_bin[1]>>4);
+//  message_text.user_id=((tmp_6_bin[1]&15)<<26)|(tmp_6_bin[2]<<20)|(tmp_6_bin[3]<<14)|(tmp_6_bin[4]<<8)|(tmp_6_bin[5]<<2)|(tmp_6_bin[6]>>4);
+//  message_text.part_number=((tmp_6_bin[6]&12)>>2);
+//	 message_text.type_of_ship_and_cargo_type = (tmp_6_bin[6]<<6)|(tmp_6_bin[7]);
+//	 return message_text;
+//}
+
+type_of_ship translate_m24B(unsigned char * text, int start)
+{
+   type_of_ship message_text;
+   int i  = 0;
+   int tmp_6_bin[28];
+   
+   for(i=0; (text[start]!=',') && (i<28); i++,start++)
+   {
+      tmp_6_bin[i]  = change_table(text[start]);
+   }
+   
+   message_text.message_id  = tmp_6_bin[0];
+   
+   message_text.user_id=((tmp_6_bin[1]&15)<<26)|(tmp_6_bin[2]<<20)|(tmp_6_bin[3]<<14)|(tmp_6_bin[4]<<8)|(tmp_6_bin[5]<<2)|(tmp_6_bin[6]>>4);
+   
+   for(i=0; i<7; i++)
+   {
+      message_text.vender_id[i]  = tmp_6_bin[8+i];
+   }
+   
+   return message_text;
 }
+
 
 //º¯ÊýÉùÃ÷
 void UI_Task(void *p_arg);

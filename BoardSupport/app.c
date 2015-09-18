@@ -97,6 +97,7 @@ _boat_m24B *boat_lisp_p24B[BOAT_NUM_MAX];
 /*----------------- External functions -----------------------*/
 extern int insert_18(struct message_18 * p_msg);
 extern int insert_24A(struct message_24_partA * p_msg);
+extern int insert_24B(type_of_ship * p_msg);
 extern void updateTimeStamp(void);
 
 /*----------------- External variables -----------------------*/
@@ -161,9 +162,9 @@ void Insert_Task(void *p_arg)  //等待接收采集到的数据
         case 240:
             insert_24A(&text_out_24A);
             break;
-//        case 241:
-       
-         break;
+        case 241:       
+            insert_24B(&text_out_type_of_ship);       
+            break;
         default:
          break;
     }

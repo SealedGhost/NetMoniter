@@ -36,11 +36,11 @@ struct message_24_partA{
   int part_number;
   char name[20];
 };
-struct vender_id{
-  char manufacturer_id[3];
-  int unit_model_code;
-  unsigned long unit_serial_number;
-};
+//struct vender_id{
+//  char manufacturer_id[3];
+//  int unit_model_code;
+//  unsigned long unit_serial_number;
+//};
 struct call_sign{
 	int f;
 };
@@ -62,10 +62,12 @@ struct dimension_of_ship{
 //   int type_of_electronic_position_fixing_device;
 //   int spare;
 // };
+
 struct type_of_ship{
 	int message_id;
-	int repeat_indicator;
+//	int repeat_indicator;
 	unsigned long user_id;
-	int part_number;
-	int type_of_ship_and_cargo_type;
+ unsigned char vender_id[7];
+//int part_number;
+//int type_of_ship_and_cargo_type;
 };

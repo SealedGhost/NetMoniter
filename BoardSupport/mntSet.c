@@ -31,6 +31,7 @@
 #include "str.h"
 #include "dlg.h"
 #include "28.h"
+#include "drawThings.h"
 
 
 /*********************************************************************
@@ -169,7 +170,8 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 				GUI_SetColor(pSkin->bt_txColor);
 				GUI_DispStringAt("左右",80,350);
 				GUI_SetColor(GUI_WHITE);
-				GUI_DrawBitmap(&bmyu,45,110);
+//				GUI_DrawBitmap(&bmyu,45,110);
+    GUI_DrawPolygon(Points_fish, 11, 53, 130);
 				GUI_DrawBitmap(&bmmao,33,260);
 				
 				//GUI_SetPenSize(3);
