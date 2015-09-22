@@ -13,7 +13,7 @@ uint8_t Buffer0[23]  = "uart0 init success\n\r";
 uint8_t Buffer2[23]  = "uart2 init success!\n\r"; 
 
 volatile Bool Doubleclick  = FALSE;
-
+volatile Bool isReleasedDet  = FALSE;
 // __IO uint8_t UART_RX[128];//DMA_UART的串口接收缓冲区
 //  OS_EVENT *QSem;//定义消息队列指针
 //  OS_MEM   *PartitionPt;
@@ -102,38 +102,32 @@ void UART0_IRQHandler(void)
 	if ((tmp == UART_IIR_INTID_RDA) || (tmp == UART_IIR_INTID_CTI))	// Receive Data Available or Character time-out
 		{	
  		  UART_Receive(UART_0, &tmpc, 1, NONE_BLOCKING);
-			printf("\n\r%d\n\r",tmpc);
     if(tmpc >= GUI_KEY_MENU  &&  tmpc <= GUI_KEY_PGDOWN)   
 			 {
-					switch(tmpc)
-					{
-						 case GUI_KEY_PWM_INC:
-									WM_SendMessageNoPara(WM_GetClientWindow(subWins[3]), GUI_KEY_PWM_INC);
-									break;								
-						 case GUI_KEY_PWM_DEC:
-									WM_SendMessageNoPara(WM_GetClientWindow(subWins[3]), GUI_KEY_PWM_DEC);
-									break;					 
-						 case GUI_KEY_TRACE_ENABLE:
-									break;
-						 case GUI_KEY_TRACE_DISABLE:
-									break;
-       default:
-       			GUI_StoreKeyMsg(tmpc, 1);
-         break;
-					}
 
+          switch(tmpc)
+          {
+            case GUI_KEY_PWM_INC:
+              WM_SendMessageNoPara(WM_GetClientWindow(subWins[3]), GUI_KEY_PWM_INC);
+              break;								
+            case GUI_KEY_PWM_DEC:
+              WM_SendMessageNoPara(WM_GetClientWindow(subWins[3]), GUI_KEY_PWM_DEC);
+              break;					 
+            case GUI_KEY_TRACE_ENABLE:
+              break;
+            case GUI_KEY_TRACE_DISABLE:
+              break;
+            default:
+               GUI_StoreKeyMsg(tmpc, 1);
+              break;
+          }
 			 }   
 			 else if(tmpc >= 0x80)
 			 {
-					if(Doubleclick)
-					{
-						 GUI_StoreKeyMsg(GUI_KEY_RELEASE, 1);
-						 printf("key release\n\r");
-					}
+       GUI_StoreKeyMsg(GUI_KEY_RELEASE, 1);
 			 }
 			 else
 			 {
-					printf("err key\n\r"); 
 			 }
    }
 }

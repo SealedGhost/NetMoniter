@@ -229,13 +229,13 @@ INFO("case msg skin");
                   myMsg.Data.v  = agentConf.Shape;
                   WM_SendMessage(myMsg.hWin, &myMsg);
                }
-               if(agentConf.Unit != SysConf.Unit)
-               {              
-                  myMsg.MsgId  = USER_MSG_UNIT;
-                  myMsg.Data.v  = agentConf.Unit;
-                  WM_SendMessage(mapWin, &myMsg);
-                  WM_SendMessage(WM_GetClientWindow(mntSettingWin), &myMsg);
-               }
+//               if(agentConf.Unit != SysConf.Unit)
+//               {              
+//                  myMsg.MsgId  = USER_MSG_UNIT;
+//                  myMsg.Data.v  = agentConf.Unit;
+//                  WM_SendMessage(mapWin, &myMsg);
+//                  WM_SendMessage(WM_GetClientWindow(mntSettingWin), &myMsg);
+//               }
                
                SysConf.Brt             = agentConf.Brt;
                SysConf.Shape           = agentConf.Shape;
@@ -250,23 +250,23 @@ INFO("case msg skin");
             else 
             {
                /// Roll back
-               HSD_SLIDER_SetValue(Slideres[0], agentConf.Skin);
-               HSD_SLIDER_SetValue(Slideres[1], agentConf.Brt);
-               HSD_SLIDER_SetValue(Slideres[2], agentConf.Snd.Vol);
-               HSD_SLIDER_SetValue(Slideres[3], agentConf.Snd.ArmSnd);
-               HSD_SLIDER_SetValue(Slideres[4], agentConf.Snd.KeySnd);
-               HSD_SLIDER_SetValue(Slideres[5], agentConf.Unit);
-               HSD_SLIDER_SetValue(Slideres[6], agentConf.Shape);
+               HSD_SLIDER_SetValue(Slideres[0], SysConf.Skin);
+               HSD_SLIDER_SetValue(Slideres[1], SysConf.Brt);
+               HSD_SLIDER_SetValue(Slideres[2], SysConf.Snd.Vol);
+               HSD_SLIDER_SetValue(Slideres[3], SysConf.Snd.ArmSnd);
+               HSD_SLIDER_SetValue(Slideres[4], SysConf.Snd.KeySnd);
+               HSD_SLIDER_SetValue(Slideres[5], SysConf.Unit);
+               HSD_SLIDER_SetValue(Slideres[6], SysConf.Shape);
               
-               ProcChanging[0](NULL, SysConf.Skin);
-               ProcChanging[1](NULL, SysConf.Brt);
-               ProcChanging[2](NULL, SysConf.Snd.Vol);
-               ProcChanging[3](NULL, SysConf.Snd.ArmSnd);
-               ProcChanging[4](NULL, SysConf.Snd.KeySnd);
-               ProcChanging[5](NULL, SysConf.Unit);
-               ProcChanging[6](NULL, SysConf.Shape);
+//               ProcChanging[0](NULL, SysConf.Skin);
+//               ProcChanging[1](NULL, SysConf.Brt);
+//               ProcChanging[2](NULL, SysConf.Snd.Vol);
+//               ProcChanging[3](NULL, SysConf.Snd.ArmSnd);
+//               ProcChanging[4](NULL, SysConf.Snd.KeySnd);
+//               ProcChanging[5](NULL, SysConf.Unit);
+//               ProcChanging[6](NULL, SysConf.Shape);
 
-               PWM_SET(agentConf.Brt * 2);
+//               PWM_SET(agentConf.Brt * 2);
             }
             WM_SetFocus(menuWin);
             break;

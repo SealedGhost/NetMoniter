@@ -19,8 +19,7 @@ WM_HWIN mapWin;
 
 
 /*-------------------------- external variables ---------------------------*/
-extern Bool Doubleclick;  /// Defined in dma.c.If doubleclick equals TRUE,key message will be sent when key released.
-
+extern Bool isReleasedDet;
 
 
 /*-------------------------- global variables ------------------------------*/
@@ -164,9 +163,9 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 
        break;
 
-
 		case WM_KEY: 
        pKeyInfo  = (WM_KEY_INFO*)(pMsg->Data.p);    
+             
        drawMapSwitchCnt  = 0;
        if(drawMapSwitch == 0)
        {
@@ -182,7 +181,7 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
        }         
     
        if(pKeyInfo->Key >= GUI_KEY_LEFT  &&  pKeyInfo->Key <= GUI_KEY_DOWN)
-       {
+       {      
           switch(pKeyInfo->Key)  
           {
              case GUI_KEY_LEFT:
@@ -201,26 +200,16 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
                   Dir_x  = 0;
                   Dir_y  = 1;             
                   break;
-          }
-//          if(pKeyInfo->PressedCnt)
-//          {
+          }             
               WM_DeleteTimer(reTimer);
               cursorTimer  = WM_CreateTimer(mapWin, ID_TIMER_CURSOR, 500, 0);
-              Doubleclick  = TRUE;             
+            
               onCursorMoved();            
-//          }
-//          else
-//          {
-//              WM_DeleteTimer(cursorTimer);         
-//              Doubleclick  = FALSE;
-// 	            reTimer  = WM_CreateTimer(pMsg->hWin, ID_TIMER_MAP_REFRESH,MAP_REFRESH_SLOT, 0);          
-//          }
        }
        else switch(pKeyInfo->Key)
        {
-         case GUI_KEY_RELEASE:        
+         case GUI_KEY_RELEASE:               
               WM_DeleteTimer(cursorTimer);         
-              Doubleclick  = FALSE;
  	            reTimer  = WM_CreateTimer(pMsg->hWin, ID_TIMER_MAP_REFRESH,MAP_REFRESH_SLOT, 0);          
               break;
          /*----------------------   捕捉到中心按键按下的响应:    -----------------------*/

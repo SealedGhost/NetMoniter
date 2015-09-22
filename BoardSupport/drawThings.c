@@ -291,7 +291,7 @@ static void disp_boat(const long lg, const long lt, const map_scale * pScale,sho
  short base_x = 0;
  short base_y = 0;
  
- GUI_SetColor(BGL_BOAT_COLOR);
+ GUI_SetColor(GUI_RED);
 	for(i=0;i<N;i++)
 	{
     base_x  = pScale->pixel * (SimpBerthes[i].longitude-lg) / pScale->minute;

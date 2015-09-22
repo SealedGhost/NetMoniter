@@ -224,7 +224,7 @@ INFO("case msg skin");
        if(SysConf.Unit == UNIT_km)
        {
           GUI_DispStringAt("km",             LV_MoniteList_WIDTH+210,LV_MoniteList_Y+240);
-          GUI_DispStringAt("nm",             LV_MoniteList_WIDTH+210,LV_MoniteList_Y+280);
+          GUI_DispStringAt("km",             LV_MoniteList_WIDTH+210,LV_MoniteList_Y+280);
        }
        else
        {

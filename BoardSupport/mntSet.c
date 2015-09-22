@@ -102,11 +102,11 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
 	//{ TEXT_CreateIndirect, "消失报警:",   ID_TEXT_1,     10,    10,    130,   30, 0, 0x0, 0},
 	//{ TEXT_CreateIndirect, "防盗报警功能:",   ID_TEXT_2, 10,    45 ,   140,   30, 0, 0x0, 0},
 	//{ TEXT_CreateIndirect, "距离:",        ID_TEXT_3,    100,   80,    70,    30, 0, 0x0, 0},
-  { TEXT_CreateIndirect, "nm",           ID_TEXT_8,    200,   82,    70,    30, 0, 0x0, 0},
+//  { TEXT_CreateIndirect, "nm",           ID_TEXT_8,    200,   82,    70,    30, 0, 0x0, 0},
 	//{ TEXT_CreateIndirect, "声音:",        ID_TEXT_4,    100,   160,   70,    30, 0x0, 0},
 	//{ TEXT_CreateIndirect, "走锚报警功能:",ID_TEXT_5,    10,    190,   140,   30, 0, 0x0, 0},
 	//{ TEXT_CreateIndirect, "距离:",        ID_TEXT_6,    100,   225,   70,    30,  0, 0x0, 0},
-  { TEXT_CreateIndirect, "nm",           ID_TEXT_9,    200,   227,   70,    30,  0, 0x0,0},
+//  { TEXT_CreateIndirect, "nm",           ID_TEXT_9,    200,   227,   70,    30,  0, 0x0,0},
   //{ TEXT_CreateIndirect, "声音:",        ID_TEXT_7,    100,   305,   70,    30,  0, 0x0, 0},
 	//{ TEXT_CreateIndirect, "使用左右切换设置",        ID_TEXT_0,    50,   350,   300,    30,  0, 0x0, 0},
  
@@ -164,6 +164,18 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 				GUI_DispStringAt("走锚报警功能:",10,190);
 				GUI_DispStringAt("距离:",100,225);
 				GUI_DispStringAt("声音:",100,305);
+    
+    if(SysConf.Unit == UNIT_nm)
+    {
+       GUI_DispStringAt("nm", 200, 82);
+       GUI_DispStringAt("nm", 200, 227);
+    }
+    else
+    {
+       GUI_DispStringAt("km", 200, 82);
+       GUI_DispStringAt("km", 200, 227);       
+    }
+    
 				GUI_SetFont(&GUI_Font24);
 				GUI_DispStringAt("使用空空切换设置:",43,350);
 				GUI_SetFont(&GUI_Font24);
@@ -189,6 +201,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     GUI_DrawLine(80, 276, 93, 256);
     GUI_DrawHLine(256, 93, 150);
 				
+
 //  				GUI_DispStringAt("是",30,250);
 // 				GUI_DispStringAt("否",30,290);
 				
@@ -199,37 +212,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        pSkin  = &(MntSetWinSkins[pMsg->Data.v]);
        
        WINDOW_SetBkColor(pMsg->hWin, pSkin->bkColor);
-       
-       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_0);
-			 TEXT_SetFont(hItem,&GUI_Font24);
-       TEXT_SetTextColor(hItem, pSkin->bt_bkFocus);
-       
-       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_1);
-       TEXT_SetTextColor(hItem, pSkin->txColor); 
-       
-       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_2);
-       TEXT_SetTextColor(hItem, pSkin->txColor); 
-       
-       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_3);
-       TEXT_SetTextColor(hItem, pSkin->txColor); 
-       
-       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_4);
-       TEXT_SetTextColor(hItem, pSkin->txColor);  
-       
-       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_5);
-       TEXT_SetTextColor(hItem, pSkin->txColor); 
-       
-       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_6);
-       TEXT_SetTextColor(hItem, pSkin->txColor); 
-       
-       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_7);
-       TEXT_SetTextColor(hItem, pSkin->txColor);  
-       
-       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_8);
-       TEXT_SetTextColor(hItem, pSkin->txColor); 
-       
-       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_9);
-       TEXT_SetTextColor(hItem, pSkin->txColor);  
+
 
        for(i=0;i<7;i++)
        {
@@ -238,13 +221,6 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        } 
        break;
        
-       
-  case USER_MSG_UNIT:
-INFO("case user_msg_UNIT");  
-       TEXT_SetText(WM_GetDialogItem(pMsg->hWin, ID_TEXT_8), pMsg->Data.v?"nm":"km");
-       TEXT_SetText(WM_GetDialogItem(pMsg->hWin, ID_TEXT_9), pMsg->Data.v?"nm":"km");
-       break;
-   
        
   case WM_INIT_DIALOG:
        pSkin  = &(MntSetWinSkins[SysConf.Skin]);

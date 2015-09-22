@@ -11,7 +11,7 @@
 #include "Check.h"
 #include "sysConf.h"
 #include "uart.h"
-
+#include "SPI1.h"
 
 
 //#ifndef test_test
@@ -102,7 +102,7 @@ extern void updateTimeStamp(void);
 
 /*----------------- External variables -----------------------*/
 extern boat mothership;
-
+extern volatile int xlCnt;
 
 
 struct message_18 msg_18;
@@ -187,6 +187,14 @@ void Refresh_Task(void *p_arg)//任务Refresh_Task
   updateTimeStamp();
   OSMutexPost(Refresher); 
 
+  if(xlCnt > 10)
+  {
+INFO("fuck fuck fuck");    
+  }
+  else
+  {
+     xlCnt++;
+  }
 //  UART_SendByte(2, 'k');
 #ifdef CODE_CHECK 
        check();
@@ -221,9 +229,8 @@ void App_TaskStart(void)//初始化UCOS，初始化SysTick节拍，并创建三个任务
   mothership.longitude = MOTHERShIP_LG;
   mothership.true_heading  = 0;
   
-
-	UART_Config(2);	
-	DMA_Config(1); 
+  SPI1_DMA_Init();
+  SPI1_Int();
   
 	OSInit();  
 	SysTick_Init();/* 初始化SysTick定时器 */
