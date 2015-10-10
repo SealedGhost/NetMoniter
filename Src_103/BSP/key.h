@@ -11,7 +11,6 @@
 #define KEY_STAT_clicking			2
 #define KEY_STAT_longKeyPress	3
 #define KEY_STAT_Release			4
-#define KEY_STAT_Pressed   0xff
 
 
 void Key_Init(void);

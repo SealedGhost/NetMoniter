@@ -22,8 +22,15 @@ static void delay_ms(u16 time)
 void Music_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA|RCC_APB2Periph_GPIOC, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA|RCC_APB2Periph_GPIOB|RCC_APB2Periph_GPIOC, ENABLE);
 
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5; /* Configure USART1 Rx (PA.8) as “Ù¿÷–≈∫≈1 */
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_Init(GPIOB, &GPIO_InitStructure);
+  GPIO_ResetBits(GPIOB,GPIO_Pin_5);
+	
+	
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8; /* Configure USART1 Rx (PA.8) as “Ù¿÷–≈∫≈1 */
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
@@ -74,50 +81,48 @@ void Music_Init(void)
 }
 void Sound_D(void)
 {
-	u32 i=0;
 	GPIO_ResetBits(GPIOC,GPIO_Pin_14);
-	for(i=0;i<1000000;i++);
+	delay_ms(20);
 	GPIO_SetBits(GPIOC,GPIO_Pin_14);
-	for(i=0;i<1000000;i++);
+	//delay_ms(10);
 }
 void Sound_U(void)
 {
-	u32 i=0;
 	GPIO_ResetBits(GPIOC,GPIO_Pin_15);
-	for(i=0;i<1000000;i++);
+	delay_ms(20);
 	GPIO_SetBits(GPIOC,GPIO_Pin_15);
-	for(i=0;i<1000000;i++);
+	//for(i=0;i<1000000;i++);
 }
-void Send_Music_Data(u8 data)
-{
-	u8 i=0;
-	GPIO_ResetBits(GPIOB,GPIO_Pin_8);
-	delay_ms(5);
-	GPIO_SetBits(GPIOB,GPIO_Pin_8);
-	for(i=0;i<8;i++)
-	{
+// void Send_Music_Data(u8 data)
+// {
+// 	u8 i=0;
+// 	GPIO_ResetBits(GPIOB,GPIO_Pin_8);
+// 	delay_ms(5);
+// 	GPIO_SetBits(GPIOB,GPIO_Pin_8);
+// 	for(i=0;i<8;i++)
+// 	{
 
-		if(data&1)
-		{	
-			GPIO_SetBits(GPIOB,GPIO_Pin_8);
-			delay_us(600);
-			GPIO_ResetBits(GPIOB,GPIO_Pin_8);
-			delay_us(200);
+// 		if(data&1)
+// 		{	
+// 			GPIO_SetBits(GPIOB,GPIO_Pin_8);
+// 			delay_us(600);
+// 			GPIO_ResetBits(GPIOB,GPIO_Pin_8);
+// 			delay_us(200);
 
-    }
-		else 
-		{	
-			GPIO_SetBits(GPIOB,GPIO_Pin_8);
-			delay_us(200);
-			GPIO_ResetBits(GPIOB,GPIO_Pin_8);
-			delay_us(600);
+//     }
+// 		else 
+// 		{	
+// 			GPIO_SetBits(GPIOB,GPIO_Pin_8);
+// 			delay_us(200);
+// 			GPIO_ResetBits(GPIOB,GPIO_Pin_8);
+// 			delay_us(600);
 
-    }
-		GPIO_SetBits(GPIOB,GPIO_Pin_8);
-		data>>=1;
-  }
-	//GPIO_SetBits(GPIOB,GPIO_Pin_8);	
-}
+//     }
+// 		GPIO_SetBits(GPIOB,GPIO_Pin_8);
+// 		data>>=1;
+//   }
+// 	//GPIO_SetBits(GPIOB,GPIO_Pin_8);	
+// }
 
 
 

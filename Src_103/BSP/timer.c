@@ -5,7 +5,6 @@
 #include "misc.h"
 #include "IWDG.h"
 //定时器4中断服务程序	 
-volatile unsigned char flag  = 0;
 void TIM4_IRQHandler(void)
 { 		 
 	if (TIM_GetITStatus(TIM4, TIM_IT_Update) != RESET)
@@ -13,17 +12,6 @@ void TIM4_IRQHandler(void)
 		TIM_ClearITPendingBit(TIM4, TIM_IT_Update  ); 
 		//printf("%c",'a');			
 			IWDG_Feed();	
-   if(!flag)
-   {
-
-      GPIO_ResetBits(GPIOA , GPIO_Pin_8);
-      flag  = 1;
-   }
-   else
-   {
-      GPIO_SetBits(GPIOA, GPIO_Pin_8);
-      flag  = 0;
-   }
   }   
 
 		

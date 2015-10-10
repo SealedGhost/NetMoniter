@@ -54,11 +54,7 @@ u8  SPI2_SendByte(u8 byte)	   //修改为8bit数据
 	u8 Retry=0;
 
 	while (SPI_I2S_GetFlagStatus(SPI2, SPI_I2S_FLAG_TXE) == RESET)
-	{
-    Retry++;
-    if(Retry>200) 
-    return 0;
- }
+	{Retry++;if(Retry>200) return 0;}
 	SPI2_CS_HIGH();	   
 	SPI2_CS_LOW();  
 	SPI_I2S_SendData(SPI2, byte);

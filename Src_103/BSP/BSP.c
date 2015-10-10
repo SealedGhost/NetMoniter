@@ -7,7 +7,6 @@
 #include "timer.h"
 #include "MUSIC.h"
 #include "SPI.h"
-//uint8_t UART_Tx[3]={0};
 void BSP_Init(void)
 {
 	unsigned short int i;
@@ -21,17 +20,10 @@ void BSP_Init(void)
   USART_Cmd(USART1, ENABLE);	
 	USART_Cmd(USART2, ENABLE);
 	USART_Cmd(USART3, ENABLE);
- 
- Music_Init();
 	IWDG_Init(4,625);//与分频数为64,重载值为625,溢出时间为1s
 	TIM4_Int_Init();  
- SPI2_Init();
-
-  for(i=0;i<4;i++)
-	{
-			USART_SendData(USART1, 'a');
-	    while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET) {}	
-  }
+	SPI2_Init();
+  Music_Init();
 	Key_Init();//打开IO时钟
 }
  

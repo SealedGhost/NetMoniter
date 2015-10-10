@@ -11,17 +11,6 @@ int main(void)
 	INT8U err;
 	u32 i;
 	BSP_Init();
-//  GPIO_ResetBits(GPIOC,GPIO_Pin_13);
-	
-	for(i=0;i<1;i++){Sound_U();}
-	
-//	GPIO_ResetBits(GPIOA,GPIO_Pin_8);
-
-	 for(i=0;i<4;i++)
-	{
-			USART_SendData(USART1, 'a');
-	    while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET) {}	
-  }
 	
 	OSInit();
 	
