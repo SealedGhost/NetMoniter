@@ -179,6 +179,7 @@ OSMutexPost(Refresher);
 void Refresh_Task(void *p_arg)//任务Refresh_Task
 {
  int i  = 0;
+ uint8_t val = 0xa5;
 
 	while(1)
 	{
@@ -186,15 +187,6 @@ void Refresh_Task(void *p_arg)//任务Refresh_Task
 //  OSMutexPend(Updater, 0, &myErr_2);
   updateTimeStamp();
   OSMutexPost(Refresher); 
-
-  if(xlCnt > 10)
-  {
-INFO("fuck fuck fuck");    
-  }
-  else
-  {
-     xlCnt++;
-  }
 //  UART_SendByte(2, 'k');
 #ifdef CODE_CHECK 
        check();
@@ -255,7 +247,7 @@ int translate_(unsigned char *text,message_18 *text_out,message_24_partA *text_o
   int i=0,comma=0;
   int tmp  = 0;
   unsigned long tempgprmc  = 0;
-  unsigned long shiftReg  = 0;
+  long shiftReg  = 0;
   
   if((text[0]!='!')&&(text[0]!='$'))
     return 0;
@@ -311,11 +303,12 @@ int translate_(unsigned char *text,message_18 *text_out,message_24_partA *text_o
 //    tempgprmc = text[8]; mothership.latitude = mothership.latitude + (tempgprmc << 8);
 //    mothership.latitude = mothership.latitude + text[9];
 //    mothership.latitude = mothership.latitude/10;    
+printf("GPRMC\n");
     shiftReg   = text[6];
     shiftReg   = (shiftReg << 8) | text[7];
     shiftReg   = (shiftReg << 8) | text[8];
     shiftReg   = (shiftReg << 8) | text[9];
-    if(shiftReg)
+    if(shiftReg )
        mothership.latitude  = shiftReg / 10;
     
     

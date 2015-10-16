@@ -4,6 +4,10 @@
 #include "ucos_ii.h"
 #include "app.h"
 
+uint8_t  isAlarm  = FALSE;
+uint8_t armState  = 0;
+uint8_t Music_flag;
+Music_Info Music_Information;
 uint8_t Uart_Rx[UART_RX_LEN];//UART2接收
 //uint8_t Uart_Tx[UART_TX_LEN];//UART2发送
 //uint8_t Message_AIS[100];
@@ -14,11 +18,11 @@ uint8_t Uart_Rx[UART_RX_LEN];//UART2接收
 void GPIO_Configuration(void)
 {	
   GPIO_InitTypeDef GPIO_InitStructure;
-  RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1 | RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | RCC_APB2Periph_AFIO, ENABLE);//打开串口1和对应IO时钟      
-  GPIO_PinRemapConfig(GPIO_Remap_USART1,ENABLE);//UART1重映射到PB6，7脚使能
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7; /* Configure USART1 Rx (PB.7) as input floating */
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
+  RCC_APB2PeriphClockCmd( RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB , ENABLE);//打开串口1和对应IO时钟      
+//  GPIO_PinRemapConfig(GPIO_Remap_USART1,ENABLE);//UART1重映射到PB6，7脚使能
+//  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7; /* Configure USART1 Rx (PB.7) as input floating */
+//  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+//  GPIO_Init(GPIOB, &GPIO_InitStructure);
   
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;  /* Configure USART1 Tx (PB.6) as alternate function push-pull */
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
@@ -72,25 +76,25 @@ void DMA_Configuration(void)
 
 void UART_Configuration(void)
 {
-	  USART_InitTypeDef USART_InitStructure;
-    
-    USART_InitStructure.USART_WordLength = USART_WordLength_8b;    
-    USART_InitStructure.USART_StopBits = USART_StopBits_1;    
-    USART_InitStructure.USART_Parity = USART_Parity_No;    
-    USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;    
-    USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;      
-    USART_InitStructure.USART_BaudRate = 115200;   
+	   USART_InitTypeDef USART_InitStructure;
  
-    USART_Init(USART1,&USART_InitStructure);          
+//    USART_InitStructure.USART_WordLength = USART_WordLength_8b;    
+//    USART_InitStructure.USART_StopBits = USART_StopBits_1;    
+//    USART_InitStructure.USART_Parity = USART_Parity_No;    
+//    USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;    
+//    USART_InitStructure.USART_Mode =  USART_Mode_Tx;      
+//    USART_InitStructure.USART_BaudRate = 115200;   
+// 
+//    USART_Init(USART1,&USART_InitStructure);          
 
-    USART_ITConfig(USART1,USART_IT_TC,DISABLE);    //禁止 
-    USART_ITConfig(USART1,USART_IT_RXNE,DISABLE);  //禁止 
-    USART_ITConfig(USART1,USART_IT_IDLE,ENABLE);   //开启
-		USART_ITConfig(USART2,USART_IT_ERR,ENABLE);//开启错误中断
-	  USART_ITConfig(USART2,USART_IT_PE,ENABLE);//开启错误中断
+//    USART_ITConfig(USART1,USART_IT_TC,DISABLE);    //禁止 
+//    USART_ITConfig(USART1,USART_IT_RXNE,DISABLE);  //禁止 
+//    USART_ITConfig(USART1,USART_IT_IDLE,DISABLE);   //开启
+
 
 
 //    USART_DMACmd(USART1,USART_DMAReq_Rx,ENABLE);	//采用DMA方式接收  
+
 /////////////////////////////////////////////////////////////////////////////////////////////
     USART_InitStructure.USART_WordLength = USART_WordLength_8b;    
     USART_InitStructure.USART_StopBits = USART_StopBits_1;    
@@ -119,127 +123,77 @@ void UART_Configuration(void)
     USART_ITConfig(USART3,USART_IT_TC,DISABLE);    //禁止 
     USART_ITConfig(USART3,USART_IT_RXNE,DISABLE);  //禁止 
     USART_ITConfig(USART3,USART_IT_IDLE,ENABLE);   //开启
-		USART_ITConfig(USART3,USART_IT_ERR,DISABLE);//开启错误中断
-	  USART_ITConfig(USART3,USART_IT_PE,DISABLE);//开启错误中断
+	  	USART_ITConfig(USART3,USART_IT_ERR,DISABLE);//开启错误中断
+	   USART_ITConfig(USART3,USART_IT_PE,DISABLE);//开启错误中断
 
 
     //USART_DMACmd(USART3,USART_DMAReq_Rx,ENABLE);	//采用DMA方式接收
 }
 void NVIC_Configuration(void)
 {
-	NVIC_InitTypeDef NVIC_InitStructure;
-	//配置UART3中断    
+    NVIC_InitTypeDef NVIC_InitStructure;
+    //配置UART3中断    
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);  
-    NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;               //通道设置为串口3中断    
+    NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;               //通道设置为串口2中断    
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;       //中断占先等级0    
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;              //中断响应优先级0    
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;                 //打开中断    
-    NVIC_Init(&NVIC_InitStructure);  
+    NVIC_Init(&NVIC_InitStructure); 
+
+//    NVIC_InitStructure.NVIC_IRQChannel  = USART1_IRQn;
+//    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+//    NVIC_Init(&NVIC_InitStructure);    
 }
 
+/*
 void USART1_IRQHandler(void)                                 
 {     
-	uint32_t Length = 0;
-//	uint8_t index,*pt,*pt0,err;	
+ uint8_t trgState  = 0;
 
 	if(USART_GetITStatus(USART1, USART_IT_IDLE) != RESET)  
 	{  
-		//flag_translate=1;
-		  DMA_Cmd(DMA1_Channel5,DISABLE); 
-		  Length = USART1->SR;  
- 		  Length = USART1->DR; //清USART_IT_IDLE标志 
- 			Length = UART_RX_LEN - DMA_GetCurrDataCounter(DMA1_Channel5);		
-      //if(45<Length<55)
-			//{		
-					//OSQPost(QSem,(void *)Uart_Rx);
-				printf("\r\n%d",Length);
-//         for(i=0;i<Length;i++)
-// 			  {
-// 					Message_AIS[i]=Uart_Rx[i];//Message_AIS++;
-// 					//printf("%c",Uart_Rx[i]);
-//         }		
-// 			pt=OSMemGet(PartitionPt,&err);
-// 			pt0=pt;
-// 			for(index=0;index<50;index++)
-// 			{
-// 				*pt=Uart_Rx[index];
-// 				pt++;
-// 			}
-// 			OSQPost(QSem,(void *)pt0);	
-//		   printf("\r\nDMA OK ");
-			 
-//           for(index=0;index<50;index++)	
-//          {
-//            Partition[myCnt][index]=Uart_Rx[index];
-//          }
-//        OSQPost(QSem,(void *)Partition[myCnt]); 
-//        myCnt++;
-//        myCnt  = myCnt%(MSG_QUEUE_TABNUM);   
-//        printf("myCnt:%d\n\r!",myCnt);	
-		  //}			 
-		  DMA1_Channel5->CNDTR = UART_RX_LEN;//重装填,并让接收地址偏址从0开始
-		  DMA_Cmd(DMA1_Channel5, ENABLE);//处理完,重开DMA   
+
 	}
 
   if((USART_GetITStatus(USART1, USART_IT_ORE) != RESET)||(USART_GetITStatus(USART1, USART_IT_NE) != RESET)||(USART_GetITStatus(USART1, USART_IT_FE) != RESET)||(USART_GetITStatus(USART1, USART_IT_PE) != RESET))
 	{
 		  printf("\r\nERROR!");
- 			Length = USART1->SR;  
- 			Length = USART1->DR; //清USART_IT_IDLE标志  
   }	
 	__nop();   
 }
+*/
 
+/*******
+ *   Receive RS232
+ */
 void USART2_IRQHandler(void)                                 
 {  
 	uint32_t Length = 0;//,i=0;
-//	uint16_t Res;	
-// 	if(USART1->SR&(1<<5))//(USART_GetITStatus(USART3, USART_IT_RXNE) != RESET)  
-// 	{
-// 		Res=USART1->DR;//USART_ReceiveData(USART3);
-// 		while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET);	
-// 			USART_SendData(USART1, Res);
-// 	
-// // 		if(Res=='!')
-// // 		{
-// // 			Uart_Rx[0]=Res;
-// // 			i=0;
-// // 			Res_Flag=1;
-// //     }
-// // 		else if(Res=='\n')
-// // 		{
-// // 			Res_Flag=0;
-// // 			i=0;
-// 			//OSQPost(QSem,(void *)Uart_Rx);
-// //     }
-// // 		else if(Res_Flag)
-// // 		{
-// // 			i++;
-// // 			Uart_Rx[i]=Res;
-// //     }
-//   }
+
 	if(USART_GetITStatus(USART2, USART_IT_IDLE) != RESET)  
 	{  
 		//flag_translate=1;
 		  DMA_Cmd(DMA1_Channel6,DISABLE); 
-		  Length = USART3->SR;  
- 		  Length = USART3->DR; //清USART_IT_IDLE标志 
+		  Length = USART2->SR;  
+ 		  Length = USART2->DR; //清USART_IT_IDLE标志 
  			Length = UART_RX_LEN - DMA_GetCurrDataCounter(DMA1_Channel6);		
-//      if(45<Length<55)
-   if(Length > 45  &&  Length < 55)
-			{		
-					OSQPost(QSem,(void *)Uart_Rx);
-			}
+   if(Uart_Rx[1] == 'A'  &&  Uart_Rx[5] == 'M')
+   {
+     if(Length > 45  &&  Length < 55)
+     {		
+       OSQPost(QSem,(void *)Uart_Rx);
+     }
+   }
+   else if(Uart_Rx[1] == 'G'  &&  Uart_Rx[5] == 'C')
+   {
+      OSQPost(QSem, (void*)Uart_Rx);
+   }
 			//printf("\r\n%d",Length);	
 			DMA1_Channel6->CNDTR = UART_RX_LEN;//重装填,并让接收地址偏址从0开始
 		  DMA_Cmd(DMA1_Channel6, ENABLE);//处理完,重开DMA 
   }
 }
-void  Putc_UART1(u8 ch)
-{
-	USART_SendData(USART1, ch);
-	while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET);		
-}
+
 void  Putc_UART2(u8 ch)
 {
 	USART_SendData(USART2, ch);

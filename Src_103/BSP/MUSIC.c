@@ -78,12 +78,17 @@ void Music_Init(void)
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
   GPIO_Init(GPIOC, &GPIO_InitStructure);	
   GPIO_SetBits(GPIOC,GPIO_Pin_15);
+  
+  Sound_D();
+  Sound_D();
+  Sound_D();
 }
 void Sound_D(void)
 {
 	GPIO_ResetBits(GPIOC,GPIO_Pin_14);
 	delay_ms(20);
 	GPIO_SetBits(GPIOC,GPIO_Pin_14);
+  delay_ms(20);
 	//delay_ms(10);
 }
 void Sound_U(void)
@@ -91,7 +96,46 @@ void Sound_U(void)
 	GPIO_ResetBits(GPIOC,GPIO_Pin_15);
 	delay_ms(20);
 	GPIO_SetBits(GPIOC,GPIO_Pin_15);
-	//for(i=0;i<1000000;i++);
+	delay_ms(20);
+}
+void OpenMusic(void)
+{
+	GPIO_SetBits(GPIOB,GPIO_Pin_5);
+}
+void ShutDown(void)
+{
+	GPIO_ResetBits(GPIOB,GPIO_Pin_5);
+}
+void Choose_Alarm1(void)
+{
+	GPIO_SetBits(GPIOB,GPIO_Pin_5);
+	GPIO_ResetBits(GPIOA,GPIO_Pin_11);
+}
+void Choose_Alarm2(void)
+{
+	GPIO_SetBits(GPIOB,GPIO_Pin_5);
+	GPIO_ResetBits(GPIOA,GPIO_Pin_12);
+}
+void Choose_Alarm3(void)
+{
+	GPIO_SetBits(GPIOB,GPIO_Pin_5);
+	GPIO_ResetBits(GPIOC,GPIO_Pin_13);
+}
+
+void Close_Alarm1(void)
+{
+	GPIO_SetBits(GPIOA,GPIO_Pin_11);
+  GPIO_ResetBits(GPIOB,GPIO_Pin_5);
+}
+void Close_Alarm2(void)
+{
+	GPIO_SetBits(GPIOA,GPIO_Pin_12);
+	GPIO_ResetBits(GPIOB,GPIO_Pin_5);
+}
+void Close_Alarm3(void)
+{
+	GPIO_SetBits(GPIOA,GPIO_Pin_13);
+	GPIO_ResetBits(GPIOB,GPIO_Pin_5);
 }
 // void Send_Music_Data(u8 data)
 // {

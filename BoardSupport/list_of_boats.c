@@ -688,7 +688,13 @@ static int getSphereDist(long lt_1,long lg_1, long lt_2, long lg_2)
  {
     return 999999;
  }
-
+ 
+ if( (lt_1>lt_2?lt_1-lt_2:lt_2-lt_1) <500  &&  (lg_1>lg_2?lg_1-lg_2:lg_2-lg_1) < 500 )
+ {
+    dist  = sqrt( (lt_1-lt_2)*(lt_1-lt_1) + (lg_1-lg_2)*(lg_1-lg_2));
+    return (int)(dist);
+ }
+ 
 	dist = 6371 *0.54 * acos(cos((f_1 - f_2)*PI / 180) / 2
 		- cos((f_1 + f_2)*PI / 180) / 2
 		+ cos((diff + f_1 + f_2)*PI / 180) / 4

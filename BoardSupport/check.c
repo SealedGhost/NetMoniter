@@ -1,6 +1,7 @@
 
 #include "Check.h"
 #include <math.h>
+#include "sound.h"
 
 /*----------------- Macro      defines --------------------------*/
 #define MYABS(x)   ((x)>0?(x):(-(x)))
@@ -11,7 +12,7 @@ extern int N_boat;
 extern MNT_BERTH * pMntHeader;
 extern MNT_BERTH MNT_Berthes[MNT_NUM_MAX];
 
-/// If key pressed , isKeyTrigged will be TRUE. Your apps must set iskeyTrigged FALSe after using it.
+/// Defined in app.c.If key pressed , isKeyTrigged will be TRUE. Your apps must set iskeyTrigged FALSe after using it.
 extern int isKeyTrigged;
  
 /*----------------- global   variables ------------------------*/
@@ -105,7 +106,7 @@ INFO("mask cursor move");
       
       Num++;
 
-INFO("check %09ld",pMntBerth->mntBoat.mmsi);   
+//INFO("check %09ld",pMntBerth->mntBoat.mmsi);   
 
    
   /*****************************************************************************
@@ -125,7 +126,7 @@ INFO("check %09ld",pMntBerth->mntBoat.mmsi);
          /// This boat had been gone but come back now.      
          if(SimpBerthes[i].pBerth->mntState == MNTState_None)
          {
-INFO("come back");            
+//INFO("come back");            
             pMntBerth->pBoat  = &(SimpBerthes[i].pBerth->Boat);
             SimpBerthes[i].pBerth->mntState  = MNTState_Monited;
             if(pMntBerth->chsState == MNTState_Init)            
@@ -141,7 +142,7 @@ INFO("come back");
    if(trgState)
    {
       pMntBerth->pBoat  = NULL;
-INFO("This boy is gone %09ld",pMntBerth->mntBoat.mmsi);      
+//INFO("This boy is gone %09ld",pMntBerth->mntBoat.mmsi);      
    }
   
    /*****************************************************************************
@@ -171,7 +172,7 @@ INFO("This boy is gone %09ld",pMntBerth->mntBoat.mmsi);
                /// Black --> Whiit.
                if(SimpBerthes[i].pBerth->Boat.target  == pMntBerth->mntBoat.mmsi)
                {
-INFO("%09ld --> White",SimpBerthes[i].pBerth->Boat.user_id);                
+//INFO("%09ld --> White",SimpBerthes[i].pBerth->Boat.user_id);                
                   /// INVD_delete.
                   SimpBerthes[i].pBerth->Boat.target  = 0;
                   INVD_deleteByMMSI(SimpBerthes[i].pBerth->Boat.user_id);
@@ -184,7 +185,7 @@ INFO("%09ld --> White",SimpBerthes[i].pBerth->Boat.user_id);
             /// INVD_delete.
             if(SimpBerthes[i].pBerth->Boat.target)
             {
-INFO("invader %09ld become mnt",SimpBerthes[i].pBerth->Boat.user_id);  
+//INFO("invader %09ld become mnt",SimpBerthes[i].pBerth->Boat.user_id);  
               INVD_deleteByMMSI(SimpBerthes[i].pBerth->Boat.user_id);           
               SimpBerthes[i].pBerth->Boat.target  = 0;
             }
@@ -198,7 +199,7 @@ INVD_deleteByTargetMMSI(pMntBerth->mntBoat.mmsi);
       {
          if(SimpBerthes[i].pBerth->Boat.target == pMntBerth->mntBoat.mmsi)
          {
-INFO("clear follower:%09ld",SimpBerthes[i].pBerth->Boat.user_id);         
+//INFO("clear follower:%09ld",SimpBerthes[i].pBerth->Boat.user_id);         
             SimpBerthes[i].pBerth->Boat.target  = 0;
          }
       }
@@ -280,7 +281,12 @@ INFO("This boy offset");
    {
       if( (pIterator->trgState & 0x1f)  ==  MNTState_Triggered )
       {
-INFO("\aFBI Warning");   
+  
+//         	UART_Send((UART_ID_Type)UART_2, (uint8_t*) &trgState, 1, BLOCKING);  /* ·¢ËÍÒ»¸ö×Ö·ûµ½UART */
+//          UART_SendByte(UART_2, 0xaa);
+//          UART_SendByte(UART_2, (SysConf.Snd.ArmSnd <<4)  |  (SysConf.Snd.Vol));          
+INFO("\aFBI warning!");   
+          SND_SelectID(SysConf.Snd.ArmSnd-1+4);
           break;      
       }  
       else
@@ -290,8 +296,7 @@ INFO("\aFBI Warning");
    }
    
    
-   INVD_print();
-   
+//   INVD_print();
  }
    Cnt++;
    Cnt  = Cnt%2;

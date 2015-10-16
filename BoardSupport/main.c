@@ -11,6 +11,7 @@
 #include <ucos_ii.h>
 // #include "exfuns.h"
 #include "lpc177x_8x_eeprom.h"
+#include "lpc177x_8x_uart.h"
 
 ////////
 ///////
@@ -56,8 +57,8 @@ int main(void)
 //	LCD_test();
   //fs_test();
 //  	exfuns_init();
-//  	load_font(); //¼ÓÔØflash×Ö¿â
-	
+//  	load_font(); //¼ÓÔØflash×Ö¿â  7E 02 01 EF
+
 	App_TaskStart();
 
 	while(1);

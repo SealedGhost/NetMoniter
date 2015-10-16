@@ -5,7 +5,6 @@
 
 OS_STK task_translate_stk[TASK_TRANSLATE_STK_SIZE];
 OS_STK task_key_stk[TASK_KEY_STK_SIZE];
-
 int main(void)
 {
 	INT8U err;
@@ -19,7 +18,6 @@ int main(void)
 	
   OSTaskCreate(Task_Translate,(void *)0, &task_translate_stk[TASK_TRANSLATE_STK_SIZE-1], TASK_TRANSLATE_PRIO);
   OSTaskCreate(Task_KEY,(void *)0, &task_key_stk[TASK_KEY_STK_SIZE-1], TASK_KEY_PRIO);
-
 	OSStart();
 	
 	return 0;

@@ -10,6 +10,7 @@
 #include "GUI.h"
 #include "pwm.h"
 #include "drawThings.h"
+#include "sound.h"
 
 #define ID_WINDOW_0         (GUI_ID_USER + 0x00)
 
@@ -42,6 +43,8 @@ GUI_POINT pPoint[] = {
 	{0,16}
 };
 
+
+
 static void sldListenter(WM_MESSAGE * pMsg);
 
 static const SysWin_COLOR * pSkin  = &SysWinSkins[0];
@@ -70,16 +73,7 @@ static  void (* const ProcChanging[7])(WM_MESSAGE *, int)  = {
 static const GUI_WIDGET_CREATE_INFO _aDialogCreate[]  = 
 {
  { WINDOW_CreateIndirect,  "Window",  ID_WINDOW_0,  SubWin_X,  SubWin_Y, SubWin_WIDTH, SubWin_HEIGHT,  0, 0, 0},
-// { TEXT_CreateIndirect, "系统设置" ,ID_TEXT_TITLE,  0,   0,                                                             120,  30,  0, 0, 0},
-// { TEXT_CreateIndirect, "夜间模式", ID_TEXT_NIGHT,  0,   Win_SysSet_txOrg,                                              120,  30,  0, 0, 0},
-// { TEXT_CreateIndirect, "亮度设置", ID_TEXT_BRIGHT  ,  0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap),   120,  30,  0, 0, 0},
-// { TEXT_CreateIndirect, "音量设置", ID_TEXT_VOL, 0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*2, 120,  30,  0, 0, 0},
-// { TEXT_CreateIndirect, "报警  音", ID_TEXT_ARMSND, 0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3, 120,  30,  0, 0, 0},
-// { TEXT_CreateIndirect, "按键  音", ID_TEXT_KEYSND, 0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4, 120,  30,  0, 0, 0},
-// { TEXT_CreateIndirect, "单位设置", ID_TEXT_UNIT,   0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5, 120,  30,  0, 0, 0},
-// { TEXT_CreateIndirect, "船位设置", ID_TEXT_SHAPE,  0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6, 120,  30,  0, 0, 0},
-// { TEXT_CreateIndirect, "软件更新", ID_TEXT_UPDATE, 0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*7, 120,  30,  0, 0, 0},
-// { TEXT_CreateIndirect, "系统版本", ID_TEXT_VERSION,0,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*8, 120,  30,  0, 0, 0},
+
  { TEXT_CreateIndirect, "左右",       ID_TEXT_VER,    75, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*7+10, 120,  30, 0,  0, 0},
 // 
  { HSD_SLIDER_CreateIndirect, " " ,ID_SLIDER_SKIN,   180,   Win_SysSet_txOrg,                                              120,  30,  0, 0, 0},
@@ -140,6 +134,16 @@ INFO("case msg skin");
            break;
            
       case WM_INIT_DIALOG:
+      
+           agentConf.Skin              = SysConf.Skin;
+           agentConf.Brt               = SysConf.Brt;
+           agentConf.Snd.Vol           = SysConf.Snd.Vol;
+           agentConf.Snd.ArmSnd        = SysConf.Snd.ArmSnd;
+           agentConf.Snd.KeySnd        = SysConf.Snd.KeySnd;
+           agentConf.Unit              = SysConf.Unit;
+           agentConf.Shape             = SysConf.Shape;
+
+           
            pSkin  = &(SysWinSkins[SysConf.Skin]);
                 //text
            hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_VER);
@@ -167,8 +171,8 @@ INFO("case msg skin");
            
            Slideres[3]  = WM_GetDialogItem(pMsg->hWin, ID_SLIDER_SNDARM);
            WM_SetCallback(Slideres[3], &sldListenter);
-           HSD_SLIDER_SetNumTicks(Slideres[3],2);
-           HSD_SLIDER_SetRange(Slideres[3], 1 , 2);
+           HSD_SLIDER_SetNumTicks(Slideres[3],3);
+           HSD_SLIDER_SetRange(Slideres[3], 1 , 3);
            HSD_SLIDER_SetValue(Slideres[3], SysConf.Snd.ArmSnd);
            
            Slideres[4]  = WM_GetDialogItem(pMsg->hWin, ID_SLIDER_SNDKEY);
@@ -202,13 +206,7 @@ INFO("case msg skin");
               HSD_SLIDER_SetFocusSliderColor(Slideres[i], pSkin->sldFocusSlider);
            }           
            
-           agentConf.Skin              = SysConf.Skin;
-           agentConf.Brt               = SysConf.Brt;
-           agentConf.Snd.Vol           = SysConf.Snd.Vol;
-           agentConf.Snd.ArmSnd        = SysConf.Snd.ArmSnd;
-           agentConf.Snd.KeySnd        = SysConf.Snd.KeySnd;
-           agentConf.Unit              = SysConf.Unit;
-           agentConf.Shape             = SysConf.Shape;
+
                  
            break;
            
@@ -438,6 +436,7 @@ static void _OnVolChanged(WM_MESSAGE * pMsg,int val)
    if(agentConf.Snd.Vol != val)
    {
       agentConf.Snd.Vol  = val;
+      SND_SetVol(val);
    }
 INFO("Vol changed .Vol:%d",agentConf.Snd.Vol);
 }
@@ -447,6 +446,8 @@ static void _OnArmSndChanged(WM_MESSAGE * pMsg,int val)
    if(agentConf.Snd.ArmSnd  != val)
    {
       agentConf.Snd.ArmSnd  = val;
+INFO("vol :%d",val);      
+      SND_SelectID(val-1+4);
    }
 INFO("arm snd changed . armsnd:%d",agentConf.Snd.ArmSnd);
 }

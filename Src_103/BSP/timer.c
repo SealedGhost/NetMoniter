@@ -11,7 +11,7 @@ void TIM4_IRQHandler(void)
 	{
 		TIM_ClearITPendingBit(TIM4, TIM_IT_Update  ); 
 		//printf("%c",'a');			
-			IWDG_Feed();	
+			IWDG_Feed();	   
   }   
 
 		

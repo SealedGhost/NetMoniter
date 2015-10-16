@@ -7,7 +7,17 @@
 
 #define UART_RX_LEN     400 
 #define UART_TX_LEN     50
+
+
+typedef struct
+{
+	uint8_t Alarm_number;
+	uint8_t volume;
+}Music_Info;
+
 extern uint8_t Uart_Rx[UART_RX_LEN];//UART1Ω” ’
+// extern Music_Info Music_Information;
+// extern uint8_t Music_flag;
 //extern uint8_t Uart_Tx[UART_TX_LEN];//UART2∑¢ÀÕ
 
 //u8 Flag_Uart_Send = 0;

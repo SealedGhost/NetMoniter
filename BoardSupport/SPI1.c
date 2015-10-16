@@ -25,6 +25,7 @@ void  SPI1_Int(void)
 	SSP_Init(LPC_SSP1, &SSP_ConfigStruct);// Initialize SSP peripheral with parameter given in structure above
 	
 	LPC_SSP1->CR1 |= SSP_CR1_SSP_EN;//SSP_Cmd(0, ENABLE);// Enable SSP peripheral	
+ printf("\n\rSPI_INIT\n\r");
 }
 
 

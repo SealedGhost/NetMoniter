@@ -146,11 +146,11 @@ printf("%d--MMSI:%09ld\n\r",i,MNT_Berthes[i].mntBoat.mmsi);
 
 void sysStore()
 {
-   uint16_t i  = 0;
-   for(i=0; i<MNT_NUM_MAX; i++)
-   {
-      EEPROM_Erase(MNT_PAGE_ID+i);
-   }
+//   uint16_t i  = 0;
+//   for(i=0; i<MNT_NUM_MAX; i++)
+//   {
+//      EEPROM_Erase(MNT_PAGE_ID+i);
+//   }
    EEPROM_Write(SYSCONF_ADDR%EEPROM_PAGE_SIZE, SYSCONF_ADDR/EEPROM_PAGE_SIZE,
                &SysConf, MODE_8_BIT, sizeof(CONF_SYS));        
 }

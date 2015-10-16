@@ -267,7 +267,7 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
     GUI_SetBkColor(pSkin->bkColor);
 //    GUI_ClearRect(0,40, 800, 480);
     GUI_ClearRectEx(Rect_Map);
-//    drawMapSwitch  = 1;
+    drawMapSwitch  = 1;
     if(drawMapSwitch)
     {
        setView(center.lgtude, center.lttude, &measuring_scale[scale_choose]);
@@ -302,7 +302,7 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
     GUI_DispStringAt(pStrBuf, 360, 5);
     sprintf(pStrBuf, "%d", mothership.COG);
     GUI_DispStringAt(pStrBuf, 510, 5);
-    
+printf("Date:%ld  Time:%ld\n",SYS_Date, SYS_Time);
     sprintf(pStrBuf, "%02ld-%02ld/%02ld  %02ld:%02ld",(SYS_Date%10000)/100,SYS_Date/10000,  SYS_Date%100, 
                                            SYS_Time/10000+8, (SYS_Time%10000)/100);                                            
     GUI_DispStringAt(pStrBuf, 600, 5);
@@ -313,13 +313,13 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 
     GUI_SetPenSize(1);
     GUI_SetColor(GUI_DARKGRAY);
-    GUI_FillPolygon(Points_Compass_1, 3, 100, 100);
+    GUI_AA_FillPolygon(Points_Compass_1, 3, 100, 100);
     GUI_SetColor(GUI_GRAY);
-    GUI_FillPolygon(Points_Compass_2, 3, 101, 100);
+    GUI_AA_FillPolygon(Points_Compass_2, 3, 100, 100);
     GUI_SetColor(GUI_RED);
-    GUI_FillPolygon(Points_Compass_3, 3, 101, 101);  
+    GUI_AA_FillPolygon(Points_Compass_3, 3, 100, 100);  
     GUI_SetColor(GUI_DARKRED);
-    GUI_FillPolygon(Points_Compass_4, 3, 100, 101);
+    GUI_AA_FillPolygon(Points_Compass_4, 3, 100, 100);
 
 
 

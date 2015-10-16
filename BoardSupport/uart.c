@@ -9,8 +9,12 @@
 #include "dlg.h"
 #include "MainTask.h" 
 #include <ucos_ii.h>
+#include "sound.h"
 uint8_t Buffer0[23]  = "uart0 init success\n\r";
 uint8_t Buffer2[23]  = "uart2 init success!\n\r"; 
+
+extern uint8_t SND[4][6];
+extern int isKeyTrigged;
 
 volatile Bool Doubleclick  = FALSE;
 volatile Bool isReleasedDet  = FALSE;
@@ -27,7 +31,8 @@ void lpc1788_Uart_Init(int port)//LPC1788_Uart_Init
    {
     case 0:
        PINSEL_ConfigPin(0,2,1);
-       PINSEL_ConfigPin(0,3,1);break;
+       PINSEL_ConfigPin(0,3,1);
+       break; 
 	}
 	UART_ConfigStructInit(&UARTConfigStruct);/* 初始化UARTConfigStruct结构体为：波特率为115200，8位数据，无奇偶校验，1位停止位 */
 	//UARTConfigStruct.Baud_rate = 115200;
@@ -66,7 +71,7 @@ void lpc1788_Uart_Init(int port)//LPC1788_Uart_Init
    PINSEL_ConfigPin(0,10,1);
    PINSEL_ConfigPin(0,11,1);
    UART_ConfigStructInit(&UARTConfigStruct1);
-   UARTConfigStruct1.Baud_rate = 115200;
+   UARTConfigStruct1.Baud_rate = 9600;
    UART_Init((UART_ID_Type)channel, &UARTConfigStruct1);
    
    UART_FIFOConfigStructInit(&UARTFIFOConfigStruct1);
@@ -80,6 +85,7 @@ void USER_Init(void)
 {	
 	GPDMA_Init();
 	lpc1788_Uart_Init(0);/* 初始化串口Uart0 使用DMA通道0*/	
+ UART_Config(2);
  //lpc1788_DMA_Init();  
 //	printf("uart0 init success!\n\r\r");	
 	UART_Send((UART_ID_Type)0, Buffer0,sizeof(Buffer0),BLOCKING);
@@ -104,7 +110,9 @@ void UART0_IRQHandler(void)
  		  UART_Receive(UART_0, &tmpc, 1, NONE_BLOCKING);
     if(tmpc >= GUI_KEY_MENU  &&  tmpc <= GUI_KEY_PGDOWN)   
 			 {
-
+//SND_Stop();
+//          SND_SelectID(0);
+          isKeyTrigged  = 1;
           switch(tmpc)
           {
             case GUI_KEY_PWM_INC:
@@ -121,13 +129,16 @@ void UART0_IRQHandler(void)
                GUI_StoreKeyMsg(tmpc, 1);
               break;
           }
+          
 			 }   
 			 else if(tmpc >= 0x80)
 			 {
        GUI_StoreKeyMsg(GUI_KEY_RELEASE, 1);
+//       SND_Stop();
 			 }
 			 else
 			 {
+//SND_Stop();       
 			 }
    }
 }

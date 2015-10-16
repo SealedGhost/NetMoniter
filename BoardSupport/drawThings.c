@@ -670,7 +670,9 @@ static void getMntWrapPara(long *halfDiff_lg, long* halfDiff_lt, map_scale* pSca
 
 void setView(const long lg, const long lt, const map_scale* pScale)
 {
+
    disp_map(lg, lt, pScale);
+   GUI_SetLineStyle(GUI_LS_SOLID);   
    disp_mntBoat(lg,lt,pScale);
    disp_boat(lg,lt,pScale, N_boat);  
    draw_mothership(lg,lt, pScale);
@@ -688,9 +690,11 @@ void setAutoView()
    autoScale.pixel  = 100;
    getMntWrapPara(&lg, &lt, &autoScale); 
    
+
    disp_map(lg, lt, &autoScale);
+   GUI_SetLineStyle(GUI_LS_SOLID);   
    disp_mntBoat(lg, lt, &autoScale);  
    disp_boat(lg, lt, &autoScale, N_boat);
-//   draw_mothership(lg,lt,&autoScale);
+   draw_mothership(lg,lt,&autoScale);
    draw_scale(&autoScale);
 }

@@ -37,12 +37,12 @@ int MNT_getAddrOffset(uint8_t * addr)
 
 /**@brief  MNT_makeSettingUp
  * 
- * @dscrp  Copy setting in etWin to  selected  boats monited.
- * @input  Monited boat array.
- *         Number of monited boat.
- *         Setting in etWin.
+ * @dscrp  
+ * @input 
+ *         
+ *         
  * @Output 
- * @return Times of copy. 
+ * @return 
  */
 int MNT_makeSettingUp (MNT_SETTING * pMNT_Setting)
 {

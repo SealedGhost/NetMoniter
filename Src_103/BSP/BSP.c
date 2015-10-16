@@ -9,22 +9,22 @@
 #include "SPI.h"
 void BSP_Init(void)
 {
-	unsigned short int i;
 	SystemInit(); /* 配置系统时钟为72M */
 	SysTick_init(); /* 初始化并使能SysTick定时器 */
 	
 	GPIO_Configuration();   
-  DMA_Configuration();
+ DMA_Configuration();
 	UART_Configuration();
 	NVIC_Configuration();   
-  USART_Cmd(USART1, ENABLE);	
+//USART_Cmd(USART1, ENABLE);	
 	USART_Cmd(USART2, ENABLE);
 	USART_Cmd(USART3, ENABLE);
 	IWDG_Init(4,625);//与分频数为64,重载值为625,溢出时间为1s
 	TIM4_Int_Init();  
 	SPI2_Init();
-  Music_Init();
-	Key_Init();//打开IO时钟
+//  Music_Init();
+  Key_Init();//打开IO时钟
+
 }
  
 void SysTick_init(void)

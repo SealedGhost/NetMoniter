@@ -149,7 +149,7 @@ INFO("case msg skin");
        LISTVIEW_SetBkColor(hItem, LISTVIEW_CI_SELFOCUS, pSkin->itm_bkFocus);
        
        LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_UNSEL, pSkin->itm_txUnsel);
-       LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_SEL,   pSkin->itm_bkSel);
+       LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_SEL,   pSkin->itm_txSel);
        LISTVIEW_SetTextColor(hItem,LISTVIEW_CI_SELFOCUS, pSkin->itm_txFocus);
        
        hItem  = LISTVIEW_GetHeader(hItem);
@@ -268,11 +268,35 @@ INFO("case msg skin");
           GUI_DispStringAt("关闭", LV_MoniteList_WIDTH+160,240);
        else
           GUI_DispStringAt("开启",  LV_MoniteList_WIDTH+160,240);
+       
+       if(SysConf.Unit == UNIT_nm)       
+       {
+          sprintf(pStrBuf, "%d.%2d", pIterator->mntBoat.mntSetting.BGL_Setting.Dist/1000,
+                                     (pIterator->mntBoat.mntSetting.BGL_Setting.Dist%1000)/100);
+          GUI_DispStringAt(pStrBuf,  LV_MoniteList_WIDTH+160,280);
           
-       GUI_DispDecAt(pIterator->mntBoat.mntSetting.BGL_Setting.Dist,
-                 LV_MoniteList_WIDTH+160,280,3);
-       GUI_DispDecAt(pIterator->mntBoat.mntSetting.DRG_Setting.Dist,
-                   LV_MoniteList_WIDTH+160,320,3);   
+          sprintf(pStrBuf, "%d.%2d", pIterator->mntBoat.mntSetting.DRG_Setting.Dist/1000,
+                                     (pIterator->mntBoat.mntSetting.DRG_Setting.Dist%1000)/100);
+          GUI_DispStringAt(pStrBuf,  LV_MoniteList_WIDTH+160,320);                                     
+          
+//          GUI_DispDecAt(pIterator->mntBoat.mntSetting.BGL_Setting.Dist,
+//                    LV_MoniteList_WIDTH+160,280,3);
+//          GUI_DispDecAt(pIterator->mntBoat.mntSetting.DRG_Setting.Dist,
+//                      LV_MoniteList_WIDTH+160,320,3);        
+       }
+       else /* if(SysConf.Unit == UNIT_km) */
+       {
+          int tmpDist  = 0;
+          
+          tmpDist  = pIterator->mntBoat.mntSetting.BGL_Setting.Dist * 100 / 54;
+          sprintf(pStrBuf, "%d.%2d", tmpDist/1000, (tmpDist%1000)/100);
+          GUI_DispStringAt(pStrBuf,  LV_MoniteList_WIDTH+160,280);
+          
+          tmpDist  = pIterator->mntBoat.mntSetting.DRG_Setting.Dist * 100 / 54;
+          sprintf(pStrBuf, "%d.%2d", tmpDist/1000, (tmpDist%1000)/100);
+          GUI_DispStringAt(pStrBuf,  LV_MoniteList_WIDTH+160,320);  
+       }
+  
         break;
 
   case WM_NOTIFY_PARENT:

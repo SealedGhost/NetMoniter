@@ -8,6 +8,8 @@
 void Task_LED(void *p_arg);
 void Task_Translate(void *p_arg);
 void Task_KEY(void *p_arg);
+void Task_Music(void *p_arg);
+
 
 extern OS_EVENT *QSem;//
  extern OS_MEM   *PartitionPt;
