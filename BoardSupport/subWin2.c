@@ -277,7 +277,7 @@ case WM_PAINT:
 	  
      SelectedRow  = LISTVIEW_GetSel(WM_GetDialogItem(pMsg->hWin,ID_LISTVIEW_0)); 
      
-     if(SelectedRow < 0)
+     if( N_boat <= 0  ||  SelectedRow < 0)
         break;
      sprintf(pStrBuf,"%3d/%3d",SelectedRow+1,TotalRows);
 
@@ -291,8 +291,27 @@ case WM_PAINT:
      lltostr(SimpBerthes[SelectedRow].longitude,pStrBuf);  
      GUI_DispStringAt(pStrBuf,LV_AllList_WIDTH+80,165);
      
-     GUI_DispDecAt(SimpBerthes[SelectedRow].pBerth->Boat.SOG,LV_AllList_WIDTH+80,205,3); 
-     GUI_DispDecAt(SimpBerthes[SelectedRow].pBerth->Boat.COG,LV_AllList_WIDTH+80,245,3);     
+     if(SysConf.Unit == UNIT_km)
+     {
+        int sog  = SimpBerthes[SelectedRow].pBerth->Boat.SOG *18;
+        sprintf(pStrBuf, "%3d.%02dkm",sog/100, sog%100);
+     }
+     else 
+     {
+        sprintf(pStrBuf, "%2d.%dkt", SimpBerthes[SelectedRow].pBerth->Boat.SOG/10,
+                                     SimpBerthes[SelectedRow].pBerth->Boat.SOG%10);
+     }
+     GUI_DispStringAt(pStrBuf, LV_AllList_WIDTH+80,205);
+     
+     
+     sprintf(pStrBuf, "%3d", SimpBerthes[SelectedRow].pBerth->Boat.COG/10);
+     pStrBuf[3]  = 194;
+     pStrBuf[4]  = 176;
+     pStrBuf[5]  = '\n';
+     GUI_DispStringAt(pStrBuf,LV_AllList_WIDTH+80,245);
+//     GUI_DispDecAt(SimpBerthes[SelectedRow].pBerth->Boat.SOG,LV_AllList_WIDTH+80,205,3);
+               
+//     GUI_DispDecAt(SimpBerthes[SelectedRow].pBerth->Boat.COG,LV_AllList_WIDTH+80,245,3);     
 	   	break;		
 		
   case WM_NOTIFY_PARENT:
@@ -664,6 +683,12 @@ static void updateListViewContent(WM_HWIN thisHandle)
 	 	NumOfRows  = LISTVIEW_GetNumRows(thisListView);
 	}
 	
+ if(NumOfRows == 0)
+ {
+    LISTVIEW_AddRow(thisListView, NULL);
+    NumOfRows  = LISTVIEW_GetNumRows(thisListView);
+ }
+ 
  LISTVIEW_SetSel(thisListView, SelectedRow);
  TotalRows  = NumOfRows;
     WM_InvalidateRect(subWins[2],&lvRect);

@@ -303,7 +303,6 @@ int translate_(unsigned char *text,message_18 *text_out,message_24_partA *text_o
 //    tempgprmc = text[8]; mothership.latitude = mothership.latitude + (tempgprmc << 8);
 //    mothership.latitude = mothership.latitude + text[9];
 //    mothership.latitude = mothership.latitude/10;    
-printf("GPRMC\n");
     shiftReg   = text[6];
     shiftReg   = (shiftReg << 8) | text[7];
     shiftReg   = (shiftReg << 8) | text[8];

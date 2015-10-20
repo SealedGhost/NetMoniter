@@ -217,7 +217,7 @@ INFO("case msg skin");
        GUI_DispStringAt("北纬",              LV_MoniteList_WIDTH+20, LV_MoniteList_Y+80 );
        GUI_DispStringAt("东经",              LV_MoniteList_WIDTH+20, LV_MoniteList_Y+120);
        GUI_DispStringAt("航速",              LV_MoniteList_WIDTH+20, LV_MoniteList_Y+160);
-       GUI_DispStringAt("航向",              LV_MoniteList_WIDTH+160, LV_MoniteList_Y+160);
+       GUI_DispStringAt("航向",              LV_MoniteList_WIDTH+200, LV_MoniteList_Y+160);
        GUI_DispStringAt("消失报警状态",     LV_MoniteList_WIDTH+20, LV_MoniteList_Y+200);
        GUI_DispStringAt("防盗报警距离",     LV_MoniteList_WIDTH+20, LV_MoniteList_Y+240);
        GUI_DispStringAt("走锚报警距离",     LV_MoniteList_WIDTH+20, LV_MoniteList_Y+280);
@@ -238,7 +238,7 @@ INFO("case msg skin");
        
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0);
        SelectedRow  = LISTVIEW_GetSel(hItem);
-       if(SelectedRow < 0)
+       if( !pMntHeader  ||  SelectedRow <0)
           break;
        TotalRows  = LISTVIEW_GetNumRows(hItem);     
        sprintf(pStrBuf,"%3d/%3d",SelectedRow+1, TotalRows);
@@ -260,8 +260,25 @@ INFO("case msg skin");
           lltostr(pIterator->pBoat->longitude, pStrBuf);
           GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH+100, 160);
           
-          GUI_DispDecAt(pIterator->pBoat->SOG, LV_MoniteList_WIDTH+80, 200, 3);
-          GUI_DispDecAt(pIterator->pBoat->COG, LV_MoniteList_WIDTH+300, 200, 3);
+          if(SysConf.Unit == UNIT_km)
+          {
+             int sog  = pIterator->pBoat->SOG * 18;
+             sprintf(pStrBuf, "%3d.%02dkm", sog/100, sog%100);
+          }
+          else
+          {
+             sprintf(pStrBuf, "%2d.%dkt",pIterator->pBoat->SOG/10, pIterator->pBoat->SOG%10);
+          }
+          
+          GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH+80, 200);
+          
+          sprintf(pStrBuf, "%3d", pIterator->pBoat->COG/10);
+          pStrBuf[3]  = 194;
+          pStrBuf[4]  = 176;
+          pStrBuf[5]  = '\n'; 
+          GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH+260, 200);
+//          GUI_DispDecAt(pIterator->pBoat->SOG, LV_MoniteList_WIDTH+80, 200, 3);
+//          GUI_DispDecAt(pIterator->pBoat->COG, LV_MoniteList_WIDTH+300, 200, 3);
        }
       
        if(pIterator->mntBoat.mntSetting.DSP_Setting.isEnable == DISABLE)
@@ -549,6 +566,11 @@ static void updateListViewContent(WM_HWIN thisHandle)
    {
       LISTVIEW_DeleteRow(thisListView, NumOfRows-1);
       NumOfRows  = LISTVIEW_GetNumRows(thisListView);
+   }
+   
+   if(NumOfRows)
+   {
+      LISTVIEW_AddRow(thisListView, NULL);
    }
 }
 

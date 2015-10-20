@@ -108,14 +108,29 @@ static void  _cbDialog(WM_MESSAGE * pMsg)
    switch(pMsg->MsgId)
    {   
       case GUI_KEY_PWM_INC:
-           HSD_SLIDER_Inc(Slideres[1]);
+           if(HSD_SLIDER_GetValue(Slideres[1]) >= 5)
+           {
+              HSD_SLIDER_SetValue(Slideres[1], 1);
+           }
+           else
+           {
+              HSD_SLIDER_Inc(Slideres[1]);          
+           }
+
            break;
-      case GUI_KEY_PWM_DEC:      
-           HSD_SLIDER_Dec(Slideres[1]);
+      case GUI_KEY_PWM_DEC:   
+           if(HSD_SLIDER_GetValue(Slideres[1]) <= 1)      
+           {
+              HSD_SLIDER_SetValue(Slideres[1], 5);
+           }
+           else
+           {           
+              HSD_SLIDER_Dec(Slideres[1]);         
+           }
+
            break;
            
-      case USER_MSG_SKIN:
-INFO("case msg skin");      
+      case USER_MSG_SKIN:    
            pSkin  = &(SysWinSkins[pMsg->Data.v]);
            
            WINDOW_SetBkColor(pMsg->hWin, pSkin->bkColor);
@@ -418,7 +433,6 @@ static void _OnSkinChanged(WM_MESSAGE * pMsg,int val)
 			
    }
 
-INFO("Skin changed .skin:%d",agentConf.Skin);
 }
 
 static void _OnBrtChanged(WM_MESSAGE * pMsg,int val)
@@ -427,8 +441,8 @@ static void _OnBrtChanged(WM_MESSAGE * pMsg,int val)
    {
       agentConf.Brt  = val;
       PWM_SET(val * 2);
+      SND_SelectID(SND_ID_WLCM);
    }
-INFO("Brightness changed .brt:%d",agentConf.Brt);
 }
 
 static void _OnVolChanged(WM_MESSAGE * pMsg,int val)
@@ -438,18 +452,15 @@ static void _OnVolChanged(WM_MESSAGE * pMsg,int val)
       agentConf.Snd.Vol  = val;
       SND_SetVol(val);
    }
-INFO("Vol changed .Vol:%d",agentConf.Snd.Vol);
 }
 
 static void _OnArmSndChanged(WM_MESSAGE * pMsg,int val)
 {
    if(agentConf.Snd.ArmSnd  != val)
    {
-      agentConf.Snd.ArmSnd  = val;
-INFO("vol :%d",val);      
-      SND_SelectID(val-1+4);
+      agentConf.Snd.ArmSnd  = val;   
+      SND_SelectID(val+SND_ID_DSP-1);      
    }
-INFO("arm snd changed . armsnd:%d",agentConf.Snd.ArmSnd);
 }
 
 static void _OnKeySndChanged(WM_MESSAGE * pMsg,int val)
@@ -458,19 +469,16 @@ static void _OnKeySndChanged(WM_MESSAGE * pMsg,int val)
    {
       agentConf.Snd.KeySnd  = val;
    }
-INFO("key snd changed . keysnd:%d",agentConf.Snd.KeySnd);
 }
 
 static void _OnUnitChanged(WM_MESSAGE * pMsg,int val)
 {
    agentConf.Unit  = val;
-INFO("unit changed  . Unit:%d",agentConf.Unit);
 }
 
 static void _OnShapeChanged(WM_MESSAGE * pMsg,int val)
 {
 agentConf.Shape  = val;
-INFO("Shape changed . Shape:%d",agentConf.Shape);
 }
 
 

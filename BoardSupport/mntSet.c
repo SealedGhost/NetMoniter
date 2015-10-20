@@ -112,11 +112,11 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
  
  { BUTTON_CreateIndirect, "bt_0", ID_BUTTON_0, 115, 10,  70, 30, 0, 0xa,  0 },
  { BUTTON_CreateIndirect, "bt_1", ID_BUTTON_1, 150, 45,  70, 30, 0, 0x64, 0 },
- { BUTTON_CreateIndirect, "bt_2", ID_BUTTON_2, 150, 80,  50, 30, 0, 0x64, 0 },
- { BUTTON_CreateIndirect, "bt_3", ID_BUTTON_3, 150, 160, 70, 30, 0, 0x64, 0 },
+ { BUTTON_CreateIndirect, "bt_2", ID_BUTTON_2, 130, 80,  50, 30, 0, 0x64, 0 },
+ { BUTTON_CreateIndirect, "bt_3", ID_BUTTON_3, 130, 160, 70, 30, 0, 0x64, 0 },
  { BUTTON_CreateIndirect, "bt_4", ID_BUTTON_4, 150, 190, 70, 30, 0, 0x64, 0 },
- { BUTTON_CreateIndirect, "bt_5", ID_BUTTON_5, 150, 225, 50, 30, 0, 0x64, 0},
- { BUTTON_CreateIndirect, "bt_6", ID_BUTTON_6, 150, 305, 70, 30, 0, 0x64, 0}
+ { BUTTON_CreateIndirect, "bt_5", ID_BUTTON_5, 130, 225, 50, 30, 0, 0x64, 0},
+ { BUTTON_CreateIndirect, "bt_6", ID_BUTTON_6, 130, 305, 70, 30, 0, 0x64, 0}
 	
   // USER START (Optionally insert additional widgets)
   // USER END
@@ -159,21 +159,21 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 				GUI_SetTextMode(GUI_TM_TRANS);
 				GUI_DispStringAt("消失报警:",10,10);
 				GUI_DispStringAt("防盗报警功能:",10,45);
-				GUI_DispStringAt("距离:",100,80);
-				GUI_DispStringAt("声音:",100,160);
+				GUI_DispStringAt("距离:",80,80);
+				GUI_DispStringAt("声音:",80,160);
 				GUI_DispStringAt("走锚报警功能:",10,190);
-				GUI_DispStringAt("距离:",100,225);
-				GUI_DispStringAt("声音:",100,305);
+				GUI_DispStringAt("距离:",80,225);
+				GUI_DispStringAt("声音:",80,305);
     
     if(SysConf.Unit == UNIT_nm)
     {
-       GUI_DispStringAt("nm", 200, 82);
-       GUI_DispStringAt("nm", 200, 227);
+       GUI_DispStringAt("nm", 180, 82);
+       GUI_DispStringAt("nm", 180, 227);
     }
     else
     {
-       GUI_DispStringAt("km", 200, 82);
-       GUI_DispStringAt("km", 200, 227);       
+       GUI_DispStringAt("km", 180, 82);
+       GUI_DispStringAt("km", 180, 227);       
     }
     
 				GUI_SetFont(&GUI_Font24);
@@ -183,23 +183,23 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 				GUI_DispStringAt("左右",80,350);
 				GUI_SetColor(GUI_WHITE);
 //				GUI_DrawBitmap(&bmyu,45,110);
-    GUI_DrawPolygon(Points_fish, 11, 53, 130);
-				GUI_DrawBitmap(&bmmao,33,260);
+    GUI_DrawPolygon(Points_fish, 11,43, 130);
+				GUI_DrawBitmap(&bmmao,23,260);
 				
 				//GUI_SetPenSize(3);
     GUI_SetColor(BGL_BOAT_COLOR);
-				GUI_DrawCircle(53,130,40);
+				GUI_DrawCircle(43,130,40);
     GUI_SetColor(DRG_BOAT_COLOR);
-				GUI_DrawCircle(53,280,40);
+				GUI_DrawCircle(43,280,40);
     
     GUI_SetColor(GUI_BROWN);
-    GUI_DrawHLine(130, 53, 93);
-    GUI_DrawLine(80, 130, 93, 110);
-    GUI_DrawHLine(110, 93, 150);
+    GUI_DrawHLine(130, 43, 83);
+    GUI_DrawLine(70, 130, 83, 110);
+    GUI_DrawHLine(110, 83, 140);
     
-    GUI_DrawHLine(276, 53, 93);
-    GUI_DrawLine(80, 276, 93, 256);
-    GUI_DrawHLine(256, 93, 150);
+    GUI_DrawHLine(276, 43, 83);
+    GUI_DrawLine(70, 276, 83, 256);
+    GUI_DrawHLine(256, 83, 140);
 				
 
 //  				GUI_DispStringAt("是",30,250);

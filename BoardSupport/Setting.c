@@ -6,7 +6,6 @@
 
 #define MNT_BERTH_SIZE  sizeof(MNT_BERTH)
 
-int N_monitedBoat  = 0;
 MNT_BERTH MNT_Berthes[MNT_NUM_MAX];
 
 

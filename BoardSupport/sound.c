@@ -25,7 +25,7 @@ void SND_SelectID(uint8_t SndID)
    else 
       id  = SndID;
       
-   UART_Send(UART_2, SND[SndID], 6, BLOCKING);
+   UART_Send(UART_2, SND[SndID-1], 6, BLOCKING);
 }
 
 

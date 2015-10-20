@@ -115,14 +115,12 @@ INFO("mask cursor move");
    
    ******************************************************************************/  
    trgState  = (0x01<<7);   
-   isDSP  = 1;
    for(i=N_boat-1; i>=0; i--)   
    {  
       /// Not disappear.
       if(SimpBerthes[i].pBerth->Boat.user_id == pMntBerth->mntBoat.mmsi)
       {
          trgState  = 0;
-         isDSP  = 0;
          /// This boat had been gone but come back now.      
          if(SimpBerthes[i].pBerth->mntState == MNTState_None)
          {
@@ -142,16 +140,54 @@ INFO("mask cursor move");
    if(trgState)
    {
       pMntBerth->pBoat  = NULL;
-//INFO("This boy is gone %09ld",pMntBerth->mntBoat.mmsi);      
+//INFO("This boy is gone %09ld",pMntBerth->mntBoat.mmsi); 
+INFO("This boy is gone %x", trgState);     
    }
+   
+   
+ 
+   /*****************************************************************************
+   
+                                      DRG check 
+                                      
+   ******************************************************************************/   
+   if(   pMntBerth->mntBoat.mntSetting.DRG_Setting.isEnable   ///  开启走锚报警
+      && (!(trgState&0x80))                                   ///  并且船没有消失
+      && pMntBerth->pBoat->latitude  )
+   {
+      diff_lt  = pMntBerth->pBoat->latitude - pMntBerth->mntBoat.lt;
+      diff_lg  = pMntBerth->pBoat->longitude- pMntBerth->mntBoat.lg;
+      
+      diff_lt  = MYABS(diff_lt);
+      diff_lg  = MYABS(diff_lg);
+      
+ /*          
+
+              
+ */       
+      
+      
+      if(   diff_lt+2*diff_lt/5 > pMntBerth->mntBoat.mntSetting.DRG_Setting.Dist
+          ||diff_lg+2*diff_lg/5 > pMntBerth->mntBoat.mntSetting.DRG_Setting.Dist)
+      {
+         r  = sqrt(diff_lt*diff_lt + diff_lg*diff_lg);
+      }
+      
+      if(r >= pMntBerth->mntBoat.mntSetting.DRG_Setting.Dist)
+      { 
+         trgState  |= (0x01<<6); 
+INFO("Offset happened :%x", trgState);        
+      }
+   }
+   
   
    /*****************************************************************************
    
                                       BGL check
    
    ******************************************************************************/      
-   if(   pMntBerth->mntBoat.mntSetting.BGL_Setting.isEnable  
-      && (!trgState)
+   if(   pMntBerth->mntBoat.mntSetting.BGL_Setting.isEnable  ///开启防盗报警
+      && (!trgState)                                         ///船没有消失,亦没有走锚
       && pMntBerth->pBoat->latitude  )
    {
       for(i=N_boat-1; i>=0; i--)
@@ -206,47 +242,12 @@ INVD_deleteByTargetMMSI(pMntBerth->mntBoat.mmsi);
    }
    
    if(InvdMaskCursor.pNext != pInvdTail)
-   {
-INFO("bgl ");   
-      trgState  |= (0x01<<6);
+   {  
+      trgState  |= (0x01<<5);
       pMntBerth->trgState  = (pMntBerth->trgState & 0xe0) | MNTState_Triggered;
+INFO("Some one is closing :%x", trgState);      
    }
    
- 
-   /*****************************************************************************
-   
-                                      DRG check 
-                                      
-   ******************************************************************************/   
-   if(   pMntBerth->mntBoat.mntSetting.DRG_Setting.isEnable  
-      && (!(trgState&0x80))
-      && pMntBerth->pBoat->latitude  )
-   {
-      diff_lt  = pMntBerth->pBoat->latitude - pMntBerth->mntBoat.lt;
-      diff_lg  = pMntBerth->pBoat->longitude- pMntBerth->mntBoat.lg;
-      
-      diff_lt  = MYABS(diff_lt);
-      diff_lg  = MYABS(diff_lg);
-      
- /*          
-
-              
- */       
-      
-      
-      if(   diff_lt+2*diff_lt/5 > pMntBerth->mntBoat.mntSetting.DRG_Setting.Dist
-          ||diff_lg+2*diff_lg/5 > pMntBerth->mntBoat.mntSetting.DRG_Setting.Dist)
-      {
-         r  = sqrt(diff_lt*diff_lt + diff_lg*diff_lg);
-      }
-      
-      if(r >= pMntBerth->mntBoat.mntSetting.DRG_Setting.Dist)
-      {
-INFO("This boy offset");  
-         trgState  |= (0x01<<5);    
-         isDRG  = TRUE;
-      }
-   }
 
    
    if(pMntBerth->mntBoat.mntSetting.DSP_Setting.isEnable == DISABLE)
@@ -256,6 +257,8 @@ INFO("This boy offset");
    
    if(pMntBerth->trgState != MNTState_Init)
    {
+      uint8_t alarmFlags  = 0;
+   
       /// 全 0 恢复监控状态
       if(trgState == 0)
       {    
@@ -264,36 +267,61 @@ INFO("This boy offset");
       ///多出来 1 触发报警
       else if( ((trgState ^ pMntBerth->trgState) & trgState) >> 5)
       {  
-         pMntBerth->trgState  = (trgState & 0xe0) | MNTState_Triggered;      
+         pMntBerth->trgState  = (trgState & 0xe0) | MNTState_Triggered;    
+         
       }
 
       /// 其他情况，很淡定的更新监控状态就中了
       else
       { 
          pMntBerth->trgState  = trgState | (pMntBerth->trgState & 0x1f);
-      }   
+      }
+
+      if( (pMntBerth->trgState & 0x1f) == MNTState_Triggered)
+      {
+         alarmFlags  = (trgState & 0xe0) >> 5;
+INFO("alarmFlags:%x",alarmFlags);         
+         switch(alarmFlags)         
+         {
+            case (0x01 << 2):
+                SND_SelectID(SND_ID_DSP);
+                break;
+            case (0x01 << 1 ):
+                SND_SelectID(SND_ID_DRG);
+                break;
+            case (0x01):
+                SND_SelectID(SND_ID_BGL);
+                break;
+            default:
+   INFO("Err!");            
+                break;
+         }          
+      }
+     
    }
+   
+   
    
 
-   
-   pIterator  = pMntHeader;
-   while(pIterator)
-   {
-      if( (pIterator->trgState & 0x1f)  ==  MNTState_Triggered )
-      {
-  
-//         	UART_Send((UART_ID_Type)UART_2, (uint8_t*) &trgState, 1, BLOCKING);  /* ·¢ËÍÒ»¸ö×Ö·ûµ½UART */
-//          UART_SendByte(UART_2, 0xaa);
-//          UART_SendByte(UART_2, (SysConf.Snd.ArmSnd <<4)  |  (SysConf.Snd.Vol));          
-INFO("\aFBI warning!");   
-          SND_SelectID(SysConf.Snd.ArmSnd-1+4);
-          break;      
-      }  
-      else
-      {
-         pIterator  = pIterator->pNext;
-      }      
-   }
+//   
+//   pIterator  = pMntHeader;
+//   while(pIterator)
+//   {
+//      if( (pIterator->trgState & 0x1f)  ==  MNTState_Triggered )
+//      {
+//  
+////         	UART_Send((UART_ID_Type)UART_2, (uint8_t*) &trgState, 1, BLOCKING);  /* ·¢ËÍÒ»¸ö×Ö·ûµ½UART */
+////          UART_SendByte(UART_2, 0xaa);
+////          UART_SendByte(UART_2, (SysConf.Snd.ArmSnd <<4)  |  (SysConf.Snd.Vol));          
+//INFO("\aFBI warning!");   
+//          SND_SelectID(SysConf.Snd.ArmSnd-1+4);
+//          break;      
+//      }  
+//      else
+//      {
+//         pIterator  = pIterator->pNext;
+//      }      
+//   }
    
    
 //   INVD_print();

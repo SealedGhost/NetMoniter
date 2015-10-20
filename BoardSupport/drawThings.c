@@ -119,6 +119,7 @@ static void draw_scale(const map_scale * pScale)
 	GUI_SetColor(pSkin->sclColor);
  GUI_SetPenSize(1);
  GUI_SetLineStyle(GUI_LS_SOLID);
+ GUI_SetFont(&GUI_Font16_1);
  
  GUI_DrawLine(800-160, 480-10,  800-160+length, 480-10);
  GUI_DrawLine(800-160, 480-10,  800-160, 480-20);
@@ -168,7 +169,20 @@ static void fixPos(short * base_x, short * base_y)
    }
 }
 
-
+static void draw_mmBoatInfo(short base_x, short base_y, boat * pBoat)
+{
+   fixPos(&base_x, &base_y);
+   
+   GUI_SetTextMode(GUI_TM_NORMAL);
+   GUI_SetColor(pSkin->map_tip_Text);
+   GUI_SetFont(&GUI_Font24_1);
+   
+   lltostr(pBoat->latitude, pStrBuf);
+   GUI_DispStringAt(pStrBuf, base_x+10, base_y+16);
+   
+   lltostr(pBoat->longitude, pStrBuf);
+   GUI_DispStringAt(pStrBuf, base_x+10, base_y+38);
+}
 
 static void draw_boatInfo( short base_x, short base_y, boat * pBoat)
 {
@@ -177,7 +191,7 @@ static void draw_boatInfo( short base_x, short base_y, boat * pBoat)
 
    fixPos(&base_x, &base_y);
 
-   GUI_SetColor(pSkin->bkColor);
+//   GUI_SetColor(pSkin->bkColor);
 //   GUI_ClearRect(base_x, base_y-20, base_x+180,base_y+80);   
    /**
     *     Draw Battery
@@ -230,10 +244,11 @@ static void draw_boat(boat* pBoat,short basePoint_x,short basePoint_y,  const GU
    if(pBoat == NULL)
       return ;
    
-   GUI_RotatePolygon(aEnlargedPoints,pPoints,count,pBoat->COG*3.14/180);
+   GUI_RotatePolygon(aEnlargedPoints,pPoints,count,(360-pBoat->COG/10)*3.14/180);
 
 //   if((basePoint_x >=MAP_LEFT)&&(basePoint_x<= MAP_RIGHT)&&(basePoint_y >=MAP_TOP)&&(basePoint_y <= MAP_BOTTOM))
-//   {
+//   
+     GUI_SetPenSize(1);
      GUI_DrawPolygon(aEnlargedPoints,count,basePoint_x,basePoint_y);
 //   }
 }
@@ -270,7 +285,7 @@ static void draw_mothership(const long lg, const long lt,const map_scale * pScal
 	  basePoint_x  = (MAP_LEFT/2 + MAP_RIGHT/2) + basePoint_x;
 	  basePoint_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - basePoint_y;
 	
-  	GUI_RotatePolygon(aEnlargedPoints,bPoints,GUI_COUNTOF(bPoints),mothership.COG*3.14/180);
+  	GUI_RotatePolygon(aEnlargedPoints,bPoints,GUI_COUNTOF(bPoints),(360-mothership.COG/10)*3.14/180);
 	  
 	  if(     (basePoint_x>= MAP_LEFT)  &&  (basePoint_x <= MAP_RIGHT) 
 						&&  (basePoint_y >= MAP_TOP)  &&  (basePoint_y <= MAP_BOTTOM)  )
@@ -279,7 +294,8 @@ static void draw_mothership(const long lg, const long lt,const map_scale * pScal
       GUI_SetPenSize(MM_BOAT_PENSIZE);
       
       GUI_DrawPolygon(aEnlargedPoints,GUI_COUNTOF(bPoints),basePoint_x, basePoint_y);
-      draw_boatInfo(basePoint_x, basePoint_y, &mothership); 
+//      draw_boatInfo(basePoint_x, basePoint_y, &mothership); 
+      draw_mmBoatInfo(basePoint_x, basePoint_y, &mothership);
 	 	}
 }
 
@@ -441,7 +457,7 @@ static unsigned int getAreaIdByLL(long lg,  long lt)
    
    for(i=0; i<N_areaRecord; i++)
    {
-      /// Find record lt of whihc contains lt
+      /// Find record 'lt' of whihc contains lt
       if(lt > fishingAreaRecord[i].lt-29999)
       {  
          if(lt > fishingAreaRecord[i].lt)      
@@ -486,14 +502,21 @@ static unsigned int getAreaIdByLL(long lg,  long lt)
             }
             */
          }
-         /// On left of org means out out fishing area.
+         /// On left of org means out of fishing area.
          else
          {
             return 0;
          }
       }
+      /*
+      else
+      {
+         coninue;
+      }
+      */
 
    }
+   return 0;
 }
 
 
@@ -514,7 +537,7 @@ static void disp_map(const long longitude, const long latitude,const map_scale *
   
    unsigned int fishingAreaId  = 0;
    
-  ///画map的锚点
+  ///计算map的锚点
    mapping  anchor;
    
    short shift_x  = (pScale->pixel>>1) - 16;
@@ -669,8 +692,7 @@ static void getMntWrapPara(long *halfDiff_lg, long* halfDiff_lt, map_scale* pSca
 
 
 void setView(const long lg, const long lt, const map_scale* pScale)
-{
-
+{  
    disp_map(lg, lt, pScale);
    GUI_SetLineStyle(GUI_LS_SOLID);   
    disp_mntBoat(lg,lt,pScale);

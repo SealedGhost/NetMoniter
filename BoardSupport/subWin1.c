@@ -392,6 +392,11 @@ static void updateListViewContent(WM_HWIN thisHandle)
     LISTVIEW_DeleteRow(thisListView, NumOfRows-1);
     NumOfRows  = LISTVIEW_GetNumRows(thisListView);
   }
+  
+  if(NumOfRows == 0)
+  {
+     LISTVIEW_AddRow(thisListView, NULL);
+  }
 }
 
 

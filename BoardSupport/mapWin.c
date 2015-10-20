@@ -290,7 +290,7 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
     GUI_DispStringAt("N:",  0,   5);
     GUI_DispStringAt("E:",  150, 5);
     GUI_DispStringAt("SOG:",300, 5);
-    GUI_DispStringAt("COG:",450, 5);
+    GUI_DispStringAt("COG:",480, 5);
     
     GUI_SetColor(pSkin->ttl_Context);
     
@@ -298,11 +298,25 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
     GUI_DispStringAt(pStrBuf, 20, 5);
     lltostr(mothership.longitude, pStrBuf);
     GUI_DispStringAt(pStrBuf, 170, 5);
-    sprintf(pStrBuf, "%d", mothership.SOG);   
+    
+    if(SysConf.Unit == UNIT_km)
+    {
+       int sog  = mothership.SOG * 18;
+       sprintf(pStrBuf, "%3d.%02dkm", sog/100, sog%100);
+    }
+    else
+    {
+       sprintf(pStrBuf, "%2d.%dkt", mothership.SOG/10,mothership.SOG%10); 
+    }
+      
     GUI_DispStringAt(pStrBuf, 360, 5);
-    sprintf(pStrBuf, "%d", mothership.COG);
-    GUI_DispStringAt(pStrBuf, 510, 5);
-printf("Date:%ld  Time:%ld\n",SYS_Date, SYS_Time);
+    
+    sprintf(pStrBuf, "%3d", mothership.COG/10);
+    pStrBuf[3]  = 194;
+    pStrBuf[4]  = 176;
+    pStrBuf[5]  = '\0';
+    GUI_DispStringAt(pStrBuf, 540, 5);
+
     sprintf(pStrBuf, "%02ld-%02ld/%02ld  %02ld:%02ld",(SYS_Date%10000)/100,SYS_Date/10000,  SYS_Date%100, 
                                            SYS_Time/10000+8, (SYS_Time%10000)/100);                                            
     GUI_DispStringAt(pStrBuf, 600, 5);

@@ -25,9 +25,9 @@ const MenuWin_COLOR menuWinSkins[2]  = {
 
 
 const LVWin_COLOR lvWinSkins[2]  = {
-/// bkColor     ttl_text    head_bk     head_text   itm_bkUnsel itm_bkSel   itm_bkFocus itm_txUnse itm_txSel    itm_txFocus inf_bk      inf_label   inf_txColor
+/// bkColor     ttl_text    head_bk     head_text   itm_bkUnsel itm_bkSel   itm_bkFocus itm_txUnsel itm_txSel   itm_txFocus inf_bk      inf_label   inf_txColor
   { 0x00c3e0e9, 0x002f2f2f, 0x00404647, 0x00eaeaea, 0x009baeb7, 0x00005dff, 0x00005dff, 0x002f2f2f, 0x002f2f2f, 0x00eaeaea, 0x00404647, 0x00eaeaea, 0x00518ff3},
-  { 0x00000000, 0x00cccccc, 0x00171717, 0x00cccccc, 0x00202021, 0x00202021  , 0x009c6f00, 0x00cccccc, 0x00cccccc, 0x00cccccc, 0x00171717, 0x00cccccc, 0x00ddb857},
+  { 0x00000000, 0x00cccccc, 0x00171717, 0x00cccccc, 0x00202021, 0x009c6f00, 0x009c6f00, 0x00cccccc, 0x00cccccc, 0x00cccccc, 0x00171717, 0x00cccccc, 0x00ddb857},
 };
 
 

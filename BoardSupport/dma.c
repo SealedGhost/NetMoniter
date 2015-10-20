@@ -73,7 +73,7 @@ void DMA_IRQHandler (void)
 
           GPDMA_ClearIntPending (GPDMA_STATCLR_INTERR, 0);
           SPI1_DMA_Init();
-//          printf("dma error\n\r");
+          printf("dma error\n\r");
        }       
 //printf("myCnt:%d",myCnt);       
      
