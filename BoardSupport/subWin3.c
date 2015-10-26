@@ -346,9 +346,12 @@ INFO("SLIDER ID ERR!");
             GUI_DispStringAt("km", 310,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5);
 //            GUI_DrawBitmap(&bmfish,130,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+7);
             GUI_RotatePolygon(aEnlargePoints, Points_fish, 11, -1.57);
-            GUI_DrawPolygon(aEnlargePoints, 11, 160, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+18);
-						      GUI_DrawPolygon(Points_boat, 3, 320, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+18);
-						   
+//            GUI_DrawPolygon(aEnlargePoints, 11, 160, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+18);
+
+            
+//						      GUI_DrawPolygon(Points_boat, 3, 320, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+18);
+            GUI_DrawPolygon(aEnlargePoints, 11, 320, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+18 );				
+            GUI_DrawPolygon(Points_boat, 3, 160, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+18);            
 //             GUI_DispStringAt("Boat",140,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+8);
 //             GUI_DispStringAt("Fish",310,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+8);
             }break;
@@ -441,7 +444,6 @@ static void _OnBrtChanged(WM_MESSAGE * pMsg,int val)
    {
       agentConf.Brt  = val;
       PWM_SET(val * 2);
-      SND_SelectID(SND_ID_WLCM);
    }
 }
 

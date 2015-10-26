@@ -87,6 +87,7 @@ extern SIMP_BERTH SimpBerthes[BOAT_NUM_MAX];
 extern int N_boat;
 extern boat mothership;
 extern char scale_choose;
+extern _cursor __cursor;
 
 /*-------------------------------- Local variables ------------------------------------*/
 static const GUI_POINT * pPoints  = Points_fish;
@@ -103,7 +104,7 @@ static const MapWin_COLOR * pSkin  = mapSkins;
  *  @output:
  *  @return:
  */
-static void draw_scale(const map_scale * pScale)
+static void draw_scale(const map_scale * pScale, short x, short y)
 {
  uint16_t length  = 0;
  
@@ -121,11 +122,13 @@ static void draw_scale(const map_scale * pScale)
  GUI_SetLineStyle(GUI_LS_SOLID);
  GUI_SetFont(&GUI_Font16_1);
  
- GUI_DrawLine(800-160, 480-10,  800-160+length, 480-10);
- GUI_DrawLine(800-160, 480-10,  800-160, 480-20);
- GUI_DrawLine(800-160+length, 480-10, 800-160+length, 480-20);
+ GUI_DrawHLine(y, x, x+length);
+ GUI_DrawVLine(x, y-5, y);
+// GUI_DrawLine(x, y, x, y-10);
+ GUI_DrawVLine(x+length, y-5, y);
+// GUI_DrawLine(x+length, y, x+length, y-10);
  sprintf(pStrBuf, "%ld.%02ld%s",pScale->minute/1000,(pScale->minute%1000)/10,SysConf.Unit==UNIT_nm?"nm":"km");
- GUI_DispStringAt(pStrBuf, 800-160+10, 480-10-20);
+ GUI_DispStringAt(pStrBuf,x+10,y-17);
 
 }
 
@@ -184,55 +187,78 @@ static void draw_mmBoatInfo(short base_x, short base_y, boat * pBoat)
    GUI_DispStringAt(pStrBuf, base_x+10, base_y+38);
 }
 
-static void draw_boatInfo( short base_x, short base_y, boat * pBoat)
+static void draw_boatInfo( short base_x, short base_y, boat * pBoat,unsigned char options)
 {
+
+    char power  = 0;
+    char i  = 0;
+    short         batBody_x;
+    short         batBody_y;
+
+
    if(pBoat == NULL)
       return ;
 
-   fixPos(&base_x, &base_y);
 
-//   GUI_SetColor(pSkin->bkColor);
-//   GUI_ClearRect(base_x, base_y-20, base_x+180,base_y+80);   
-   /**
-    *     Draw Battery
-    **/
-   if(pBoat->isHSD)
+   if(options)
    {
-      unsigned char power  = pBoat->SOG % 10;
-      short         batBody_x;
-      short         batBody_y;
+      fixPos(&base_x,  &base_y);
+      GUI_SetTextMode(GUI_TM_NORMAL);
+      GUI_SetColor(pSkin->map_tip_Text);
+       
+      /// Show battery in tip.
+      if(options & SHOW_OPTION_BAT)
+      {
+         if(pBoat->isHSD)
+         {                
+            char   i  = 0;            
+            char   power      = pBoat->SOG % 10;
+            short  batBody_x  = base_x +10;
+            short  batBody_y  = base_y -10;
+            
+            GUI_SetColor(pSkin->map_tip_Bat);
+            GUI_DrawRect(batBody_x, batBody_y, batBody_x + 19, batBody_y+10); 
+            GUI_DrawVLine(batBody_x+20, batBody_y+3, batBody_y+7);
+            
+            i  = (power + 2) / 3;
+            if(i>1)
+               GUI_SetColor(GUI_DARKGREEN);
+            else 
+               GUI_SetColor(GUI_DARKRED);
+            for(;i>0;i--)
+            {
+               GUI_FillRect(batBody_x + i*6 -4, batBody_y + 2, batBody_x+i*6-1, batBody_y+8);
+            }
+         }
+      }
+     
       
-      batBody_x  = base_x +10;
-      batBody_y  = base_y -10;
+      /// Show name in tip.
+      if(options & SHOW_OPTION_NAME)
+      {
+         GUI_SetFont(&GUI_Font16_1);
+         GUI_DispStringAt(pBoat->name, base_x+10, base_y+1); 
+      }
       
-      GUI_SetColor(pSkin->map_tip_Bat);
+      /// Show ll in tip.
+      if(options & SHOW_OPTION_LL)
+      {
+         GUI_SetFont(&GUI_Font24_1);
+         lltostr(pBoat->latitude, pStrBuf);
+         GUI_DispStringAt(pStrBuf, base_x+10, base_y+16);
+         lltostr(pBoat->longitude, pStrBuf);
+         GUI_DispStringAt(pStrBuf, base_x+10, base_y+38);
+      }
       
-      GUI_DrawRect(batBody_x, batBody_y, batBody_x+20, batBody_y+8);      
-      GUI_DrawVLine(batBody_x+21, batBody_y+2 ,batBody_y+6);
-      GUI_FillRect(batBody_x, batBody_y+1, batBody_x+power*2, batBody_y+7);     
+      /// Show MMSI in tip.
+      if(options & SHOW_OPTION_MMSI)
+      {
+         GUI_SetFont(&GUI_Font16_1);
+         sprintf(pStrBuf, "%09ld", pBoat->user_id);
+         GUI_DispStringAt(pStrBuf, base_x+10, base_y+62);         
+      }
+      
    }
-   
-   
-
-   GUI_SetTextMode(GUI_TM_NORMAL);
-   GUI_SetColor(pSkin->map_tip_Text);
- 
-   GUI_SetFont(&GUI_Font16_1);
-   GUI_DispStringAt(pBoat->name, base_x+10, base_y+1); 
-   
-   GUI_SetColor(pSkin->map_tip_Text);
-   GUI_SetFont(&GUI_Font24_1);
-   
-   lltostr(pBoat->latitude, pStrBuf);
-   GUI_DispStringAt(pStrBuf, base_x+10, base_y+16);
-   
-   lltostr(pBoat->longitude, pStrBuf);
-   GUI_DispStringAt(pStrBuf, base_x+10, base_y+38);
-   
-
-   GUI_SetFont(&GUI_Font16_1);
-   sprintf(pStrBuf, "%09ld", pBoat->user_id);
-   GUI_DispStringAt(pStrBuf, base_x+10, base_y+62);
 }
 
 
@@ -248,7 +274,6 @@ static void draw_boat(boat* pBoat,short basePoint_x,short basePoint_y,  const GU
 
 //   if((basePoint_x >=MAP_LEFT)&&(basePoint_x<= MAP_RIGHT)&&(basePoint_y >=MAP_TOP)&&(basePoint_y <= MAP_BOTTOM))
 //   
-     GUI_SetPenSize(1);
      GUI_DrawPolygon(aEnlargedPoints,count,basePoint_x,basePoint_y);
 //   }
 }
@@ -294,8 +319,6 @@ static void draw_mothership(const long lg, const long lt,const map_scale * pScal
       GUI_SetPenSize(MM_BOAT_PENSIZE);
       
       GUI_DrawPolygon(aEnlargedPoints,GUI_COUNTOF(bPoints),basePoint_x, basePoint_y);
-//      draw_boatInfo(basePoint_x, basePoint_y, &mothership); 
-      draw_mmBoatInfo(basePoint_x, basePoint_y, &mothership);
 	 	}
 }
 
@@ -307,7 +330,11 @@ static void disp_boat(const long lg, const long lt, const map_scale * pScale,sho
  short base_x = 0;
  short base_y = 0;
  
- GUI_SetColor(GUI_RED);
+ char isAdsorbed  = 0;
+ int isCursorVisible  = GUI_CURSOR_GetState();
+ 
+ GUI_SetPenSize(1);
+ 
 	for(i=0;i<N;i++)
 	{
     base_x  = pScale->pixel * (SimpBerthes[i].longitude-lg) / pScale->minute;
@@ -319,8 +346,19 @@ static void disp_boat(const long lg, const long lt, const map_scale * pScale,sho
     if(SimpBerthes[i].pBerth->Boat.target)
     {
        if((base_x >=MAP_LEFT)&&(base_x<= MAP_RIGHT)&&(base_y >=MAP_TOP)&&(base_y <= MAP_BOTTOM))
-       {
-          draw_boat(&SimpBerthes[i].pBerth->Boat, base_x, base_y, Points_boat, 3);
+       {         
+          if( !isAdsorbed  &&  isCursorVisible  &&  ( MYABS(base_x-__cursor.x) <=10)  &&  ( MYABS(base_y-__cursor.y) <= 10) )
+          {
+             GUI_SetColor(pSkin->ttl_Context);
+             draw_boat(&SimpBerthes[i].pBerth->Boat, base_x, base_y, Points_boat, 3);
+             draw_boatInfo(base_x, base_y, &SimpBerthes[i].pBerth->Boat, SHOW_OPTION_NAME | SHOW_OPTION_MMSI | SHOW_OPTION_LL);
+             isAdsorbed  = 1;
+          }
+          else
+          {
+             GUI_SetColor(GUI_RED);
+             draw_boat(&SimpBerthes[i].pBerth->Boat, base_x, base_y, Points_boat, 3);
+          }
        }        
     }
 	}
@@ -334,8 +372,12 @@ static void disp_mntBoat(const long center_lg,const long center_lt, const map_sc
 {
    short base_x  = 0;
    short base_y  = 0;
-
+   short base_cur_x = 0;
+   short base_cur_y = 0;
+   
    MNT_BERTH * pIterator  = pMntHeader;
+   
+   GUI_SetPenSize(1);
    
    while(pIterator)
    {
@@ -346,9 +388,12 @@ static void disp_mntBoat(const long center_lg,const long center_lt, const map_sc
          
          base_x  = (MAP_LEFT/2 + MAP_RIGHT/2) + base_x;
          base_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - base_y;
+         
+         base_cur_x = base_x;
+         base_cur_y = base_y;
     
          GUI_SetColor(pSkin->boat_Org);    
-         GUI_SetPenSize(2); 
+         GUI_SetPenSize(1); 
          
 ///   DSP boat conf.      
          if(pIterator->mntBoat.mntSetting.DSP_Setting.isEnable == ENABLE) 
@@ -358,7 +403,7 @@ static void disp_mntBoat(const long center_lg,const long center_lt, const map_sc
          if((base_x >=MAP_LEFT)&&(base_x<= MAP_RIGHT)&&(base_y >=MAP_TOP)&&(base_y <= MAP_BOTTOM))
          {
             draw_boat(pIterator->pBoat, base_x, base_y,pPoints, PointNum);
-            draw_boatInfo(base_x, base_y, pIterator->pBoat);
+            draw_boatInfo(base_x, base_y, pIterator->pBoat, SHOW_OPTION_NAME | SHOW_OPTION_LL);
          }         
         
          
@@ -366,7 +411,6 @@ static void disp_mntBoat(const long center_lg,const long center_lt, const map_sc
          if(pIterator->mntBoat.mntSetting.BGL_Setting.isEnable == ENABLE)
          {
             GUI_SetColor(pSkin->boat_Bgl);
-            GUI_SetPenSize(1); 
             
             GUI_DrawCircle(base_x, base_y,pIterator->mntBoat.mntSetting.BGL_Setting.Dist*pScale->pixel/pScale->minute);            
          } 
@@ -380,9 +424,16 @@ static void disp_mntBoat(const long center_lg,const long center_lt, const map_sc
             base_x  = (MAP_LEFT/2 + MAP_RIGHT/2) + base_x;
             base_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - base_y;
             
-            GUI_SetColor(pSkin->boat_Drg);
-            GUI_SetPenSize(DRG_PENSIZE);        
+            GUI_SetColor(pSkin->boat_Drg);      
             GUI_DrawCircle(base_x, base_y, pIterator->mntBoat.mntSetting.DRG_Setting.Dist*pScale->pixel/pScale->minute);
+            
+            if(pIterator->trgState&(0x01<<6))
+            {
+               GUI_SetColor(GUI_GRAY);
+               GUI_SetLineStyle(GUI_LS_DOT);
+               GUI_DrawLine(base_cur_x, base_cur_y, base_x, base_y);
+               GUI_SetLineStyle(GUI_LS_SOLID);
+            }
          }
       }
       else
@@ -640,37 +691,88 @@ static void getMntWrapPara(long *halfDiff_lg, long* halfDiff_lt, map_scale* pSca
    long maxDiff_lg  = 0;
    long maxDiff_lt  = 0;
    
+   long drgDist  = 0;
+   long bglDist  = 0;
+   long radius   = 0;
    
    MNT_BERTH * pIterator  = pMntHeader;
    
    
    while(pIterator)
    {
-      if( pIterator->pBoat && (pIterator->pBoat->latitude) && (pIterator->pBoat->longitude) )
-      {
-         if(pIterator->pBoat->latitude < min_lt)
+//      if( pIterator->pBoat && (pIterator->pBoat->latitude) && (pIterator->pBoat->longitude) )
+//      {
+//         if(pIterator->pBoat->latitude < min_lt)
+//         {
+//            min_lt  = pIterator->pBoat->latitude;
+//         }
+//         else if(pIterator->pBoat->latitude > max_lt)
+//         {
+//            max_lt  = pIterator->pBoat->latitude;
+//         }
+//         
+//         if(pIterator->pBoat->longitude < min_lg)
+//         {
+//            min_lg  = pIterator->pBoat->longitude;
+//         }
+//         else if(pIterator->pBoat->longitude > max_lg)
+//         {
+//            max_lg  = pIterator->pBoat->longitude;
+//         }
+         
+         if(pIterator->mntBoat.mntSetting.DRG_Setting.isEnable)
          {
-            min_lt  = pIterator->pBoat->latitude;
-         }
-         else if(pIterator->pBoat->latitude > max_lt)
-         {
-            max_lt  = pIterator->pBoat->latitude;
+            drgDist  = pIterator->mntBoat.mntSetting.DRG_Setting.Dist;
+            
+            if(pIterator->mntBoat.lg - drgDist < min_lg )
+            {
+               min_lg  = pIterator->mntBoat.lg - drgDist;
+            }
+            else if(pIterator->mntBoat.lg + drgDist > max_lg)
+            {
+               max_lg  = pIterator->mntBoat.lg + drgDist;
+            }
+            
+            if(pIterator->mntBoat.lt - drgDist < min_lt)
+            {
+               min_lt  = pIterator->mntBoat.lt - drgDist;
+            }
+            else if(pIterator->mntBoat.lt + drgDist > max_lt)
+            {
+               max_lt  = pIterator->mntBoat.lt + drgDist;
+            }
          }
          
-         if(pIterator->pBoat->longitude < min_lg)
+              
+         if(pIterator->pBoat && pIterator->pBoat->latitude && pIterator->pBoat->longitude)
          {
-            min_lg  = pIterator->pBoat->longitude;
+            bglDist  = pIterator->mntBoat.mntSetting.BGL_Setting.isEnable?pIterator->mntBoat.mntSetting.BGL_Setting.Dist:100;         
+            
+            if(pIterator->pBoat->longitude - bglDist < min_lg)
+            {
+               min_lg  = pIterator->pBoat->longitude - bglDist;
+            }
+            else if(pIterator->pBoat->longitude + bglDist > max_lg)
+            {
+               max_lg  = pIterator->pBoat->longitude + bglDist;
+            }
+            
+            if(pIterator->pBoat->latitude - bglDist < min_lt)
+            {
+               min_lt  = pIterator->pBoat->latitude - bglDist;
+            }
+            else if(pIterator->pBoat->latitude + bglDist > max_lt)
+            {
+               max_lt  = pIterator->pBoat->latitude + bglDist;
+            }
          }
-         else if(pIterator->pBoat->longitude > max_lg)
-         {
-            max_lg  = pIterator->pBoat->longitude;
-         }
-      }
+         
+//      }
       pIterator  = pIterator->pNext;
    }
    
-   maxDiff_lg  = max_lg - min_lg + 20;
-   maxDiff_lt  = max_lt - min_lt + 20;
+   maxDiff_lg  = max_lg - min_lg ;
+   maxDiff_lt  = max_lt - min_lt ;
    
    *halfDiff_lg  = max_lg/2 + min_lg/2;
    *halfDiff_lt  = max_lt/2 + min_lt/2;
@@ -681,12 +783,12 @@ static void getMntWrapPara(long *halfDiff_lg, long* halfDiff_lt, map_scale* pSca
    ///若适配区域的宽度大于高度的两倍，则以map的宽来适配
     if(( maxDiff_lg/2) > maxDiff_lt)
     {
-       pScale->minute  = ( maxDiff_lg/(8*10) + 1)*10;  ///这种写法保证所得到的scale.minute为100的整数倍
+       pScale->minute  = ( maxDiff_lg/(8*100) + 1)*100;  ///这种写法保证所得到的scale.minute为100的整数倍
     }
     ///否则以map的高来适配
     else
     {
-       pScale->minute  = ( maxDiff_lt/(4*10) + 1)*10;
+       pScale->minute  = ( maxDiff_lt/(4*100) + 1)*100;
     }
 }
 
@@ -698,7 +800,7 @@ void setView(const long lg, const long lt, const map_scale* pScale)
    disp_mntBoat(lg,lt,pScale);
    disp_boat(lg,lt,pScale, N_boat);  
    draw_mothership(lg,lt, pScale);
-   draw_scale(pScale);
+   draw_scale(pScale, 640, 440);
 }
 
 
@@ -718,5 +820,5 @@ void setAutoView()
    disp_mntBoat(lg, lt, &autoScale);  
    disp_boat(lg, lt, &autoScale, N_boat);
    draw_mothership(lg,lt,&autoScale);
-   draw_scale(&autoScale);
+   draw_scale(&autoScale, 640,440);
 }

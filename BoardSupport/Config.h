@@ -93,10 +93,10 @@
  */
 #define DSP_BOAT_COLOR   GUI_BLACK
 
-#define BGL_BOAT_COLOR   GUI_GREEN
+#define BGL_BOAT_COLOR   GUI_RED
 #define BGL_CIRCLE_R     15
 
-#define DRG_BOAT_COLOR   GUI_RED
+#define DRG_BOAT_COLOR   GUI_GREEN
 #define DRG_CIRCLE_R     20
 #define DRG_PENSIZE      4
 

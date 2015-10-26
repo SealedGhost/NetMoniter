@@ -267,7 +267,7 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
     GUI_SetBkColor(pSkin->bkColor);
 //    GUI_ClearRect(0,40, 800, 480);
     GUI_ClearRectEx(Rect_Map);
-    drawMapSwitch  = 1;
+//    drawMapSwitch  = 1;
     if(drawMapSwitch)
     {
        setView(center.lgtude, center.lttude, &measuring_scale[scale_choose]);

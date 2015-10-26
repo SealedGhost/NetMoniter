@@ -176,6 +176,7 @@ INFO("This boy is gone %x", trgState);
       if(r >= pMntBerth->mntBoat.mntSetting.DRG_Setting.Dist)
       { 
          trgState  |= (0x01<<6); 
+         
 INFO("Offset happened :%x", trgState);        
       }
    }
@@ -187,7 +188,7 @@ INFO("Offset happened :%x", trgState);
    
    ******************************************************************************/      
    if(   pMntBerth->mntBoat.mntSetting.BGL_Setting.isEnable  ///开启防盗报警
-      && (!trgState)                                         ///船没有消失,亦没有走锚
+      && (!(trgState&0xc0))                                         ///船没有消失,亦没有走锚
       && pMntBerth->pBoat->latitude  )
    {
       for(i=N_boat-1; i>=0; i--)
@@ -283,6 +284,7 @@ INFO("Some one is closing :%x", trgState);
 INFO("alarmFlags:%x",alarmFlags);         
          switch(alarmFlags)         
          {
+            case 0x05:
             case (0x01 << 2):
                 SND_SelectID(SND_ID_DSP);
                 break;
@@ -643,12 +645,6 @@ static Bool removeById(long Id)
 
 
 
-
-
-
-
-
-//static void func()
 static void MNT_filter()
 {
    MNT_BERTH * pIterator  = NULL;
@@ -702,6 +698,11 @@ INFO("delete at body");
       }
       else
       {
+       ///   没有消失报警  && 船丢了 && 非初始化状态  -->船丢了但还没来得及check
+        if( (pIterator->trgState<0x80) && (!pIterator->pBoat) && pIterator->trgState != MNTState_Init)
+        {
+           INVD_deleteByTargetMMSI(pIterator->mntBoat.mmsi);
+        }
         pIterator  = pIterator->pNext;
       }     
       pBC  = pIterator->pNext;

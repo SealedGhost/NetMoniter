@@ -308,6 +308,7 @@ case WM_PAINT:
      pStrBuf[3]  = 194;
      pStrBuf[4]  = 176;
      pStrBuf[5]  = '\0';
+     //pStrBuf[5]  = '\n';
      GUI_DispStringAt(pStrBuf,LV_AllList_WIDTH+80,245);
 //     GUI_DispDecAt(SimpBerthes[SelectedRow].pBerth->Boat.SOG,LV_AllList_WIDTH+80,205,3);
                

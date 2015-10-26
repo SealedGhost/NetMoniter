@@ -238,7 +238,7 @@ INFO("case msg skin");
        
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0);
        SelectedRow  = LISTVIEW_GetSel(hItem);
-       if( !pMntHeader  ||  SelectedRow <0)
+       if( !pMntHeader  ||  SelectedRow < 0)
           break;
        TotalRows  = LISTVIEW_GetNumRows(hItem);     
        sprintf(pStrBuf,"%3d/%3d",SelectedRow+1, TotalRows);
@@ -275,7 +275,7 @@ INFO("case msg skin");
           sprintf(pStrBuf, "%3d", pIterator->pBoat->COG/10);
           pStrBuf[3]  = 194;
           pStrBuf[4]  = 176;
-          pStrBuf[5]  = '\n'; 
+          pStrBuf[5]  = '\0'; 
           GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH+260, 200);
 //          GUI_DispDecAt(pIterator->pBoat->SOG, LV_MoniteList_WIDTH+80, 200, 3);
 //          GUI_DispDecAt(pIterator->pBoat->COG, LV_MoniteList_WIDTH+300, 200, 3);
@@ -568,7 +568,7 @@ static void updateListViewContent(WM_HWIN thisHandle)
       NumOfRows  = LISTVIEW_GetNumRows(thisListView);
    }
    
-   if(NumOfRows)
+   if(NumOfRows == 0)
    {
       LISTVIEW_AddRow(thisListView, NULL);
    }

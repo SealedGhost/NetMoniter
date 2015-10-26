@@ -15,7 +15,7 @@ void MainTask(void)
 {
    GUI_MEMDEV_Handle hMem0;
    
-//   SND_SelectID(SND_ID_WLCM);
+  SND_SelectID(SND_ID_WLCM);
    GUI_Init();	
    WM_SetCreateFlags(WM_CF_MEMDEV);
    //开机界面

@@ -267,6 +267,19 @@ static void myListViewListener(WM_MESSAGE* pMsg)
             break;
        
        case GUI_KEY_RIGHT:
+//            pIterator  = pMntHeader;
+//            while(pIterator->pNext)
+//            {
+//               if(pIterator->chsState == MNTState_Choosen  ||  pIterator->chsState == MNTState_Default)
+//               {
+//                  WM_SetFocus(mntSettingWin);
+//                  break;
+//               }
+//               else
+//               {
+//                  pIterator  = pIterator->pNext;
+//               }
+//            }
             WM_SetFocus(mntSettingWin);
 //            WM_SetFocus(_mntSettingWin);
             break;
