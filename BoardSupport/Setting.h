@@ -54,11 +54,12 @@ struct _MNT_BERTH
 
   unsigned char chsState;
   unsigned char trgState;
+  unsigned char flsState;
   boat * pBoat;  
   MNT_BERTH * pNext;
 };
 
-
+extern MNT_BERTH MNT_Berthes[MNT_NUM_MAX];
 extern MNT_BERTH * pMntHeader;
 extern MNT_SETTING mntSetting; 
 
@@ -69,6 +70,7 @@ void MNT_load(void);
 int MNT_makeSettingUp(MNT_SETTING * pMNT_Setting);
 void MNT_printSetting(void);
 Bool MNT_removeById(long Id);
+uint8_t MNT_getDefaultNum(void);
 
 
 //__inline void MNT_resetIterator()

@@ -50,4 +50,6 @@ const SysWin_COLOR SysWinSkins[2]  = {
 ///   bk         client        tx         sldBk         sldSlot    sldSlider   sldFocusSlider
   { 0x00c3e0e9, 0x00404647, 0x00eaeaea,  0x00404647, 0x002f2f2f, 0x0006b940, 0x00005dff}, 
   { 0x00000000, 0x00171717, 0x00cccccc,  0x00171717, 0x00404647, 0x0006b940, 0x00cf9b18}
-};                              
+};    
+
+                          

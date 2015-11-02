@@ -383,7 +383,6 @@ static void myListViewListener(WM_MESSAGE* pMsg)
  int selectedRow  = -1;
  int totalRows  = 0;
 	int i  = 0;
- int Cnt  = 0;
  Bool isAdded  = FALSE;
  long Id  = 0;
 	switch(pMsg->MsgId)
@@ -452,7 +451,6 @@ static void myListViewListener(WM_MESSAGE* pMsg)
                if( isAdded )
                {         
                   SimpBerthes[i].pBerth->mntState  = MNTState_Monited;   
-                  Cnt++;
                }
                else
                {
@@ -462,7 +460,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
          }
          myMsg.hWin  = WM_GetClientWindow(menuWin);
          myMsg.MsgId  = USER_MSG_DFULT_CNT;
-         myMsg.Data.v  = Cnt;
+         myMsg.Data.v  = MNT_getDefaultNum();
          WM_SendMessage(myMsg.hWin, &myMsg);
          MNT_printSetting();         
          WM_SetFocus(menuWin);

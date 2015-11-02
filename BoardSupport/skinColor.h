@@ -12,3 +12,4 @@ extern const MntSetWin_COLOR MntSetWinSkins[2];
 extern const MntSetting_COLOR MntSettingSkins[2];
 extern const SysWin_COLOR SysWinSkins[2];
 #endif
+

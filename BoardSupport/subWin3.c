@@ -150,13 +150,13 @@ static void  _cbDialog(WM_MESSAGE * pMsg)
            
       case WM_INIT_DIALOG:
       
-           agentConf.Skin              = SysConf.Skin;
-           agentConf.Brt               = SysConf.Brt;
-           agentConf.Snd.Vol           = SysConf.Snd.Vol;
-           agentConf.Snd.ArmSnd        = SysConf.Snd.ArmSnd;
-           agentConf.Snd.KeySnd        = SysConf.Snd.KeySnd;
-           agentConf.Unit              = SysConf.Unit;
-           agentConf.Shape             = SysConf.Shape;
+//           agentConf.Skin              = SysConf.Skin;
+//           agentConf.Brt               = SysConf.Brt;
+//           agentConf.Snd.Vol           = SysConf.Snd.Vol;
+//           agentConf.Snd.ArmSnd        = SysConf.Snd.ArmSnd;
+//           agentConf.Snd.KeySnd        = SysConf.Snd.KeySnd;
+//           agentConf.Unit              = SysConf.Unit;
+//           agentConf.Shape             = SysConf.Shape;
 
            
            pSkin  = &(SysWinSkins[SysConf.Skin]);

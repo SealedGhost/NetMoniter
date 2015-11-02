@@ -6,6 +6,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include "Setting.h"
+#include "invader.h"
 // find if id exist in aux_boat, yes return 1, otherwise 0, size exclusive
 
 /*----------------------- Macro defination -----------------------*/
@@ -576,7 +577,7 @@ INFO("alloc berth failed!");
 
 void updateTimeStamp()
 {
-   MNT_BERTH * pIterator  = NULL;
+//   MNT_BERTH * pIterator  = NULL;
    BERTH * tmp  = NULL;
    BERTH * tmpTail  = pTail;
    
@@ -602,21 +603,21 @@ void updateTimeStamp()
       else
       { 
 //printf("Delete %09ld\n\r", pCur->Boat.user_id); 
-         pIterator  = pMntHeader;
-         while(pIterator)
-         {
-            if(pIterator->mntBoat.mmsi == pCur->Boat.user_id)
-            {
-               pIterator->pBoat  = NULL;
-               break;
-            }
-            else
-            {
-               pIterator  = pIterator->pNext;
-            }
-         }
-         INVD_deleteByMMSI(pCur->Boat.user_id);
-              
+//         pIterator  = pMntHeader;
+//         while(pIterator)
+//         {
+//            if(pIterator->mntBoat.mmsi == pCur->Boat.user_id)
+//            {
+//               pIterator->pBoat  = NULL;
+//               break;
+//            }
+//            else
+//            {
+//               pIterator  = pIterator->pNext;
+//            }
+//         }
+         if(pCur->isInvader)
+            INVD_deleteByAddr(pCur);    
          /// Delete at header
          if(pCur == pHeader)
          {

@@ -62,10 +62,21 @@ static void _Paint(BUTTON_Obj * pObj, BUTTON_Handle hObj)
   
    if(pObj->v)
    {
-      GUI_SetFont(pObj->vFont);
-      LCD_SetColor(vColor);
+      int strX  = 0;
+      int strY  = 0;
+      
       sprintf(pStrBuf, "%2d", pObj->v);
-      GUI_DispStringAt(pStrBuf, r.x1 - 16, r.y0);   
+      
+      GUI_SetColor(GUI_RED);
+      GUI_FillCircle(r.x1-16,   r.y0+16,  8);
+   
+      GUI_SetFont(pObj->vFont);
+      
+      LCD_SetColor(vColor);
+
+      strX  = GUI_GetStringDistX(pStrBuf);
+      strY  = GUI_GetYDistOfFont(pObj->vFont);
+      GUI_DispStringAt(pStrBuf, r.x1-16-strX/2, r.y0+16-strY/2    );   
    }
 }
 
@@ -334,3 +345,6 @@ void HSD_BUTTON_SetVFocusColor(BUTTON_Handle hObj, GUI_COLOR Color)
       WM_UNLOCK();
    }
 }
+
+
+

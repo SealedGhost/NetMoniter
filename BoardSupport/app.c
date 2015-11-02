@@ -26,7 +26,7 @@
 #define Refresh_Task_PRIO        9
 #define Task_Stack_Use_PRIO      10  
 /* 定义任务堆栈大小 */
-#define USER_TASK_STACK_SIZE 2000
+#define USER_TASK_STACK_SIZE 4096
 #define TOUCH_TASK_STACK_SIZE 256
 #define KEY_TASK_STACK_SIZE 128
 #define Task_Stack_Use_STACK_SIZE 128
@@ -39,7 +39,7 @@ static	OS_STK	UI_Task_Stack[USER_TASK_STACK_SIZE];
 static	OS_STK	Insert_Task_Stack[TOUCH_TASK_STACK_SIZE];
 
 static	OS_STK	Refresh_Task_Stack[KEY_TASK_STACK_SIZE];
-static  OS_STK  Task_Stack_Use_Stack[Task_Stack_Use_STACK_SIZE];
+//static  OS_STK  Task_Stack_Use_Stack[Task_Stack_Use_STACK_SIZE];
 
 //static  OS_STK_DATA UI_Task_Stack_Use;
 //static  OS_STK_DATA Insert_Task_Stack_Use;
@@ -84,7 +84,7 @@ _boat_m24A *boat_list_p24A[BOAT_NUM_MAX];
 #pragma arm section rwdata
 
 
-BERTH Berthes[BOAT_NUM_MAX]__attribute__((at(0xA1D00000)));
+BERTH Berthes[BOAT_NUM_MAX]__attribute__((at(0xA1C00000)));
 SIMP_BERTH SimpBerthes[BOAT_NUM_MAX]__attribute__((at(0xA1E00000)));
 
 _boat_m24A boat_list_24A[BOAT_NUM_MAX]__attribute__((at(0xA1F00000)));;
@@ -178,8 +178,6 @@ OSMutexPost(Refresher);
 }
 void Refresh_Task(void *p_arg)//任务Refresh_Task
 {
- int i  = 0;
- uint8_t val = 0xa5;
 
 	while(1)
 	{
@@ -215,7 +213,7 @@ void App_TaskStart(void)//初始化UCOS，初始化SysTick节拍，并创建三个任务
 {
 	INT8U err;
   
-  int i  = 0;
+
 
   mothership.latitude = MOTHERShIP_LA;
   mothership.longitude = MOTHERShIP_LG;
@@ -246,7 +244,7 @@ int translate_(unsigned char *text,message_18 *text_out,message_24_partA *text_o
 {
   int i=0,comma=0;
   int tmp  = 0;
-  unsigned long tempgprmc  = 0;
+
   long shiftReg  = 0;
   
   if((text[0]!='!')&&(text[0]!='$'))

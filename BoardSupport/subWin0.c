@@ -494,6 +494,12 @@ static void myListViewListener(WM_MESSAGE* pMsg)
                   }
 INFO("disable row:%d",SelRow);                  
                   LISTVIEW_DeleteRow(thisListView, SelRow);
+                  
+                  myMsg.hWin  = WM_GetClientWindow(menuWin);               
+                  myMsg.MsgId  = USER_MSG_DFULT_CNT;
+                  myMsg.Data.v  = MNT_getDefaultNum();;
+                  WM_SendMessage(myMsg.hWin, &myMsg);
+                  
                   WM_SetFocus(subWins[0]);
                }
                else
@@ -557,6 +563,22 @@ static void updateListViewContent(WM_HWIN thisHandle)
          
          sprintf(pStrBuf, "%09ld", pIterator->mntBoat.mmsi);
          LISTVIEW_SetItemText(thisListView, 1, Cnt-1, pStrBuf);    
+         
+         switch(pIterator->trgState>>5)
+         {
+            case 0x04: /// DSP
+                 LISTVIEW_SetItemText(thisListView, 2, Cnt-1, "消失");
+                 break;                 
+            case 0x02:/// DRG
+                 LISTVIEW_SetItemText(thisListView, 2, Cnt-1, "走锚");
+                 break;
+            case 0x01:/// BGL
+                 LISTVIEW_SetItemText(thisListView, 2, Cnt-1, "靠近");
+                 break;
+            default:
+                 LISTVIEW_SetItemText(thisListView, 2, Cnt-1, NULL);
+                 break;
+         }
       }
       
       pIterator  = pIterator->pNext;

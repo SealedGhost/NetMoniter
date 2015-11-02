@@ -30,7 +30,6 @@ struct _boat
   short time_cnt; 
 
 	 int dist;
-	 long target;
   char isHSD;
 };
 
@@ -40,6 +39,7 @@ struct _BERTH
 {
    boat Boat;
    unsigned char mntState;
+   long isInvader;
    BERTH * pLast;
    BERTH * pNext;
 };

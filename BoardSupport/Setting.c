@@ -120,7 +120,7 @@ INFO("Error!");
       pIterator  = pIterator->pNext;
    }
    
-   MNT_printSetting();
+//   MNT_printSetting();
    return Cnt;
 }
 
@@ -250,6 +250,29 @@ Bool MNT_removeById(long Id)
    } 
    return  FALSE;
 }
+
+
+
+/** @brief MNT_getDefaultNum
+ *
+ *  @dscrp Get the number of mntBoat with MNTState_Init state.
+ *
+ */
+ uint8_t MNT_getDefaultNum()
+ {
+    MNT_BERTH * pIterator  = pMntHeader;
+    uint8_t cnt  = 0;
+    
+    while(pIterator)
+    {
+       if(pIterator->chsState == MNTState_Default)
+          cnt++;
+      
+       pIterator  = pIterator->pNext;
+    }
+    
+    return cnt;
+ }
 
 
 /** @brief  MNT_initSetting

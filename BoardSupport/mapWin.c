@@ -58,7 +58,7 @@ long temp_lat = 1920726,temp_long = 7305545;
 mapping center;
 boat mothership;
 
-static void onCursorMoved();
+static void onCursorMoved(void);
 
 
 static void _cbWindowAllFishMap(WM_MESSAGE* pMsg) 
@@ -69,7 +69,6 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
 
  WM_MESSAGE myMsg;
 
-	short i = 0;
 	
 	temp_lat  = __cursor.latitude;
 	temp_long  = __cursor.longitude ;

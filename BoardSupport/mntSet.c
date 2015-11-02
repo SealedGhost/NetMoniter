@@ -70,8 +70,6 @@ WM_HWIN mntSettingWin ;
 
 static WM_HWIN hBts[7];
 
-static int fdDist  = 0;
-static int zmDist  = 0;
 static void myButtonListener(WM_MESSAGE* pMsg);
 static void btReset(WM_HWIN thisWin);
 extern GUI_CONST_STORAGE GUI_BITMAP bmyu;

@@ -10,3 +10,5 @@ void lltostr(long l_o_l,char *str);
 char * ttoi(long num , char *str);
 
 #endif
+
+

@@ -7,6 +7,7 @@
 #include "Compass.c"
 #include "map.h"
 
+
 /*--------------------------------- Macro defines -------------------------------------*/
 #define MYABS(x)   ((x)>0?(x):(-(x)))
 
@@ -189,13 +190,6 @@ static void draw_mmBoatInfo(short base_x, short base_y, boat * pBoat)
 
 static void draw_boatInfo( short base_x, short base_y, boat * pBoat,unsigned char options)
 {
-
-    char power  = 0;
-    char i  = 0;
-    short         batBody_x;
-    short         batBody_y;
-
-
    if(pBoat == NULL)
       return ;
 
@@ -343,7 +337,7 @@ static void disp_boat(const long lg, const long lt, const map_scale * pScale,sho
     base_x  = (MAP_LEFT/2 + MAP_RIGHT/2) + base_x;
     base_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - base_y;    
 
-    if(SimpBerthes[i].pBerth->Boat.target)
+    if(SimpBerthes[i].pBerth->isInvader)
     {
        if((base_x >=MAP_LEFT)&&(base_x<= MAP_RIGHT)&&(base_y >=MAP_TOP)&&(base_y <= MAP_BOTTOM))
        {         
@@ -375,13 +369,16 @@ static void disp_mntBoat(const long center_lg,const long center_lt, const map_sc
    short base_cur_x = 0;
    short base_cur_y = 0;
    
+   char isAdsorbed   = 0;
+   int  isCursorVisible  = GUI_CURSOR_GetState();
+   
    MNT_BERTH * pIterator  = pMntHeader;
    
    GUI_SetPenSize(1);
    
    while(pIterator)
    {
-      if(pIterator->pBoat)
+      if(pIterator->pBoat  &&  pIterator->pBoat->user_id == pIterator->mntBoat.mmsi)
       {
          base_x  = pScale->pixel * (pIterator->pBoat->longitude - center_lg) / pScale->minute;
          base_y  = pScale->pixel * (pIterator->pBoat->latitude - center_lt) / pScale->minute;
@@ -392,7 +389,7 @@ static void disp_mntBoat(const long center_lg,const long center_lt, const map_sc
          base_cur_x = base_x;
          base_cur_y = base_y;
     
-         GUI_SetColor(pSkin->boat_Org);    
+  
          GUI_SetPenSize(1); 
          
 ///   DSP boat conf.      
@@ -402,8 +399,29 @@ static void disp_mntBoat(const long center_lg,const long center_lt, const map_sc
          }
          if((base_x >=MAP_LEFT)&&(base_x<= MAP_RIGHT)&&(base_y >=MAP_TOP)&&(base_y <= MAP_BOTTOM))
          {
-            draw_boat(pIterator->pBoat, base_x, base_y,pPoints, PointNum);
-            draw_boatInfo(base_x, base_y, pIterator->pBoat, SHOW_OPTION_NAME | SHOW_OPTION_LL);
+            if(!isAdsorbed  &&  isCursorVisible  && ( MYABS(base_x-__cursor.x) <= 10)  &&  ( MYABS(base_y-__cursor.y) <= 10) )
+            {
+               GUI_SetColor(pSkin->ttl_Context);
+                  draw_boat(pIterator->pBoat, base_x, base_y,pPoints, PointNum);
+               draw_boatInfo(base_x, base_y, pIterator->pBoat, SHOW_OPTION_NAME | SHOW_OPTION_LL | SHOW_OPTION_MMSI);
+               isAdsorbed  = 1;
+            }
+            else
+            {
+
+               GUI_SetColor(pSkin->boat_Org);  
+               if( (pIterator->trgState&0x1f) == MNTState_Triggered)
+               {
+                  if(pIterator->flsState&0x01)
+                     draw_boat(pIterator->pBoat, base_x, base_y,pPoints, PointNum);
+                  pIterator->flsState  = ~pIterator->flsState;
+               }   
+               else
+               {
+                  draw_boat(pIterator->pBoat, base_x, base_y,pPoints, PointNum);
+               }
+//               draw_boat(pIterator->pBoat, base_x, base_y,pPoints, PointNum);
+            }
          }         
         
          
@@ -693,7 +711,6 @@ static void getMntWrapPara(long *halfDiff_lg, long* halfDiff_lt, map_scale* pSca
    
    long drgDist  = 0;
    long bglDist  = 0;
-   long radius   = 0;
    
    MNT_BERTH * pIterator  = pMntHeader;
    
@@ -822,3 +839,5 @@ void setAutoView()
    draw_mothership(lg,lt,&autoScale);
    draw_scale(&autoScale, 640,440);
 }
+
+
