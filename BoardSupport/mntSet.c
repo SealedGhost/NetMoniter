@@ -140,7 +140,6 @@ static const MntSetWin_COLOR * pSkin  = &MntSetWinSkins[0];
 */
 static void _cbDialog(WM_MESSAGE * pMsg) {
 	
-	const WM_KEY_INFO* pInfo;
  WM_HWIN  hItem  = 0;
  
   int     i  = 0;
@@ -447,7 +446,6 @@ static void myButtonListener(WM_MESSAGE* pMsg)
 {
 	const WM_KEY_INFO* pInfo;
 	WM_MESSAGE myMsg;
-	WM_HWIN thisButton = pMsg->hWin;
 	
 	WM_HWIN focussedButton  = 0;
 	
@@ -478,6 +476,9 @@ static void myButtonListener(WM_MESSAGE* pMsg)
 		
 		  switch(pInfo->Key)
 			{
+    case GUI_KEY_PWM_INC:       
+      WM_SendMessageNoPara(subWins[3], USER_MSG_DIM);
+      break;
 				case GUI_KEY_UP:
 					GUI_StoreKeyMsg(GUI_KEY_BACKTAB,1);
 					break;

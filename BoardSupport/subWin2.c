@@ -93,7 +93,7 @@ static const GUI_RECT lvRect   =    {0,LV_AllList_Y,LV_AllList_WIDTH,LV_AllList_
 
 static const LVWin_COLOR * pSkin  = &lvWinSkins[0];
 
-
+MENU_Handle hObj;
 
 
 // USER START (Optionally insert additional defines)
@@ -151,7 +151,6 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
   WM_HWIN hItem;
   int     NCode;
   int     Id;
-  int     i  = 0;
   int     SelectedRow  = -1;
   // USER START (Optionally insert additional variables)
   // USER END
@@ -383,6 +382,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
  int selectedRow  = -1;
  int totalRows  = 0;
 	int i  = 0;
+ int Cnt  = 0;
  Bool isAdded  = FALSE;
  long Id  = 0;
 	switch(pMsg->MsgId)
@@ -408,6 +408,9 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 			pInfo  = (WM_KEY_INFO*)pMsg->Data.p; 
 		 switch(pInfo->Key)
 			{
+    case GUI_KEY_PWM_INC:       
+      WM_SendMessageNoPara(subWins[3], USER_MSG_DIM);
+      break;
 				case GUI_KEY_UP:
 				case GUI_KEY_DOWN:
 				     LISTVIEW_Callback(pMsg);
@@ -447,10 +450,11 @@ static void myListViewListener(WM_MESSAGE* pMsg)
          {
             if(MNTState_Choosen == SimpBerthes[i].pBerth->mntState)
             {     
-               isAdded  = MNT_add(&SimpBerthes[i].pBerth->Boat);
+               isAdded  = MNT_add(SimpBerthes[i].pBerth);
                if( isAdded )
                {         
-                  SimpBerthes[i].pBerth->mntState  = MNTState_Monited;   
+                  SimpBerthes[i].pBerth->mntState  = MNTState_Monitored ;   
+                  Cnt++;
                }
                else
                {
@@ -460,7 +464,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
          }
          myMsg.hWin  = WM_GetClientWindow(menuWin);
          myMsg.MsgId  = USER_MSG_DFULT_CNT;
-         myMsg.Data.v  = MNT_getDefaultNum();
+         myMsg.Data.v  = Cnt;
          WM_SendMessage(myMsg.hWin, &myMsg);
          MNT_printSetting();         
          WM_SetFocus(menuWin);
@@ -508,7 +512,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
             LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, selectedRow, "吖");
          }
          
-         else if(MNTState_Monited  <= SimpBerthes[i].pBerth->mntState)
+         else if(MNTState_Monitored  <= SimpBerthes[i].pBerth->mntState)
          {  
             MMSI  = SimpBerthes[i].pBerth->Boat.user_id;
             myMsg.hWin     = WM_GetClientWindow(confirmWin);
@@ -557,7 +561,7 @@ INFO("sel:%d",selectedRow);
             LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, selectedRow, "啊");
          }
          
-         else if(MNTState_Monited  == SimpBerthes[i].pBerth->mntState)
+         else if(MNTState_Monitored  == SimpBerthes[i].pBerth->mntState)
          {  
             MMSI  = SimpBerthes[i].pBerth->Boat.user_id;
             myMsg.hWin     = WM_GetClientWindow(confirmWin);

@@ -54,10 +54,9 @@ extern SIMP_BERTH Simp_Berthes[BOAT_NUM_MAX];
 
 
 /*------------------------- local variables ----------------------------*/
-static WM_HWIN dlgFrame;
+
 static WM_HWIN dlgTextContent;
-static WM_HWIN dlgBtOk;
-static WM_HWIN dlgBtCancel;
+
 static int Option  = 0;
 static WM_MESSAGE myMsg;
 static WM_HWIN Confim_BUTTON[2];
@@ -79,14 +78,14 @@ static void myButton(WM_MESSAGE * pMsg);
 *
 *       _aDialogCreate
 */
-static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
-  { WINDOW_CreateIndirect, "Win_Confirm", GUI_ID_BUTTON2,      200,  120,  400,  200,  0, 0x64,0  },
-  { BUTTON_CreateIndirect, "OK",          GUI_ID_BUTTON0,      60,  110,   80,  40,    0, 0x0,  0 },
-  { BUTTON_CreateIndirect, "Cancel",      GUI_ID_BUTTON1, 260,  110,   80,  40,    0, 0x0,  0 },
-  { TEXT_CreateIndirect, "Text",          ID_TEXT_CONTENT,   0,   40,  400, 40, TEXT_CF_HCENTER, 0x0,  0 }
-  // USER START (Optionally insert additional widgets)
-  // USER END
-};
+//static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
+//  { WINDOW_CreateIndirect, "Win_Confirm", GUI_ID_BUTTON2,      200,  120,  400,  200,  0, 0x64,0  },
+//  { BUTTON_CreateIndirect, "OK",          GUI_ID_BUTTON0,      60,  110,   80,  40,    0, 0x0,  0 },
+//  { BUTTON_CreateIndirect, "Cancel",      GUI_ID_BUTTON1, 260,  110,   80,  40,    0, 0x0,  0 },
+//  { TEXT_CreateIndirect, "Text",          ID_TEXT_CONTENT,   0,   40,  400, 40, TEXT_CF_HCENTER, 0x0,  0 }
+//  // USER START (Optionally insert additional widgets)
+//  // USER END
+//};
 
 /*********************************************************************
 *
@@ -111,10 +110,9 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 	
 	const WM_KEY_INFO* pInfo;
   WM_HWIN thisFrame  = pMsg->hWin;
-	WM_HWIN hWin;
+
   int     NCode;
   int     Id;
-  int i  = 0;
 	
 	int xSize;
 	int ySize;
@@ -311,14 +309,12 @@ WM_HWIN confirmWinCreate(void) {
 
 static void myButton (WM_MESSAGE *pMsg)
 {
-	const WM_KEY_INFO *pInfo;
-	WM_HWIN thisFrame  = pMsg->hWin;
+
+
 	
-	int Id = 0;
 	int index = 0;
-	int NCode;
-	WM_MESSAGE myMsg;
-	WM_HWIN thisButton  = pMsg->hWin; 
+
+
 
 	switch(pMsg->MsgId)   
    { 
@@ -358,3 +354,5 @@ static void myButton (WM_MESSAGE *pMsg)
 }
 
 /*************************** End of file ****************************/
+
+

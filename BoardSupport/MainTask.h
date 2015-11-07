@@ -11,6 +11,7 @@
 #define USER_MSG_UNIT      (WM_USER + 0x05)
 #define USER_MSG_BRING     (WM_USER + 0x06)
 #define USER_MSG_DFULT_CNT (WM_USER + 0x07)
+#define USER_MSG_DIM       (WM_USER + 0x08)
 
 #define STORE_SETTING   1
 #define CANCEL_MONITED  2

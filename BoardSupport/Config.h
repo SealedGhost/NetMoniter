@@ -1,8 +1,8 @@
 #ifndef _CONFIG_H
 #define _CONFIG_H
 
-#define MOTHERShIP_LA    1927265
-#define MOTHERShIP_LG    7128663
+#define MOTHERSHIP_LA    1927265
+#define MOTHERSHIP_LG    7128663
 
 
 

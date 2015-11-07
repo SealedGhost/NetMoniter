@@ -111,8 +111,11 @@ printf("after fix:\n\r");
       EEPROM_Read(0, MNT_PAGE_ID+i, &MNT_Berthes[i], MODE_8_BIT, sizeof(MNT_BOAT));
       if(MNT_Berthes[i].mntBoat.mmsi)
       {
-         MNT_Berthes[i].chsState  = MNTState_Init;
-         MNT_Berthes[i].trgState  = MNTState_Init;
+         MNT_Berthes[i].mntBoat.lg  = 0;
+         MNT_Berthes[i].mntBoat.lt  = 0;
+         MNT_Berthes[i].chsState  = MNTState_Monitored;
+         MNT_Berthes[i].trgState  = MNTState_Monitored;
+         MNT_Berthes[i].cfgState  = MNTState_Init;
 printf("%d--MMSI:%09ld\n\r",i,MNT_Berthes[i].mntBoat.mmsi);      
          cnt++;
       }
@@ -175,15 +178,11 @@ INFO("Error happened when system load.System will be configed with default value
    pIterator  = pMntHeader;
    while(pIterator)
    {
-      if(i == 5)
-         printf("\n\r");
-      printf("%09ld --> ",pIterator->mntBoat.mmsi);
-      
+      if(i == 5)      
       i++;
       i  = i%5;
       pIterator  = pIterator->pNext;
    }
-   printf("\n\r");
   
    PWM_SET(SysConf.Brt * 2); 
 }

@@ -257,6 +257,9 @@ static void myListViewListener(WM_MESSAGE* pMsg)
    
     switch(pInfo->Key)
     {
+       case GUI_KEY_PWM_INC:       
+        WM_SendMessageNoPara(subWins[3], USER_MSG_DIM);
+        break;
        case GUI_KEY_UP:
        case GUI_KEY_DOWN:
             LISTVIEW_Callback(pMsg);     
@@ -296,7 +299,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
             switch(pIterator->chsState)
             {
                case MNTState_Choosen:
-                    pIterator->chsState  = MNTState_Monited;
+                    pIterator->chsState  = MNTState_Monitored;
                     LISTVIEW_SetItemText(thisListView, 2, selectedRow, "啊");
                     break;
                case MNTState_Default:

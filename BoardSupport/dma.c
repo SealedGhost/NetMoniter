@@ -36,7 +36,7 @@ __IO uint8_t UART2_RX[50];//
 
 void DMA_IRQHandler (void)
 {
-	uint8_t *pt,*pt0,index,err;	
+	uint8_t index;	
 
 	if (GPDMA_IntGetStatus(GPDMA_STAT_INT, 0))
 	{

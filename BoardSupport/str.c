@@ -38,6 +38,7 @@ void lltostr(long l_o_l,char *str)
 	int degree  = 0;
 	int minute_int  = 0;
 	int minute_dec  = 0;
+	char tmp[10];
  if( l_o_l==0)
  {
     str[0]  = '?';

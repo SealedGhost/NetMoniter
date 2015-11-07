@@ -54,8 +54,9 @@ struct _MNT_BERTH
 
   unsigned char chsState;
   unsigned char trgState;
+  unsigned char cfgState;
   unsigned char flsState;
-  boat * pBoat;  
+  BERTH * pBerth;  
   MNT_BERTH * pNext;
 };
 
@@ -64,11 +65,12 @@ extern MNT_BERTH * pMntHeader;
 extern MNT_SETTING mntSetting; 
 
 int MNT_getAddrOffset(uint8_t * addr);
-Bool MNT_add(boat * pBoat);
+Bool MNT_add(BERTH * pBerth);
 void MNT_initSetting(void);
 void MNT_load(void);
 int MNT_makeSettingUp(MNT_SETTING * pMNT_Setting);
 void MNT_printSetting(void);
+void MNT_DumpSetting(MNT_BERTH * pBerth);
 Bool MNT_removeById(long Id);
 uint8_t MNT_getDefaultNum(void);
 

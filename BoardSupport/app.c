@@ -18,7 +18,6 @@
 //	#define test_test
 //#endif
 
-
 /*-------------------- Macro defines ---------------------*/
 /* 定义任务优先级 */
 #define UI_Task_PRIO             11
@@ -26,7 +25,7 @@
 #define Refresh_Task_PRIO        9
 #define Task_Stack_Use_PRIO      10  
 /* 定义任务堆栈大小 */
-#define USER_TASK_STACK_SIZE 4096
+#define USER_TASK_STACK_SIZE 2048
 #define TOUCH_TASK_STACK_SIZE 256
 #define KEY_TASK_STACK_SIZE 128
 #define Task_Stack_Use_STACK_SIZE 128
@@ -39,7 +38,6 @@ static	OS_STK	UI_Task_Stack[USER_TASK_STACK_SIZE];
 static	OS_STK	Insert_Task_Stack[TOUCH_TASK_STACK_SIZE];
 
 static	OS_STK	Refresh_Task_Stack[KEY_TASK_STACK_SIZE];
-//static  OS_STK  Task_Stack_Use_Stack[Task_Stack_Use_STACK_SIZE];
 
 //static  OS_STK_DATA UI_Task_Stack_Use;
 //static  OS_STK_DATA Insert_Task_Stack_Use;
@@ -84,7 +82,7 @@ _boat_m24A *boat_list_p24A[BOAT_NUM_MAX];
 #pragma arm section rwdata
 
 
-BERTH Berthes[BOAT_NUM_MAX]__attribute__((at(0xA1C00000)));
+BERTH Berthes[BOAT_NUM_MAX]__attribute__((at(0xA1D00000)));
 SIMP_BERTH SimpBerthes[BOAT_NUM_MAX]__attribute__((at(0xA1E00000)));
 
 _boat_m24A boat_list_24A[BOAT_NUM_MAX]__attribute__((at(0xA1F00000)));;
@@ -101,7 +99,9 @@ extern int insert_24B(type_of_ship * p_msg);
 extern void updateTimeStamp(void);
 
 /*----------------- External variables -----------------------*/
-extern boat mothership;
+boat fuckership;
+mapping center;
+
 extern volatile int xlCnt;
 
 
@@ -178,7 +178,6 @@ OSMutexPost(Refresher);
 }
 void Refresh_Task(void *p_arg)//任务Refresh_Task
 {
-
 	while(1)
 	{
   OSMutexPend(Refresher, 0, &myErr);
@@ -212,12 +211,13 @@ void Task_Stack_Use(void *p_arg)
 void App_TaskStart(void)//初始化UCOS，初始化SysTick节拍，并创建三个任务
 {
 	INT8U err;
+
+  fuckership.latitude = MOTHERSHIP_LA;
+  fuckership.longitude = MOTHERSHIP_LG;
+  fuckership.true_heading  = 0;
   
-
-
-  mothership.latitude = MOTHERShIP_LA;
-  mothership.longitude = MOTHERShIP_LG;
-  mothership.true_heading  = 0;
+  center.lgtude  = MOTHERSHIP_LG;
+  center.lttude  = MOTHERSHIP_LA;
   
   SPI1_DMA_Init();
   SPI1_Int();
@@ -294,47 +294,47 @@ int translate_(unsigned char *text,message_18 *text_out,message_24_partA *text_o
       }
   }
 
-	else if((text[1]=='G')&&(text[2]=='P')&&(text[3]=='R')&&(text[4]=='M')&&(text[5]=='C')) //GPS GPRMC
+	else if((text[4]=='M')&&(text[5]=='C')) //GPS GPRMC
 	{
-//    tempgprmc = text[6]; mothership.latitude = tempgprmc << 24;
-//    tempgprmc = text[7]; mothership.latitude = mothership.latitude + (tempgprmc << 16);
-//    tempgprmc = text[8]; mothership.latitude = mothership.latitude + (tempgprmc << 8);
-//    mothership.latitude = mothership.latitude + text[9];
-//    mothership.latitude = mothership.latitude/10;    
+//    tempgprmc = text[6]; fuckership.latitude = tempgprmc << 24;
+//    tempgprmc = text[7]; fuckership.latitude = fuckership.latitude + (tempgprmc << 16);
+//    tempgprmc = text[8]; fuckership.latitude = fuckership.latitude + (tempgprmc << 8);
+//    fuckership.latitude = fuckership.latitude + text[9];
+//    fuckership.latitude = fuckership.latitude/10;    
     shiftReg   = text[6];
     shiftReg   = (shiftReg << 8) | text[7];
     shiftReg   = (shiftReg << 8) | text[8];
     shiftReg   = (shiftReg << 8) | text[9];
     if(shiftReg )
-       mothership.latitude  = shiftReg / 10;
+       fuckership.latitude  = shiftReg / 10;
     
     
-//    tempgprmc = text[10]; mothership.longitude = tempgprmc << 24;
-//    tempgprmc = text[11]; mothership.longitude = mothership.longitude + (tempgprmc << 16);
-//    tempgprmc = text[12]; mothership.longitude = mothership.longitude + (tempgprmc << 8);
-//    mothership.longitude = mothership.longitude + text[13];
-//    mothership.longitude = mothership.longitude/10;
+//    tempgprmc = text[10]; fuckership.longitude = tempgprmc << 24;
+//    tempgprmc = text[11]; fuckership.longitude = fuckership.longitude + (tempgprmc << 16);
+//    tempgprmc = text[12]; fuckership.longitude = fuckership.longitude + (tempgprmc << 8);
+//    fuckership.longitude = fuckership.longitude + text[13];
+//    fuckership.longitude = fuckership.longitude/10;
       
     shiftReg   = text[10];
     shiftReg   = (shiftReg << 8) | text[11];
     shiftReg   = (shiftReg << 8) | text[12];
     shiftReg   = (shiftReg << 8) | text[13];
     if(shiftReg)
-       mothership.longitude  = shiftReg / 10;
+       fuckership.longitude  = shiftReg / 10;
     
-//    tempgprmc = text[14]; mothership.SOG = mothership.SOG + (tempgprmc << 8);
-//    mothership.SOG = mothership.SOG + text[15];
+//    tempgprmc = text[14]; fuckership.SOG = fuckership.SOG + (tempgprmc << 8);
+//    fuckership.SOG = fuckership.SOG + text[15];
 
       shiftReg   = text[14];
       shiftReg   = (shiftReg << 8) | text[15];
-      mothership.SOG  = shiftReg;
+      fuckership.SOG  = shiftReg;
    
-//    tempgprmc = text[16]; mothership.COG = mothership.COG + (tempgprmc << 8);
-//    mothership.COG = mothership.COG + text[17];
+//    tempgprmc = text[16]; fuckership.COG = fuckership.COG + (tempgprmc << 8);
+//    fuckership.COG = fuckership.COG + text[17];
 
       shiftReg   = text[16];
       shiftReg   = (shiftReg << 8) | text[17];
-      mothership.COG  = shiftReg;
+      fuckership.COG  = shiftReg;
 
 //    tempgprmc = text[18]; SYS_Date = tempgprmc << 24;
 //    tempgprmc = text[19]; SYS_Date = SYS_Date + (tempgprmc << 16);

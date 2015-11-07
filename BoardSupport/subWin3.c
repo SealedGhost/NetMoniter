@@ -29,10 +29,11 @@
 #define ID_SLIDER_SKIN      (GUI_ID_USER + 0x20)
 #define ID_SLIDER_BRT       (GUI_ID_USER + 0x21)
 #define ID_SLIDER_VOL       (GUI_ID_USER + 0x22)
-#define ID_SLIDER_SNDARM    (GUI_ID_USER + 0x23)
-#define ID_SLIDER_SNDKEY    (GUI_ID_USER + 0x24)
-#define ID_SLIDER_UNIT      (GUI_ID_USER + 0x25)
-#define ID_SLIDER_SHAPE     (GUI_ID_USER + 0x26)
+#define ID_SLIDER_UNIT      (GUI_ID_USER + 0x23)
+#define ID_SLIDER_SHAPE     (GUI_ID_USER + 0x24)
+
+extern boat fuckership;
+extern mapping center;
 
 extern GUI_CONST_STORAGE GUI_BITMAP bmfish;
 GUI_POINT pPoint[] = {
@@ -51,8 +52,6 @@ static const SysWin_COLOR * pSkin  = &SysWinSkins[0];
 static void _OnSkinChanged(WM_MESSAGE * pMsg,int val);
 static void _OnBrtChanged(WM_MESSAGE * pMsg,int val);
 static void _OnVolChanged(WM_MESSAGE * pMsg,int val);
-static void _OnArmSndChanged(WM_MESSAGE * pMsg,int val);
-static void _OnKeySndChanged(WM_MESSAGE * pMsg,int val);
 static void _OnUnitChanged(WM_MESSAGE * pMsg,int val);
 static void _OnShapeChanged(WM_MESSAGE * pMsg,int val);
 
@@ -64,8 +63,6 @@ static  void (* const ProcChanging[7])(WM_MESSAGE *, int)  = {
    _OnSkinChanged, 
    _OnBrtChanged,
    _OnVolChanged,
-   _OnArmSndChanged,
-   _OnKeySndChanged,
    _OnUnitChanged,
    _OnShapeChanged
 };
@@ -79,17 +76,9 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[]  =
  { HSD_SLIDER_CreateIndirect, " " ,ID_SLIDER_SKIN,   180,   Win_SysSet_txOrg,                                              120,  30,  0, 0, 0},
  { HSD_SLIDER_CreateIndirect, " ", ID_SLIDER_BRT  ,  180,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap),   120,  30,  0, 0, 0},
  { HSD_SLIDER_CreateIndirect, " ", ID_SLIDER_VOL,    180,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*2, 120,  30,  0, 0, 0},
- { HSD_SLIDER_CreateIndirect, " ", ID_SLIDER_SNDARM, 180,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3, 120,  30,  0, 0, 0},
- { HSD_SLIDER_CreateIndirect, " ", ID_SLIDER_SNDKEY, 180,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4, 120,  30,  0, 0, 0},
- { HSD_SLIDER_CreateIndirect, " ", ID_SLIDER_UNIT,   180,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5, 120,  30,  0, 0, 0},
- { HSD_SLIDER_CreateIndirect, " ", ID_SLIDER_SHAPE,  180,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6, 120,  30,  0, 0, 0}
-// { HSD_SLIDER_CreateIndirect, " ", ID_BUTTON_UPDATE, 120,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*7, 120,  30,  0, 0, 0},
+ { HSD_SLIDER_CreateIndirect, " ", ID_SLIDER_UNIT, 180,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3, 120,  30,  0, 0, 0},
+ { HSD_SLIDER_CreateIndirect, " ", ID_SLIDER_SHAPE, 180,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4, 120,  30,  0, 0, 0}
 };
-
-
-
-
-
 
 
 static WM_HWIN Slideres[7];
@@ -101,40 +90,22 @@ static void  _cbDialog(WM_MESSAGE * pMsg)
    WM_MESSAGE myMsg;
    
    WM_HWIN hItem;
-   int Id;
+   int val;
+   int sldId;
    int i;
    GUI_RECT r;
       
    switch(pMsg->MsgId)
    {   
-      case GUI_KEY_PWM_INC:
-           if(HSD_SLIDER_GetValue(Slideres[1]) >= 5)
-           {
-              HSD_SLIDER_SetValue(Slideres[1], 1);
-           }
-           else
-           {
-              HSD_SLIDER_Inc(Slideres[1]);          
-           }
-
+      case USER_MSG_DIM:   
+           HSD_SLIDER_Loop(Slideres[1]);
            break;
-      case GUI_KEY_PWM_DEC:   
-           if(HSD_SLIDER_GetValue(Slideres[1]) <= 1)      
-           {
-              HSD_SLIDER_SetValue(Slideres[1], 5);
-           }
-           else
-           {           
-              HSD_SLIDER_Dec(Slideres[1]);         
-           }
 
-           break;
-           
       case USER_MSG_SKIN:    
            pSkin  = &(SysWinSkins[pMsg->Data.v]);
            
            WINDOW_SetBkColor(pMsg->hWin, pSkin->bkColor);
-           for(i=7; i;)
+           for(i=5; i;)
            {
               i--;
               HSD_SLIDER_SetBkColor(Slideres[i], pSkin->sldBk);
@@ -148,24 +119,13 @@ static void  _cbDialog(WM_MESSAGE * pMsg)
            
            break;
            
-      case WM_INIT_DIALOG:
-      
-//           agentConf.Skin              = SysConf.Skin;
-//           agentConf.Brt               = SysConf.Brt;
-//           agentConf.Snd.Vol           = SysConf.Snd.Vol;
-//           agentConf.Snd.ArmSnd        = SysConf.Snd.ArmSnd;
-//           agentConf.Snd.KeySnd        = SysConf.Snd.KeySnd;
-//           agentConf.Unit              = SysConf.Unit;
-//           agentConf.Shape             = SysConf.Shape;
-
-           
+      case WM_INIT_DIALOG:       
            pSkin  = &(SysWinSkins[SysConf.Skin]);
                 //text
            hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_VER);
            TEXT_SetFont(hItem,&GUI_Font24);
            TEXT_SetTextColor(hItem, pSkin->sldSlider);
            
-						//WINDOW_SetBkColor(pMsg->hWin, pSkin->bkColor);
 			
            Slideres[0]  = WM_GetDialogItem(pMsg->hWin, ID_SLIDER_SKIN);
            WM_SetCallback(Slideres[0], &sldListenter);
@@ -184,31 +144,19 @@ static void  _cbDialog(WM_MESSAGE * pMsg)
            HSD_SLIDER_SetRange(Slideres[2], 0, 4);
            HSD_SLIDER_SetValue(Slideres[2], SysConf.Snd.Vol);
            
-           Slideres[3]  = WM_GetDialogItem(pMsg->hWin, ID_SLIDER_SNDARM);
+           Slideres[3]  = WM_GetDialogItem(pMsg->hWin, ID_SLIDER_UNIT);
            WM_SetCallback(Slideres[3], &sldListenter);
-           HSD_SLIDER_SetNumTicks(Slideres[3],3);
-           HSD_SLIDER_SetRange(Slideres[3], 1 , 3);
-           HSD_SLIDER_SetValue(Slideres[3], SysConf.Snd.ArmSnd);
+           HSD_SLIDER_SetRange(Slideres[3], UNIT_nm,  UNIT_km);
+           HSD_SLIDER_SetValue(Slideres[3], SysConf.Unit);
            
-           Slideres[4]  = WM_GetDialogItem(pMsg->hWin, ID_SLIDER_SNDKEY);
+           Slideres[4]  = WM_GetDialogItem(pMsg->hWin, ID_SLIDER_SHAPE);
            WM_SetCallback(Slideres[4], &sldListenter);
-           HSD_SLIDER_SetNumTicks(Slideres[4], 2);
-           HSD_SLIDER_SetRange(Slideres[4], 1,  2);
-           HSD_SLIDER_SetValue(Slideres[4], SysConf.Snd.KeySnd);
-           
-           Slideres[5]  = WM_GetDialogItem(pMsg->hWin, ID_SLIDER_UNIT);
-           WM_SetCallback(Slideres[5], &sldListenter);
-           HSD_SLIDER_SetRange(Slideres[5], UNIT_nm,  UNIT_km);
-           HSD_SLIDER_SetValue(Slideres[5], SysConf.Unit);
-           
-           Slideres[6]  = WM_GetDialogItem(pMsg->hWin, ID_SLIDER_SHAPE);
-           WM_SetCallback(Slideres[6], &sldListenter);
-           HSD_SLIDER_SetRange(Slideres[6], SHAPE_Boat,  SHAPE_Fish);
-           HSD_SLIDER_SetValue(Slideres[6], SysConf.Shape);
+           HSD_SLIDER_SetRange(Slideres[4], SHAPE_Boat,  SHAPE_Fish);
+           HSD_SLIDER_SetValue(Slideres[4], SysConf.Shape);
            
            WINDOW_SetBkColor(pMsg->hWin, pSkin->bkColor);
            
-           for(i=7; i; )
+           for(i=5; i; )
            {
               i--;
               HSD_SLIDER_SetBkColor(Slideres[i], pSkin->sldBk);
@@ -242,14 +190,7 @@ static void  _cbDialog(WM_MESSAGE * pMsg)
                   myMsg.Data.v  = agentConf.Shape;
                   WM_SendMessage(myMsg.hWin, &myMsg);
                }
-//               if(agentConf.Unit != SysConf.Unit)
-//               {              
-//                  myMsg.MsgId  = USER_MSG_UNIT;
-//                  myMsg.Data.v  = agentConf.Unit;
-//                  WM_SendMessage(mapWin, &myMsg);
-//                  WM_SendMessage(WM_GetClientWindow(mntSettingWin), &myMsg);
-//               }
-               
+
                SysConf.Brt             = agentConf.Brt;
                SysConf.Shape           = agentConf.Shape;
                SysConf.Skin            = agentConf.Skin;
@@ -271,15 +212,6 @@ static void  _cbDialog(WM_MESSAGE * pMsg)
                HSD_SLIDER_SetValue(Slideres[5], SysConf.Unit);
                HSD_SLIDER_SetValue(Slideres[6], SysConf.Shape);
               
-//               ProcChanging[0](NULL, SysConf.Skin);
-//               ProcChanging[1](NULL, SysConf.Brt);
-//               ProcChanging[2](NULL, SysConf.Snd.Vol);
-//               ProcChanging[3](NULL, SysConf.Snd.ArmSnd);
-//               ProcChanging[4](NULL, SysConf.Snd.KeySnd);
-//               ProcChanging[5](NULL, SysConf.Unit);
-//               ProcChanging[6](NULL, SysConf.Shape);
-
-//               PWM_SET(agentConf.Brt * 2);
             }
             WM_SetFocus(menuWin);
             break;
@@ -288,21 +220,16 @@ static void  _cbDialog(WM_MESSAGE * pMsg)
             switch(pMsg->Data.v)  
             {
                case WM_NOTIFICATION_VALUE_CHANGED:
-                    Id  = WM_GetId(pMsg->hWinSrc);
-                    Id  = Id - ID_SLIDER_SKIN;                   
-                    if(Id >= 0  &&  Id <= 6)
-                    {
-                       i  = HSD_SLIDER_GetValue(Slideres[Id]);                      
-                       ProcChanging[Id](pMsg, i);
+                    sldId  = WM_GetId(pMsg->hWinSrc) - ID_SLIDER_SKIN;
+                    if(sldId >=0  &&  sldId <= 6)
+                    {                  
+                       val  = HSD_SLIDER_GetValue(Slideres[sldId]);                     
+                       ProcChanging[sldId](pMsg, val);
                     }
                     else
-                    {  
-INFO("SLIDER ID ERR!");                    
+                    {
+INFO("SLIDER ID Err!");                    
                     }
-                    break;                   
-                             
-               default:
-//                    WINDOW_Callback(pMsg);
                     break;
             }
             break;
@@ -326,10 +253,10 @@ INFO("SLIDER ID ERR!");
             GUI_DispStringAt("夜间模式:", 30,   Win_SysSet_txOrg );
             GUI_DispStringAt("亮度设置:", 30,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap));
             GUI_DispStringAt("音量设置:", 30,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*2);
-            GUI_DispStringAt("报警音:"  , 30,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3);
-            GUI_DispStringAt("按键音:"  , 30,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4);
-            GUI_DispStringAt("单位设置:", 30,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5);
-            GUI_DispStringAt("船位设置:", 30,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6);
+//            GUI_DispStringAt("报警音:"  , 30,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3);
+//            GUI_DispStringAt("按键音:"  , 30,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4);
+            GUI_DispStringAt("单位设置:", 30,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3);
+            GUI_DispStringAt("船位设置:", 30,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4);
             
             GUI_SetFont(&GUI_Font30);
             
@@ -342,16 +269,16 @@ INFO("SLIDER ID ERR!");
             GUI_SetFont (&GUI_Font32_1);
             GUI_SetColor(pSkin->txColor);
 //            GUI_DrawPolygon(&pPoint[0],5,310,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+8);
-            GUI_DispStringAt("nm", 140,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5);           
-            GUI_DispStringAt("km", 310,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5);
+            GUI_DispStringAt("nm", 140,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3);           
+            GUI_DispStringAt("km", 310,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3);
 //            GUI_DrawBitmap(&bmfish,130,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+7);
             GUI_RotatePolygon(aEnlargePoints, Points_fish, 11, -1.57);
 //            GUI_DrawPolygon(aEnlargePoints, 11, 160, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+18);
 
             
 //						      GUI_DrawPolygon(Points_boat, 3, 320, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+18);
-            GUI_DrawPolygon(aEnlargePoints, 11, 320, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+18 );				
-            GUI_DrawPolygon(Points_boat, 3, 160, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+18);            
+            GUI_DrawPolygon(aEnlargePoints, 11, 320, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4+18 );				
+            GUI_DrawPolygon(Points_boat, 3, 160, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4+18);            
 //             GUI_DispStringAt("Boat",140,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+8);
 //             GUI_DispStringAt("Fish",310,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+8);
             }break;
@@ -382,6 +309,9 @@ static void sldListenter(WM_MESSAGE * pMsg)
            pInfo  = (WM_KEY_INFO*)(pMsg->Data.p);
            switch(pInfo->Key)
            {
+              case GUI_KEY_PWM_INC:       
+                   WM_SendMessageNoPara(subWins[3], USER_MSG_DIM);
+                   break;
               case GUI_KEY_BACKSPACE:
                    myMsg.hWin  = WM_GetClientWindow(confirmWin);
                    myMsg.hWinSrc  = subWins[3];
@@ -392,6 +322,7 @@ static void sldListenter(WM_MESSAGE * pMsg)
                    WM_BringToTop(confirmWin);
                    WM_SetFocus(WM_GetDialogItem (confirmWin,GUI_ID_BUTTON0)); 
                    break;
+                                 
               default:
                    HSD_SLIDER_Callback(pMsg);
                    break;
@@ -411,13 +342,12 @@ static void _OnSkinChanged(WM_MESSAGE * pMsg,int val)
    int i  = 0;
 	 WM_MESSAGE myMsg;
    if(agentConf.Skin  != val)
-   {
-		 
+   {	 
       agentConf.Skin  = val;
       pSkin  = &(SysWinSkins[val]);
       
       WINDOW_SetBkColor(pMsg->hWin, pSkin->bkColor);
-      for(i=0; i<7; i++)
+      for(i=0; i<5; i++)
       {
          HSD_SLIDER_SetBkColor(Slideres[i], pSkin->sldBk);
 				     HSD_SLIDER_SetFocusBkColor(Slideres[i], pSkin->sldBk);
@@ -435,14 +365,14 @@ static void _OnSkinChanged(WM_MESSAGE * pMsg,int val)
       WM_SendMessage (myMsg.hWin, &myMsg);
 			
    }
-
 }
+
 
 static void _OnBrtChanged(WM_MESSAGE * pMsg,int val)
 {
    if(agentConf.Brt != val)
    {
-      agentConf.Brt  = val;
+      agentConf.Brt  = val;     
       PWM_SET(val * 2);
    }
 }
@@ -456,22 +386,6 @@ static void _OnVolChanged(WM_MESSAGE * pMsg,int val)
    }
 }
 
-static void _OnArmSndChanged(WM_MESSAGE * pMsg,int val)
-{
-   if(agentConf.Snd.ArmSnd  != val)
-   {
-      agentConf.Snd.ArmSnd  = val;   
-      SND_SelectID(val+SND_ID_DSP-1);      
-   }
-}
-
-static void _OnKeySndChanged(WM_MESSAGE * pMsg,int val)
-{
-   if(agentConf.Snd.KeySnd  != val)
-   {
-      agentConf.Snd.KeySnd  = val;
-   }
-}
 
 static void _OnUnitChanged(WM_MESSAGE * pMsg,int val)
 {
@@ -482,8 +396,6 @@ static void _OnShapeChanged(WM_MESSAGE * pMsg,int val)
 {
 agentConf.Shape  = val;
 }
-
-
 
 
 

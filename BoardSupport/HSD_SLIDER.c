@@ -1,6 +1,9 @@
 #include "HSD_SLIDER.h"
-#include "Config.h"
 
+
+//#include "Config.h"
+//#include "boat_struct.h"
+//extern boat fuckership;
 
 typedef struct
 {
@@ -35,7 +38,7 @@ static void _Paint(SLIDER_Obj* pObj, WM_HWIN hObj)
 {
    GUI_RECT r, rFocus, rSlider, rSlot;
    GUI_COLOR  SlotColor, SliderColor;
-   int x0, xSize, i, Range, NumTicks;
+   int x0, xSize,  Range, NumTicks;
    WIDGET__GetClientRect(&pObj->Widget, &rFocus);
    GUI__ReduceRect(&r, &rFocus, 1);
    NumTicks  = pObj->NumTicks;
@@ -87,8 +90,7 @@ static void _Paint(SLIDER_Obj* pObj, WM_HWIN hObj)
 
 //      }
 //   }
-
-   
+  
    LCD_SetColor(SliderColor);
    GUI_FillCircle(rSlider.x0+pObj->Width/2,(rSlider.y0+rSlider.y1)/2 , pObj->Width/2);  
    
@@ -110,7 +112,7 @@ static void _Paint(SLIDER_Obj* pObj, WM_HWIN hObj)
 static void _OnKey(SLIDER_Handle hObj, WM_MESSAGE * pMsg)
 {
    const WM_KEY_INFO * pKeyInfo;
-   WM_MESSAGE myMsg;
+
    int Key;
    pKeyInfo  = (const WM_KEY_INFO*)(pMsg->Data.p);
    Key  = pKeyInfo->Key;
@@ -130,7 +132,8 @@ static void _OnKey(SLIDER_Handle hObj, WM_MESSAGE * pMsg)
          case GUI_KEY_DOWN:
               WM_SetFocusOnNextChild(WM_GetParent(pMsg->hWin));
               break;
-
+         case GUI_KEY_MOVE:
+         
          default:
               SLIDER_Callback(pMsg);
               break ;
@@ -215,7 +218,7 @@ SLIDER_Handle HSD_SLIDER_CreateEx(int x0, int y0, int xSize, int ySize, WM_HWIN 
    }
    else
    {
-INFO("Slider create failed!");   
+//INFO("Slider create failed!");   
    }
    WM_UNLOCK();
    return hObj;
@@ -279,6 +282,28 @@ void HSD_SLIDER_Inc(SLIDER_Handle hObj) {
   }
 }
 
+
+/*********************************************************************
+*
+*       HSD_SLIDER_Loop
+*/
+void HSD_SLIDER_Loop(SLIDER_Handle hObj)
+{
+   SLIDER_Obj * pObj;
+   if(hObj)
+   {
+      WM_LOCK();
+      pObj  = SLIDER_H2P(hObj);  
+      pObj->v  = (pObj->v + 1 - pObj->Min) % (pObj->Max - pObj->Min + 1) + pObj->Min;    
+      WM_InvalidateWindow(hObj);
+      WM_NotifyParent(hObj, WM_NOTIFICATION_VALUE_CHANGED);       
+      WM_UNLOCK();       
+   }
+}
+
+
+
+
 /*********************************************************************
 *
 *       HSD_SLIDER_SetWidth
@@ -309,7 +334,7 @@ void HSD_SLIDER_SetValue(SLIDER_Handle hObj, int v) {
     if (v < pObj->Min) {
       v = pObj->Min;
     }
-    if (v > pObj->Max) {
+    else if (v > pObj->Max) {
       v = pObj->Max;
     }
     if (pObj->v != v) {
@@ -528,11 +553,13 @@ void HSD_SLIDER_SetFocusSliderColor(SLIDER_Handle hObj, GUI_COLOR Color)
 int HSD_SLIDER_GetValue(SLIDER_Handle hObj) {
   int r = 0;
   SLIDER_Obj* pObj;
-  if (hObj) {
-    WM_LOCK();
-    pObj = SLIDER_H2P(hObj);
-    r = pObj->v;
-    WM_UNLOCK();
+  
+  if (hObj) 
+  { 
+     WM_LOCK();
+     pObj = SLIDER_H2P(hObj);    
+     r = pObj->v;    
+     WM_UNLOCK();    
   }
   return r;
 }

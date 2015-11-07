@@ -1,6 +1,7 @@
 #include "Setting.h"
 #include <string.h>
 #include "sysConf.h"
+#include "invader.h"
 
 
 
@@ -14,6 +15,18 @@ MNT_BERTH * pMntHeader  = NULL;
 MNT_SETTING mntSetting; 
 
 
+static char  strStates[9][10]  =
+{
+   {"None     "},
+   {"Cancel   "},
+   {"Init     "},
+   {"Pending  "},
+   {"Choosen  "},
+   {"Default  "},
+   {"Monitored"},
+   {"Triggered"},
+   {"Masked   "}
+};
 
 
 /** @brief  MNT_addrCalculate
@@ -53,7 +66,7 @@ int MNT_makeSettingUp (MNT_SETTING * pMNT_Setting)
       if(   (pIterator->chsState == MNTState_Choosen)
           ||(pIterator->chsState == MNTState_Default)  )
       {
-         pIterator->chsState  = MNTState_Monited;
+         pIterator->chsState  = MNTState_Monitored;
          pIterator->trgState  = MNTState_None;        
          
          if(SysConf.Unit == UNIT_nm)
@@ -78,6 +91,9 @@ INFO("Error!");
          pIterator->mntBoat.mntSetting.DSP_Setting.isEnable  = 
                    pMNT_Setting->DSP_Setting.isEnable;
          
+         pIterator->mntBoat.mntSetting.BGL_Setting.isSndEnable  = 
+                   pMNT_Setting->BGL_Setting.isSndEnable;
+                   
          if(pMNT_Setting->BGL_Setting.Dist == 0)
          {
             pIterator->mntBoat.mntSetting.BGL_Setting.isEnable  = DISABLE;         
@@ -88,9 +104,19 @@ INFO("Error!");
                      pMNT_Setting->BGL_Setting.isEnable;        
          }
 
-         pIterator->mntBoat.mntSetting.BGL_Setting.isSndEnable  = 
-                   pMNT_Setting->BGL_Setting.isSndEnable;
-         
+         if(pMNT_Setting->BGL_Setting.Dist > 0  &&  pIterator->mntBoat.mntSetting.BGL_Setting.isEnable)
+         {
+            pIterator->mntBoat.mntSetting.BGL_Setting.isEnable  = ENABLE;
+         }
+         else 
+         {
+            pIterator->mntBoat.mntSetting.BGL_Setting.isEnable  = DISABLE;
+            INVD_clear(pIterator-MNT_Berthes);
+         }
+          
+         pIterator->mntBoat.mntSetting.DRG_Setting.isSndEnable  = 
+                   pMNT_Setting->DRG_Setting.isSndEnable;
+
          if(pMNT_Setting->DRG_Setting.Dist == 0)
          {
             pIterator->mntBoat.mntSetting.DRG_Setting.isEnable  = DISABLE;
@@ -101,8 +127,7 @@ INFO("Error!");
                       pMNT_Setting->DRG_Setting.isEnable;
          }         
 
-         pIterator->mntBoat.mntSetting.DRG_Setting.isSndEnable  = 
-                   pMNT_Setting->DRG_Setting.isSndEnable;  
+  
 
          EEPROM_Write( 0, MNT_PAGE_ID+(pIterator-MNT_Berthes),
                        &(pIterator->mntBoat),MODE_8_BIT,sizeof(MNT_BOAT));                   
@@ -117,10 +142,38 @@ INFO("Error!");
          Cnt++;
       }
       
+/*********************************************************************************************
+ *
+ *   Have no boat         ---->Init
+ *   Hvae no lg & lt      ---->Pending
+ *   Hvae lg & lt         ---->Monitored
+ *
+ **/
+      if(pIterator->pBerth == NULL || pIterator->pBerth->Boat.user_id != pIterator->mntBoat.mmsi)   
+      {
+         pIterator->cfgState  = MNTState_Init;
+      }      
+      else if(pIterator->pBerth->Boat.dist > 100000)
+      {
+         pIterator->cfgState  = MNTState_Pending;
+      }
+      else 
+      {
+         if(pMNT_Setting->DRG_Setting.isEnable)
+         {
+            pIterator->mntBoat.lg  = pIterator->pBerth->Boat.longitude;
+            pIterator->mntBoat.lt  = pIterator->pBerth->Boat.latitude;
+INFO("update drg:(%ld,%ld)",pIterator->mntBoat.lg, pIterator->mntBoat.lt);            
+         }
+         pIterator->cfgState  = MNTState_Monitored;
+      }
+      
+      MNT_DumpSetting(pIterator);
+      
       pIterator  = pIterator->pNext;
    }
    
-//   MNT_printSetting();
+   MNT_printSetting();
    return Cnt;
 }
 
@@ -155,7 +208,7 @@ static MNT_BERTH * MNT_allocOneBerth(MNT_BERTH * mntBerthes)
  *  @return   
  *
  */
-Bool MNT_add(boat * pBoat)
+Bool MNT_add(BERTH * pBerth)
 {
    int i  = 0;
    MNT_BERTH * buf  = NULL;
@@ -166,7 +219,7 @@ Bool MNT_add(boat * pBoat)
    /// If exist ,none
    while(pIterator)
    {
-      if(pIterator->mntBoat.mmsi == pBoat->user_id)
+      if(pIterator->mntBoat.mmsi == pBerth->Boat.user_id)
       {
          return TRUE;
       }
@@ -185,19 +238,21 @@ INFO("allco mnt berth failed!");
    
    for(i=0;i<20;i++)
    {
-      buf->mntBoat.name[i]  = pBoat->name[i];
-      if(pBoat->name[i] == '\0')
+      buf->mntBoat.name[i]  = pBerth->Boat.name[i];
+      if(pBerth->Boat.name[i] == '\0')
       {
          break;
       }
    }
    
    buf->mntBoat.name[19]  = '\0';  
-   buf->pBoat  = pBoat;
-   buf->mntBoat.mmsi  = pBoat->user_id;
-   buf->mntBoat.lt    = pBoat->latitude;
-   buf->mntBoat.lg    = pBoat->longitude;
+   buf->pBerth  = pBerth;
+   buf->mntBoat.mmsi  = pBerth->Boat.user_id;
+   buf->mntBoat.lt    = pBerth->Boat.latitude;
+   buf->mntBoat.lg    = pBerth->Boat.longitude;
    buf->chsState      = MNTState_Default;
+   buf->cfgState      = MNTState_Init;
+   buf->trgState      = MNTState_Monitored;
    buf->mntBoat.mntSetting.DSP_Setting.isEnable  = ENABLE;
    
    if(pMntHeader != NULL)
@@ -240,7 +295,7 @@ Bool MNT_removeById(long Id)
       if(pIterator->mntBoat.mmsi == Id)
       {
 //         pIterator->mntBoat.mntState  = MNTState_Delete;
-         pIterator->chsState  = MNTState_Delete;
+         pIterator->chsState  = MNTState_Cancel;
          return TRUE;
       }
       else
@@ -330,9 +385,23 @@ void MNT_printSetting()
          printf("\r\n");
          printf("%d-mmsi %ld\r\n",i,pIterator->mntBoat.mmsi);
          printSetting(&(pIterator->mntBoat.mntSetting));
-         printf("/r/n State:%d",pIterator->chsState);
+         printf("rn State:%d",pIterator->chsState);
          printf("still hava %d is default\r\n",cnt);
          pIterator  = pIterator->pNext;
          i++;
+   }
+}
+
+
+void MNT_DumpSetting(MNT_BERTH * pBerth)
+{
+
+   if(pBerth)
+   {
+      printf("%09ld--chs:%s cfg:%s trg:%s\n\r",
+                  pBerth->mntBoat.mmsi, 
+                  strStates[pBerth->chsState&0x1f],
+                  strStates[pBerth->cfgState&0x1f],
+                  strStates[pBerth->trgState&0x1f]);
    }
 }

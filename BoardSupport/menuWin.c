@@ -97,7 +97,6 @@ static int btIndex  = 0;
 *       _cbDialog
 */
 static void _cbDialog(WM_MESSAGE * pMsg) {
-	const WM_KEY_INFO * pInfo;
   int     NCode;
   int     Id;
  	char     i;
@@ -290,7 +289,6 @@ static void myButtonListener(WM_MESSAGE * pMsg)
  static int selIndex  = 2;
 	const WM_KEY_INFO * pInfo;
 	WM_HWIN thisButton  = pMsg->hWin;
-	WM_HWIN handle;
 	
 	
 	switch(pMsg->MsgId)
@@ -338,6 +336,9 @@ INFO("focus err!");
 			pInfo  = (WM_KEY_INFO*)pMsg->Data.p;
 		  switch(pInfo->Key)
 			{
+    case GUI_KEY_PWM_INC:       
+      WM_SendMessageNoPara(subWins[3], USER_MSG_DIM);
+      break;
 				case GUI_KEY_DOWN:  
          selIndex = -1;  
          HSD_BUTTON_Callback(pMsg);

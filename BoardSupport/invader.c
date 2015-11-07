@@ -3,8 +3,8 @@
 #include "Setting.h"
 
 static INVADER INVD_Heap[MNT_NUM_MAX][INVD_NUM_MAX] = {0};
-static INVADER * pInvdHeaders[MNT_NUM_MAX] = {NULL};
-static INVADER * pInvdTails[MNT_NUM_MAX] = {NULL};
+INVADER * pInvdHeaders[MNT_NUM_MAX] = {NULL};
+INVADER * pInvdTails[MNT_NUM_MAX] = {NULL};
 static INVADER * pInvdMasks[MNT_NUM_MAX]  = {NULL};
 
 /**@brief  INVD_allocOne
@@ -32,7 +32,7 @@ static INVADER * INVD_allocOne(unsigned int  row)
 void INVD_deleteByAddr(BERTH * pBerth)
 {
    int i  = 0;
-   
+   pBerth->isInvader  = 0;
    for(; i<MNT_NUM_MAX; i++)
    {
       if(pInvdHeaders[i])
@@ -101,7 +101,7 @@ INFO("alloc invd failed!");
    /// Add at first time.
    else
    {
-printf("add as header\n");   
+//printf("add as header\n");   
       buf  = INVD_allocOne(row);
       
       if(buf)
@@ -198,7 +198,7 @@ INFO("pass error row:%d",row);
             pBC  = pIterator->pNext;
          }
          
-INFO("Can not find this invader!");         
+//INFO("Can not find this invader!");         
          return;
       }
    }

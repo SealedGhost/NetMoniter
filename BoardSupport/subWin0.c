@@ -98,7 +98,7 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
 };
 
 
-
+static WM_HTIMER lvRefshTimer ;
 
 static const LVWin_COLOR * pSkin  = &lvWinSkins[0];
 
@@ -118,7 +118,6 @@ static const LVWin_COLOR * pSkin  = &lvWinSkins[0];
 */
 static void _cbDialog(WM_MESSAGE * pMsg) {
   WM_HWIN hItem;
-  WM_MESSAGE myMsg;
   int     NCode;
   long  Id;
   int  SelectedRow  = -1;
@@ -252,27 +251,27 @@ INFO("case msg skin");
     
        GUI_DispStringAt(pIterator->mntBoat.name, LV_MoniteList_WIDTH+80, 80);         
        
-       if(pIterator->pBoat)
+       if(pIterator->pBerth  && pIterator->pBerth->Boat.dist < 100000)
        {
-          lltostr(pIterator->pBoat->latitude, pStrBuf);
+          lltostr(pIterator->pBerth->Boat.latitude, pStrBuf);
           GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH+100, 120);
           
-          lltostr(pIterator->pBoat->longitude, pStrBuf);
+          lltostr(pIterator->pBerth->Boat.longitude, pStrBuf);
           GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH+100, 160);
           
           if(SysConf.Unit == UNIT_km)
           {
-             int sog  = pIterator->pBoat->SOG * 18;
+             int sog  = pIterator->pBerth->Boat.SOG * 18;
              sprintf(pStrBuf, "%3d.%02dkm", sog/100, sog%100);
           }
           else
           {
-             sprintf(pStrBuf, "%2d.%dkt",pIterator->pBoat->SOG/10, pIterator->pBoat->SOG%10);
+             sprintf(pStrBuf, "%2d.%dkt",pIterator->pBerth->Boat.SOG/10, pIterator->pBerth->Boat.SOG%10);
           }
           
           GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH+80, 200);
           
-          sprintf(pStrBuf, "%3d", pIterator->pBoat->COG/10);
+          sprintf(pStrBuf, "%3d", pIterator->pBerth->Boat.COG/10);
           pStrBuf[3]  = 194;
           pStrBuf[4]  = 176;
           pStrBuf[5]  = '\0'; 
@@ -382,10 +381,7 @@ WM_HWIN sub0WinCreate(void) {
 */
 static void myListViewListener(WM_MESSAGE* pMsg)
 {
-
-  LISTVIEW_Handle hObj;
-  
-  int selectedRow  = -1;
+ int selectedRow  = -1;
   int lastRow  = 0;
   int i   = 0;
   
@@ -414,6 +410,9 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 		
 		  switch(pInfo->Key)
 			{
+    case GUI_KEY_PWM_INC:       
+      WM_SendMessageNoPara(subWins[3], USER_MSG_DIM);
+      break;
 				case GUI_KEY_UP:
 				case GUI_KEY_DOWN:
          LISTVIEW_Callback(pMsg);
@@ -491,8 +490,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
                         SimpBerthes[i].pBerth->mntState  = MNTState_None;
                         break;
                      }
-                  }
-INFO("disable row:%d",SelRow);                  
+                  }                
                   LISTVIEW_DeleteRow(thisListView, SelRow);
                   
                   myMsg.hWin  = WM_GetClientWindow(menuWin);               
@@ -531,7 +529,6 @@ INFO("reply error!");
 static void updateListViewContent(WM_HWIN thisHandle)
 {
    WM_HWIN  thisListView  = thisHandle;
-   int i  = 0;
    int Cnt  = 0;
    int NumOfRows  = 0;
    MNT_BERTH * pIterator  = NULL;
@@ -541,7 +538,7 @@ static void updateListViewContent(WM_HWIN thisHandle)
    pIterator  = pMntHeader;
    while(pIterator)
    {
-      if(pIterator->chsState != MNTState_Delete)
+      if(pIterator->chsState != MNTState_Cancel)
       {
          Cnt++;
          if(Cnt > NumOfRows)
@@ -550,35 +547,38 @@ static void updateListViewContent(WM_HWIN thisHandle)
             NumOfRows  = LISTVIEW_GetNumRows(thisListView);
          }
          
-         if(pIterator->pBoat)
+         if(pIterator->pBerth && pIterator->pBerth->Boat.user_id == pIterator->mntBoat.mmsi)
          {
-            disttostr(pStrBuf, pIterator->pBoat->dist);
+            disttostr(pStrBuf, pIterator->pBerth->Boat.dist);
             LISTVIEW_SetItemText(thisListView, 0, Cnt-1, pStrBuf);     
          }      
          else
          {
             LISTVIEW_SetItemText(thisListView, 0, Cnt-1, "????");
          }
-
          
          sprintf(pStrBuf, "%09ld", pIterator->mntBoat.mmsi);
-         LISTVIEW_SetItemText(thisListView, 1, Cnt-1, pStrBuf);    
+         LISTVIEW_SetItemText(thisListView, 1, Cnt-1, pStrBuf);   
          
-         switch(pIterator->trgState>>5)
+INFO("mmsi:%09ld, trgState:%d",pIterator->mntBoat.mmsi, pIterator->trgState>>4);                  
+         
+         switch(pIterator->trgState>>4)
          {
-            case 0x04: /// DSP
+            case 0x01: /// DSP
+            case 0x08:
                  LISTVIEW_SetItemText(thisListView, 2, Cnt-1, "消失");
                  break;                 
             case 0x02:/// DRG
-                 LISTVIEW_SetItemText(thisListView, 2, Cnt-1, "走锚");
+                 LISTVIEW_SetItemText(thisListView, 2, Cnt-1, "防盗");
                  break;
-            case 0x01:/// BGL
-                 LISTVIEW_SetItemText(thisListView, 2, Cnt-1, "靠近");
+            case 0x04:/// BGL
+                 LISTVIEW_SetItemText(thisListView, 2, Cnt-1, "走锚");
                  break;
             default:
                  LISTVIEW_SetItemText(thisListView, 2, Cnt-1, NULL);
                  break;
          }
+ 
       }
       
       pIterator  = pIterator->pNext;

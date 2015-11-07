@@ -65,10 +65,10 @@ static void _Paint(BUTTON_Obj * pObj, BUTTON_Handle hObj)
       int strX  = 0;
       int strY  = 0;
       
-      sprintf(pStrBuf, "%2d", pObj->v);
+      sprintf(pStrBuf, "%d", pObj->v);
       
-      GUI_SetColor(GUI_RED);
-      GUI_FillCircle(r.x1-16,   r.y0+16,  8);
+      GUI_SetColor(GUI_LIGHTRED);
+      GUI_AA_FillCircle(r.x1-16,   r.y0+16,  8);
    
       GUI_SetFont(pObj->vFont);
       

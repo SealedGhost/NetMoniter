@@ -32,3 +32,6 @@ void HSD_BUTTON_SetVFocusColor(BUTTON_Handle hObj, GUI_COLOR Color);
 void HSD_BUTTON_SetTxFont(BUTTON_Handle hObj, const GUI_FONT GUI_UNI_PTR * pFont);
 void HSD_BUTTON_SetVFont(BUTTON_Handle hObj, const GUI_FONT GUI_UNI_PTR * pFont);
 #endif
+
+
+

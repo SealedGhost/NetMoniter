@@ -6,6 +6,8 @@
 #include "WIDGET.h"
 
 
+#define GUI_KEY_MOVE   40
+
 
 
 /**********************************************************************
@@ -27,6 +29,7 @@ SLIDER_Handle HSD_SLIDER_CreateEx      (int x0, int y0, int xsize, int ysize, WM
 void HSD_SLIDER_Callback(WM_MESSAGE * pMsg);
 void HSD_SLIDER_Inc         (SLIDER_Handle hObj);
 void HSD_SLIDER_Dec         (SLIDER_Handle hObj);
+void HSD_SLIDER_Loop        (SLIDER_Handle hObj);
 void HSD_SLIDER_SetBkColor  (SLIDER_Handle hObj, GUI_COLOR Color);
 void HSD_SLIDER_SetFocusBkColor(SLIDER_Handle hObj, GUI_COLOR Color);
 void HSD_SLIDER_SetSlotColor(SLIDER_Handle hObj, GUI_COLOR Color);
@@ -49,12 +52,11 @@ void HSD_SLIDER_SetNumTicks (SLIDER_Handle hObj, int NumTicks);
  **********************************************************************/
 int HSD_SLIDER_GetValue(SLIDER_Handle hObj);
 
-
-
-
-
-
-
-
-
 #endif 
+
+
+
+
+
+
+

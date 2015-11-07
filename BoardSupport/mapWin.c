@@ -23,7 +23,7 @@ extern Bool isReleasedDet;
 
 
 /*-------------------------- global variables ------------------------------*/
-boat mothership;
+extern boat fuckership;
 char scale_choose = 1;
 
 /*------------------------- local variables --------------------------------*/
@@ -55,8 +55,8 @@ static unsigned int drawMapSwitchCnt  = 0;
 long temp_lat = 1920726,temp_long = 7305545;
 
 
-mapping center;
-boat mothership;
+extern mapping center;
+
 
 static void onCursorMoved(void);
 
@@ -84,8 +84,8 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
        pSkin  = &(mapSkins[SysConf.Skin]);
        setBoatSkin(SysConf.Skin); 
        /// Initializaton of center
-//       center.lgtude  = mothership.longitude;
-//       center.lttude  = mothership.latitude;
+//       center.lgtude  = fuckership.longitude;
+//       center.lttude  = fuckership.latitude;
 
        center.lgtude  = 7260000;
        center.lttude  = 2220000;
@@ -163,8 +163,7 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
        break;
 
 		case WM_KEY: 
-       pKeyInfo  = (WM_KEY_INFO*)(pMsg->Data.p);    
-             
+       pKeyInfo  = (WM_KEY_INFO*)(pMsg->Data.p);                 
        drawMapSwitchCnt  = 0;
        if(drawMapSwitch == 0)
        {
@@ -220,11 +219,12 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
               __cursor.y = (MAP_TOP+MAP_BOTTOM)/2;
            
            /* 光标代表的经纬度设置为母船的经纬度 */
-              __cursor.latitude = mothership.latitude;
-              __cursor.longitude = mothership.longitude;
+              __cursor.latitude = fuckership.latitude;
+              __cursor.longitude = fuckership.longitude;
               
-              center.lgtude  = mothership.longitude;
-              center.lttude  = mothership.latitude;
+              center.lgtude  = fuckership.longitude;
+              center.lttude  = fuckership.latitude;
+printf("enter:%ld,%ld\n\r", center.lgtude, center.lttude);              
               
               GUI_CURSOR_Hide();
               GUI_CURSOR_SetPosition(__cursor.x, __cursor.y);
@@ -255,7 +255,9 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
              WM_ShowWindow(subWins[3]);
              WM_SetFocus(menuWin);
              break;
-
+        case GUI_KEY_PWM_INC:       
+             WM_SendMessageNoPara(subWins[3], USER_MSG_DIM);
+             break;
 			     }
 		      break;
 			
@@ -268,8 +270,9 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
     GUI_ClearRectEx(Rect_Map);
 //    drawMapSwitch  = 1;
     if(drawMapSwitch)
-    {
+    { 
        setView(center.lgtude, center.lttude, &measuring_scale[scale_choose]);
+   
     }
     else
     {
@@ -293,24 +296,24 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
     
     GUI_SetColor(pSkin->ttl_Context);
     
-    lltostr(mothership.latitude, pStrBuf);
+    lltostr(fuckership.latitude, pStrBuf);
     GUI_DispStringAt(pStrBuf, 20, 5);
-    lltostr(mothership.longitude, pStrBuf);
+    lltostr(fuckership.longitude, pStrBuf);
     GUI_DispStringAt(pStrBuf, 170, 5);
     
     if(SysConf.Unit == UNIT_km)
     {
-       int sog  = mothership.SOG * 18;
+       int sog  = fuckership.SOG * 18;
        sprintf(pStrBuf, "%3d.%02dkm", sog/100, sog%100);
     }
     else
     {
-       sprintf(pStrBuf, "%2d.%dkt", mothership.SOG/10,mothership.SOG%10); 
+       sprintf(pStrBuf, "%2d.%dkt", fuckership.SOG/10,fuckership.SOG%10); 
     }
       
     GUI_DispStringAt(pStrBuf, 360, 5);
     
-    sprintf(pStrBuf, "%3d", mothership.COG/10);
+    sprintf(pStrBuf, "%3d", fuckership.COG/10);
     pStrBuf[3]  = 194;
     pStrBuf[4]  = 176;
     pStrBuf[5]  = '\0';
@@ -333,13 +336,11 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
     GUI_AA_FillPolygon(Points_Compass_3, 3, 100, 100);  
     GUI_SetColor(GUI_DARKRED);
     GUI_AA_FillPolygon(Points_Compass_4, 3, 100, 100);
-
-
-
-		break;
+	  	break;
 
 		default:
-			 WM_DefaultProc(pMsg);
+       WM_DefaultProc(pMsg);
+       break;
 	}
 }
 
@@ -375,7 +376,7 @@ static void onCursorMoved()
       { 
          center.lgtude  = center.lgtude + measuring_scale[scale_choose].minute/measuring_scale[scale_choose].pixel * (MAP_WIDTH/2) * Dir_x ;
          center.lttude  = center.lttude - measuring_scale[scale_choose].minute/measuring_scale[scale_choose].pixel * (MAP_HEIGHT/2) * Dir_y;
-         
+printf("fuck:%d,%d\n\r",center.lgtude, center.lttude);         
          __cursor.x  = (MAP_LEFT+MAP_RIGHT)/2;
          __cursor.y  = (MAP_TOP+MAP_BOTTOM)/2;
          __cursor.longitude  = center.lgtude;

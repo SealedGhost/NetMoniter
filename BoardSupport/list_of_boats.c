@@ -23,7 +23,7 @@ extern int list_endIndex;
 extern int myCnt;
 extern char * pStrBuf;
 extern _boat* boat_list_p[BOAT_NUM_MAX];
-extern boat mothership;
+extern boat fuckership;
 extern BERTH Berthes[BOAT_NUM_MAX];
 extern SIMP_BERTH SimpBerthes[BOAT_NUM_MAX];
 extern MNT_BERTH * pMntHeader;
@@ -33,7 +33,6 @@ extern Bool INVD_deleteByMMSI(long MMSI);
 
 
 /*----------------------- local variables -------------------------*/
-static int mymyCnt  = 0;
 const unsigned int  R_KM  = 6371;
 const unsigned int  R_NM  = (unsigned int)(0.54*R_KM);
 const float         LLTOA = PI/60000/180;
@@ -66,9 +65,9 @@ int insert_18(struct message_18 * p_msg)
    int i  = 0; 
    
    /// Give up berthes out of range .
-   if( (p_msg->longitude < mothership.longitude-30000)  ||  (p_msg->longitude > mothership.longitude+30000) ) 
+   if( (p_msg->longitude < fuckership.longitude-30000)  ||  (p_msg->longitude > fuckership.longitude+30000) ) 
         return 0;
-   if( (p_msg->latitude < mothership.latitude-30000)  ||  (p_msg->latitude > mothership.latitude+30000) )
+   if( (p_msg->latitude < fuckership.latitude-30000)  ||  (p_msg->latitude > fuckership.latitude+30000) )
         return 0; 
    /// Update existent berth
    for(i=0;i<BOAT_NUM_MAX;i++)
@@ -173,9 +172,7 @@ int update_18(BERTH * pBerth, struct message_18 * p_msg)
 {
    int lastDist  = 0;
    int Dist  = 0;
-   int i  = 0;
-   int cnt  = 0;
- 
+   
    BERTH * tmp  = NULL;   
    lastDist  = pBerth->Boat.dist;
 
@@ -189,7 +186,7 @@ int update_18(BERTH * pBerth, struct message_18 * p_msg)
    pBerth->Boat.latitude      = p_msg->latitude;
    
    Dist = getSphereDist(p_msg->latitude,p_msg->longitude,
-                        mothership.latitude,mothership.longitude);  
+                        fuckership.latitude,fuckership.longitude);  
    pBerth->Boat.dist  = Dist;
    
    pBerth->Boat.time_cnt  = TIMESTAMP;
@@ -360,7 +357,7 @@ INFO("alloc berth failed!");
    buf->Boat.longitude       = p_msg->longitude;
    buf->Boat.latitude        = p_msg->latitude;
    Dist  = getSphereDist(p_msg->latitude, p_msg->longitude,
-                         mothership.latitude, mothership.longitude);
+                         fuckership.latitude, fuckership.longitude);
    buf->Boat.dist  = Dist;
    buf->Boat.time_cnt  = TIMESTAMP;
    
@@ -458,7 +455,6 @@ int update_24A(BERTH * pBerth, struct message_24_partA * p_msg)
 int add_24A(struct message_24_partA * p_msg)
 {
    BERTH * buf  = NULL;
-   BERTH * tmp  = NULL;
 
    int i  = 0;
    
@@ -512,7 +508,6 @@ INFO("alloc berth failed!");
 
 int update_24B(BERTH * pBerth, type_of_ship * p_msg)
 {
-   int i  = 0;  
    pBerth->Boat.time_cnt  = TIMESTAMP;
 
    if(    p_msg->vender_id[0] == 8
@@ -532,9 +527,7 @@ int update_24B(BERTH * pBerth, type_of_ship * p_msg)
 int add_24B(type_of_ship * p_msg)
 {
    BERTH * buf  = NULL;
-   BERTH * tmp  = NULL;
    
-   int i  = 0;
  
    buf  = allocOneBerth();
    
@@ -579,12 +572,9 @@ void updateTimeStamp()
 {
 //   MNT_BERTH * pIterator  = NULL;
    BERTH * tmp  = NULL;
-   BERTH * tmpTail  = pTail;
-   
-   
+     
    BERTH * pCur  = NULL;
    int i  = 0;  
-   int k  = 0;
    pCur  = pHeader; 
    
    while(pCur)
@@ -617,7 +607,10 @@ void updateTimeStamp()
 //            }
 //         }
          if(pCur->isInvader)
+         {
+printf("deleteAddr\n");         
             INVD_deleteByAddr(pCur);    
+         }
          /// Delete at header
          if(pCur == pHeader)
          {
@@ -670,10 +663,9 @@ static int getSphereDist(long lt_1,long lg_1, long lt_2, long lg_2)
 	float dist = 0.0;
 	float f_1 = 1.0*lt_1 / 60000;
 	float f_2 = 1.0*lt_2 / 60000;
-	float l_1 = 1.0*lg_1 / 60000;
-	float l_2 = 1.0*lg_2 / 60000;
+
 	float diff = 1.0*(lg_1 - lg_2) / 60000;
- float tmp  = 0.0;
+ float cosTheta  = 0.0;
 // f_1  = lt_1/60000 + ( (lt_1%60000)/10000 )*0.01667;
 
 // printf("\r\nf_1:%lf\r\n",f_1);
@@ -695,6 +687,20 @@ static int getSphereDist(long lt_1,long lg_1, long lt_2, long lg_2)
     dist  = sqrt( (lt_1-lt_2)*(lt_1-lt_1) + (lg_1-lg_2)*(lg_1-lg_2));
     return (int)(dist);
  }
+ 
+// cosTheta  =   cos((f_1 - f_2)*PI / 180) / 2
+//             - cos((f_1 + f_2)*PI / 180) / 2
+//             + cos((diff + f_1 + f_2)*PI / 180) / 4
+//             + cos((diff + f_1 - f_2)*PI / 180) / 4
+//             + cos((diff - f_1 + f_2)*PI / 180) / 4
+//             + cos((diff - f_1 - f_2)*PI / 180) / 4  ;
+//             
+// if(cosTheta > 1) 
+//    cosTheta = 1;
+// else if(cosTheta < -1) 
+//    cosTheta = -1;
+// 
+// dist  = 6371 *0.54 * acos(cosTheta);
  
 	dist = 6371 *0.54 * acos(cos((f_1 - f_2)*PI / 180) / 2
 		- cos((f_1 + f_2)*PI / 180) / 2

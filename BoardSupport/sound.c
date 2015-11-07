@@ -1,4 +1,5 @@
 #include "sound.h"
+#include "uart.h"
 
 uint8_t SND[SND_ID_MAX][6] = {  {0x7e, 0x04, 0x41, 0x00, 0x01, 0xef},  
                                 {0x7e, 0x04, 0x41, 0x00, 0x02, 0xef},   
@@ -33,7 +34,7 @@ void SND_SelectID(uint8_t SndID)
    else 
       id  = SndID;
       
-   UART_Send(UART_2, SND[SndID-1], 6, BLOCKING);
+   UART_Send(UART_0, SND[SndID-1], 6, BLOCKING);
 }
 
 
@@ -47,22 +48,23 @@ void SND_SetVol(uint8_t SndVol)
    else 
       vol  = SndVol;
       
-   UART_Send(UART_2, VOL[vol], 5, BLOCKING);
+   UART_Send(UART_0, VOL[vol], 5, BLOCKING);
+printf("vol:%d\n",vol);  
 }
 
 
 void SND_Stop()
 {
-   UART_SendByte(UART_2, 0x7e);
-   UART_SendByte(UART_2, 0x02);
-   UART_SendByte(UART_2, 0x0e);
-   UART_SendByte(UART_2, 0xef);
+   UART_SendByte(UART_0, 0x7e);
+   UART_SendByte(UART_0, 0x02);
+   UART_SendByte(UART_0, 0x0e);
+   UART_SendByte(UART_0, 0xef);
 }
 
 void SND_Play()
 {
-   UART_SendByte(UART_2, 0x7e);
-   UART_SendByte(UART_2, 0x01);
-   UART_SendByte(UART_2, 0x0e);
-   UART_SendByte(UART_2, 0xef);
+   UART_SendByte(UART_0, 0x7e);
+   UART_SendByte(UART_0, 0x01);
+   UART_SendByte(UART_0, 0x0e);
+   UART_SendByte(UART_0, 0xef);
 }

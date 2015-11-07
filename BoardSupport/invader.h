@@ -15,6 +15,7 @@ struct _INVADER
 };
 
 
+
 Bool INVD_add(int row,  BERTH * pBerth);
 
 void INVD_delete(int row, BERTH * pBerth);
