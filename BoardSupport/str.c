@@ -1,5 +1,6 @@
 #include "str.h"
 #include <stdio.h>
+#include <string.h>
 
 char strBuf[20]  = "?????.???";
 char* pStrBuf = strBuf;
@@ -21,13 +22,26 @@ void disttostr( char * str, int num)
 long strtoi(const char*str)
 {
 	int val = 0;
-	short i = 0;
+	int i = 0;
+ int len  = 0;
+ 
 	
-	while('\0' != str[i])
-	{
-		val  = val*10+str[i]-'0';
-		i++;
-	}
+ if(str != NULL)
+ {
+ 
+    len  = strlen(str);
+    for(i=0; i<len; i++)
+    {
+       if(str[i]>='0'  &&  str[i]<='9')
+       {
+          val  = val*10 + str[i]-'0';
+       }
+       else if(str[i] != ' ')
+       {
+          return 0;
+       }
+    }
+ }
 	return val;
 }
 

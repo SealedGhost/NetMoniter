@@ -9,7 +9,7 @@
 
 
 /*------------------------ Global variables extern ---------------------------*/
-extern boat fuckership;
+extern boat mothership;
 extern char scale_choose;
 
 

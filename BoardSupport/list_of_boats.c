@@ -23,7 +23,7 @@ extern int list_endIndex;
 extern int myCnt;
 extern char * pStrBuf;
 extern _boat* boat_list_p[BOAT_NUM_MAX];
-extern boat fuckership;
+extern boat mothership;
 extern BERTH Berthes[BOAT_NUM_MAX];
 extern SIMP_BERTH SimpBerthes[BOAT_NUM_MAX];
 extern MNT_BERTH * pMntHeader;
@@ -65,9 +65,9 @@ int insert_18(struct message_18 * p_msg)
    int i  = 0; 
    
    /// Give up berthes out of range .
-   if( (p_msg->longitude < fuckership.longitude-30000)  ||  (p_msg->longitude > fuckership.longitude+30000) ) 
+   if( (p_msg->longitude < mothership.longitude-30000)  ||  (p_msg->longitude > mothership.longitude+30000) ) 
         return 0;
-   if( (p_msg->latitude < fuckership.latitude-30000)  ||  (p_msg->latitude > fuckership.latitude+30000) )
+   if( (p_msg->latitude < mothership.latitude-30000)  ||  (p_msg->latitude > mothership.latitude+30000) )
         return 0; 
    /// Update existent berth
    for(i=0;i<BOAT_NUM_MAX;i++)
@@ -186,7 +186,7 @@ int update_18(BERTH * pBerth, struct message_18 * p_msg)
    pBerth->Boat.latitude      = p_msg->latitude;
    
    Dist = getSphereDist(p_msg->latitude,p_msg->longitude,
-                        fuckership.latitude,fuckership.longitude);  
+                        mothership.latitude,mothership.longitude);  
    pBerth->Boat.dist  = Dist;
    
    pBerth->Boat.time_cnt  = TIMESTAMP;
@@ -357,7 +357,7 @@ INFO("alloc berth failed!");
    buf->Boat.longitude       = p_msg->longitude;
    buf->Boat.latitude        = p_msg->latitude;
    Dist  = getSphereDist(p_msg->latitude, p_msg->longitude,
-                         fuckership.latitude, fuckership.longitude);
+                         mothership.latitude, mothership.longitude);
    buf->Boat.dist  = Dist;
    buf->Boat.time_cnt  = TIMESTAMP;
    

@@ -1,9 +1,7 @@
 #include "HSD_SLIDER.h"
 
 
-//#include "Config.h"
-//#include "boat_struct.h"
-//extern boat fuckership;
+
 
 typedef struct
 {

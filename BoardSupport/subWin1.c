@@ -93,8 +93,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        updateListViewContent( WM_GetDialogItem(pMsg->hWin,ID_LISTVIEW_0));
        break;
   
-  case USER_MSG_SKIN:
-INFO("case msg skin"); 
+  case USER_MSG_SKIN: 
        pSkin  = &(lvWinSkins[pMsg->Data.v]);
        
        WINDOW_SetBkColor(pMsg->hWin,pSkin->bkColor);
@@ -405,8 +404,8 @@ static void updateListViewContent(WM_HWIN thisHandle)
   }
   while(NumOfRows > Cnt)
   {
-    LISTVIEW_DeleteRow(thisListView, NumOfRows-1);
-    NumOfRows  = LISTVIEW_GetNumRows(thisListView);
+     LISTVIEW_DeleteRow(thisListView, NumOfRows-1);
+     NumOfRows  = LISTVIEW_GetNumRows(thisListView);
   }
   
   if(NumOfRows == 0)

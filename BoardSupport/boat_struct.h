@@ -18,7 +18,7 @@ enum _MNT_States  {  MNTState_None=0,
                      MNTState_Monitored,///6
                      MNTState_Triggered,///7
                      MNTState_Masked    ///8No
-                  };
+                  };  
 
 
 typedef struct _boat _boat;

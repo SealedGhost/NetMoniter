@@ -62,7 +62,7 @@ void check()
       pIterator  = pMntHeader;
       while(pIterator)
       {
-         if( (pIterator->trgState & 0x1f) == MNTState_Triggered )
+         if( (pIterator->trgState & 0x0f) == MNTState_Triggered )
          {
             pIterator->trgState  =  (pIterator->trgState & 0xf0) | MNTState_Masked;
          }
@@ -101,7 +101,7 @@ void check()
       
       Num++;
     
-INFO("Check %09ld",pMntBerth->mntBoat.mmsi);     
+//INFO("Check %09ld",pMntBerth->mntBoat.mmsi);     
      CHECK_check(pMntBerth); 
       
    }
@@ -124,7 +124,7 @@ void CHECK_check(MNT_BERTH * pMntBerth)
    }
    else if(CHECK_isDrg(pMntBerth))
    {
-printf("drg clear\n");   
+//printf("drg clear\n");   
       INVD_clear(pMntBerth - MNT_Berthes);
       trgState  = 0x01<<6;
    }
@@ -143,11 +143,10 @@ printf("drg clear\n");
    else if( (trgState ^ pMntBerth->trgState) & trgState )
    {
       pMntBerth->trgState  = (trgState & 0xe0) | MNTState_Triggered;
-   }
-MNT_DumpSetting(pMntBerth);    
+   }  
   
    
-   if( (pMntBerth->trgState & 0x1f)  ==  MNTState_Triggered)
+   if( (pMntBerth->trgState & 0x0f)  ==  MNTState_Triggered)
    {
       Numbers[0]  = (pMntBerth->mntBoat.mmsi%1000) / 100;
       Numbers[1]  = (pMntBerth->mntBoat.mmsi%100) / 10;
@@ -166,11 +165,11 @@ MNT_DumpSetting(pMntBerth);
                 SND_SelectID(SND_ID_NUM_BASE+Numbers[1]);
                 OSTimeDlyHMSM(0, 0, 0, 800);
                 SND_SelectID(SND_ID_NUM_BASE+Numbers[2]);
-   printf("\a DSP\n");                 
+//   printf("\a DSP\n");                 
              }
              break;
         case (0x01<<6):
-             if(pMntBerth->mntBoat.mntSetting.DRG_Setting.isEnable) 
+             if(pMntBerth->mntBoat.mntSetting.DRG_Setting.isEnable && pMntBerth->mntBoat.mntSetting.DRG_Setting.isSndEnable) 
              {
                 SND_SelectID(SND_ID_DRG);
                 
@@ -180,11 +179,11 @@ MNT_DumpSetting(pMntBerth);
                 SND_SelectID(SND_ID_NUM_BASE+Numbers[1]);
                 OSTimeDlyHMSM(0, 0, 0, 800);
                 SND_SelectID(SND_ID_NUM_BASE+Numbers[2]);
-   printf("\a DRG\n");                 
+//   printf("\a DRG\n");                 
              }
              break;
         case (0x01<<5):
-             if(pMntBerth->mntBoat.mntSetting.BGL_Setting.isEnable)
+             if(pMntBerth->mntBoat.mntSetting.BGL_Setting.isEnable && pMntBerth->mntBoat.mntSetting.BGL_Setting.isSndEnable)
              {
                 SND_SelectID(SND_ID_BGL);
                 
@@ -194,7 +193,7 @@ MNT_DumpSetting(pMntBerth);
                 SND_SelectID(SND_ID_NUM_BASE+Numbers[1]);
                 OSTimeDlyHMSM(0, 0, 0, 800);
                 SND_SelectID(SND_ID_NUM_BASE+Numbers[2]);                
-   printf("\a BGL\n");                 
+//   printf("\a BGL\n");                 
              }
              break;
         default:
@@ -245,7 +244,7 @@ static Bool CHECK_isDsp(MNT_BERTH * pMntBerth)
               
               pMntBerth->mntBoat.lg  = pMntBerth->pBerth->Boat.longitude;
               pMntBerth->mntBoat.lt  = pMntBerth->pBerth->Boat.latitude;
-INFO("update drg:(%ld,%ld)", pMntBerth->mntBoat.lg, pMntBerth->mntBoat.lt);              
+//INFO("update drg:(%ld,%ld)", pMntBerth->mntBoat.lg, pMntBerth->mntBoat.lt);              
            }
            /*
            else {}
@@ -367,7 +366,7 @@ static Bool CHECK_isBgl(MNT_BERTH * pMntBerth)
          /// Is not invader but has been.So remove it from black list.
          else if(SimpBerthes[i].pBerth->isInvader == pMntBerth->mntBoat.mmsi)
          {   
-printf("black->white\n");         
+//printf("black->white\n");         
             INVD_delete(pMntBerth-MNT_Berthes, SimpBerthes[i].pBerth);  
             SimpBerthes[i].pBerth->isInvader  = 0;            
          }
@@ -406,7 +405,7 @@ static void MNT_filter()
    {   
       pBC  = pMntHeader;
       pMntHeader  = pMntHeader->pNext;
-printf("mnt delete claer\n");
+//printf("mnt delete claer\n");
       INVD_clear(pBC-MNT_Berthes);     
     
       EEPROM_Write(0 , MNT_PAGE_ID+pBC-MNT_Berthes,
@@ -430,7 +429,7 @@ printf("mnt delete claer\n");
       if(pMntHeader->pBerth && pMntHeader->pBerth->Boat.user_id != pMntHeader->mntBoat.mmsi)
       {  
          pMntHeader->pBerth  = NULL;   
-printf("filte dsp clear\n");         
+//printf("filte dsp clear\n");         
          INVD_clear(pMntHeader-MNT_Berthes);  
       }
    }   
@@ -443,7 +442,7 @@ printf("filte dsp clear\n");
       if(pIterator->chsState == MNTState_Cancel)
       {    
          pBC->pNext  = pIterator->pNext;
-printf("mnt delete claer\n");
+//printf("mnt delete claer\n");
          INVD_clear(pIterator-MNT_Berthes); 
         
          EEPROM_Write(0 , MNT_PAGE_ID+pIterator-MNT_Berthes,
@@ -461,7 +460,7 @@ printf("mnt delete claer\n");
             {  
                pIterator->pBerth  = NULL;   
                pIterator->trgState  = (pIterator->trgState & 0x0f)|0x10;
-printf("filte dsp clear\n");               
+//printf("filte dsp clear\n");               
                INVD_clear(pIterator-MNT_Berthes);  
             }
          } 

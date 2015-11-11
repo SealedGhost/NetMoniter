@@ -21,8 +21,7 @@ typedef struct {
 static void _Paint(BUTTON_Obj * pObj, BUTTON_Handle hObj)
 {
    const char * s  = NULL;
-   int i  ;
-   GUI_RECT r,focusRect;
+   GUI_RECT r;
    GUI_COLOR txColor;
    GUI_COLOR vColor;
    
@@ -89,7 +88,6 @@ static void _Paint(BUTTON_Obj * pObj, BUTTON_Handle hObj)
 static void _OnKey(BUTTON_Handle hObj, WM_MESSAGE * pMsg)
 {
    const WM_KEY_INFO * pKeyInfo;
-   WM_MESSAGE myMsg;
    int Key;
    pKeyInfo  = (const WM_KEY_INFO*)(pMsg->Data.p);
    Key  = pKeyInfo->Key;

@@ -32,7 +32,7 @@
 #define ID_SLIDER_UNIT      (GUI_ID_USER + 0x23)
 #define ID_SLIDER_SHAPE     (GUI_ID_USER + 0x24)
 
-extern boat fuckership;
+extern boat mothership;
 extern mapping center;
 
 extern GUI_CONST_STORAGE GUI_BITMAP bmfish;

@@ -51,6 +51,8 @@
 #define ID_TEXT_7     (GUI_ID_USER + 0x19)
 #define ID_TEXT_8     (GUI_ID_USER + 0x1a)
 
+unsigned char isSub0Inited  = 0;
+
 /*----------------- external variables ---------------------*/
 extern int N_boat;
 extern SIMP_BERTH SimpBerthes[BOAT_NUM_MAX];
@@ -129,14 +131,17 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
   // USER END
 
   switch (pMsg->MsgId) {
-  case USER_MSG_BRING:
-       hItem  = WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0);
-       updateListViewContent(hItem);
+  case USER_MSG_LV_UPDATE: 
+       updateListViewContent(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0));      
        WM_InvalidateRect(hItem, &lvIndicate);
        break;
+//  case USER_MSG_BRING:
+//       hItem  = WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0);
+//       updateListViewContent(hItem);
+//       WM_InvalidateRect(hItem, &lvIndicate);
+//       break;
   
-  case USER_MSG_SKIN:
-INFO("case msg skin");  
+  case USER_MSG_SKIN: 
        pSkin  = &(lvWinSkins[pMsg->Data.v]);
        
        WINDOW_SetBkColor(pMsg->hWin,pSkin->bkColor);
@@ -197,8 +202,9 @@ INFO("case msg skin");
 			 //LISTVIEW_SetItemText (WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0),2,0,"O");
        // USER START (Optionally insert additional code for further widget initialization)
        // USER END
+       isSub0Inited  = 1;
        break;
-			
+/*			
   case WM_PAINT:
 
        GUI_SetColor(pSkin->inf_bkColor);
@@ -244,11 +250,16 @@ INFO("case msg skin");
        GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH-80, LV_MoniteList_Y-25);
        
        pIterator  = pMntHeader;
+INFO("SelectedRow:%d",SelectedRow);       
        for(i=0;i<SelectedRow;i++)
        {
           pIterator  = pIterator->pNext;
        }  
-    
+       if(pIterator == NULL)
+       {
+          break;
+       }
+       
        GUI_DispStringAt(pIterator->mntBoat.name, LV_MoniteList_WIDTH+80, 80);         
        
        if(pIterator->pBerth  && pIterator->pBerth->Boat.dist < 100000)
@@ -294,13 +305,8 @@ INFO("case msg skin");
           sprintf(pStrBuf, "%d.%2d", pIterator->mntBoat.mntSetting.DRG_Setting.Dist/1000,
                                      (pIterator->mntBoat.mntSetting.DRG_Setting.Dist%1000)/100);
           GUI_DispStringAt(pStrBuf,  LV_MoniteList_WIDTH+160,320);                                     
-          
-//          GUI_DispDecAt(pIterator->mntBoat.mntSetting.BGL_Setting.Dist,
-//                    LV_MoniteList_WIDTH+160,280,3);
-//          GUI_DispDecAt(pIterator->mntBoat.mntSetting.DRG_Setting.Dist,
-//                      LV_MoniteList_WIDTH+160,320,3);        
        }
-       else /* if(SysConf.Unit == UNIT_km) */
+       else
        {
           int tmpDist  = 0;
           
@@ -313,8 +319,8 @@ INFO("case msg skin");
           GUI_DispStringAt(pStrBuf,  LV_MoniteList_WIDTH+160,320);  
        }
   
-        break;
-
+       break;
+*/
   case WM_NOTIFY_PARENT:
        Id    = WM_GetId(pMsg->hWinSrc);
        NCode = pMsg->Data.v;
@@ -531,6 +537,7 @@ static void updateListViewContent(WM_HWIN thisHandle)
    WM_HWIN  thisListView  = thisHandle;
    int Cnt  = 0;
    int NumOfRows  = 0;
+   unsigned char tmpTrgState  = 0;
    MNT_BERTH * pIterator  = NULL;
    
    NumOfRows  = LISTVIEW_GetNumRows(thisListView);
@@ -560,9 +567,9 @@ static void updateListViewContent(WM_HWIN thisHandle)
          sprintf(pStrBuf, "%09ld", pIterator->mntBoat.mmsi);
          LISTVIEW_SetItemText(thisListView, 1, Cnt-1, pStrBuf);   
          
-INFO("mmsi:%09ld, trgState:%d",pIterator->mntBoat.mmsi, pIterator->trgState>>4);                  
-         
-         switch(pIterator->trgState>>4)
+         tmpTrgState  = pIterator->trgState>>4;                 
+INFO("%09ld trgState :%0x %x", pIterator->mntBoat.mmsi, pIterator->trgState,pIterator->trgState>>4);        
+         switch(tmpTrgState)
          {
             case 0x01: /// DSP
             case 0x08:
@@ -575,7 +582,7 @@ INFO("mmsi:%09ld, trgState:%d",pIterator->mntBoat.mmsi, pIterator->trgState>>4);
                  LISTVIEW_SetItemText(thisListView, 2, Cnt-1, "走锚");
                  break;
             default:
-                 LISTVIEW_SetItemText(thisListView, 2, Cnt-1, NULL);
+                 LISTVIEW_SetItemText(thisListView, 2, Cnt-1, "");
                  break;
          }
  

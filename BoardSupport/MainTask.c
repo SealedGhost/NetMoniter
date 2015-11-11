@@ -10,6 +10,9 @@
 #include "dlg.h"
 #include "sound.h"
 
+extern unsigned char isSub0Inited;
+extern unsigned char isSub2Inited;
+extern unsigned char isChecked;
 
 void MainTask(void)
 {
@@ -67,6 +70,12 @@ void MainTask(void)
    while(1)
    {
       GUI_Delay(200);
+      if(isChecked && isSub0Inited && isSub2Inited)
+      {
+         WM_SendMessageNoPara(subWins[2],USER_MSG_LV_UPDATE);
+         WM_SendMessageNoPara(subWins[0],USER_MSG_LV_UPDATE);
+         isChecked  = 0;
+      }
    }
 }
 

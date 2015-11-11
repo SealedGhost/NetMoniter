@@ -12,6 +12,8 @@
 #include "sysConf.h"
 #include "uart.h"
 #include "SPI1.h"
+#include "GUI.h"
+#include "dlg.h"
 
 
 //#ifndef test_test
@@ -52,6 +54,7 @@ void mntSetting_init(void);
 ///Insert , Refresh互斥信号量
 int isKeyTrigged  = 0;
 
+unsigned char isChecked  = 0;
 
 
 int ReleasedDectSwitch  = 0;
@@ -99,7 +102,7 @@ extern int insert_24B(type_of_ship * p_msg);
 extern void updateTimeStamp(void);
 
 /*----------------- External variables -----------------------*/
-boat fuckership;
+boat mothership;
 mapping center;
 
 extern volatile int xlCnt;
@@ -183,10 +186,12 @@ void Refresh_Task(void *p_arg)//任务Refresh_Task
   OSMutexPend(Refresher, 0, &myErr);
 //  OSMutexPend(Updater, 0, &myErr_2);
   updateTimeStamp();
-  OSMutexPost(Refresher); 
+  OSMutexPost(Refresher);
+
 //  UART_SendByte(2, 'k');
 #ifdef CODE_CHECK 
        check();
+       isChecked  = 1;
 #endif 
 
 //  CurMntBoatIndex++;
@@ -212,9 +217,9 @@ void App_TaskStart(void)//初始化UCOS，初始化SysTick节拍，并创建三个任务
 {
 	INT8U err;
 
-  fuckership.latitude = MOTHERSHIP_LA;
-  fuckership.longitude = MOTHERSHIP_LG;
-  fuckership.true_heading  = 0;
+  mothership.latitude = MOTHERSHIP_LA;
+  mothership.longitude = MOTHERSHIP_LG;
+  mothership.true_heading  = 0;
   
   center.lgtude  = MOTHERSHIP_LG;
   center.lttude  = MOTHERSHIP_LA;
@@ -267,7 +272,8 @@ int translate_(unsigned char *text,message_18 *text_out,message_24_partA *text_o
            
           switch(tmp)
           {
-            case 18:           
+            case 18:   
+            case 19:            
                  (*text_out)=translate_m18(text,i);
                  return 18;
 
@@ -296,45 +302,45 @@ int translate_(unsigned char *text,message_18 *text_out,message_24_partA *text_o
 
 	else if((text[4]=='M')&&(text[5]=='C')) //GPS GPRMC
 	{
-//    tempgprmc = text[6]; fuckership.latitude = tempgprmc << 24;
-//    tempgprmc = text[7]; fuckership.latitude = fuckership.latitude + (tempgprmc << 16);
-//    tempgprmc = text[8]; fuckership.latitude = fuckership.latitude + (tempgprmc << 8);
-//    fuckership.latitude = fuckership.latitude + text[9];
-//    fuckership.latitude = fuckership.latitude/10;    
+//    tempgprmc = text[6]; mothership.latitude = tempgprmc << 24;
+//    tempgprmc = text[7]; mothership.latitude = mothership.latitude + (tempgprmc << 16);
+//    tempgprmc = text[8]; mothership.latitude = mothership.latitude + (tempgprmc << 8);
+//    mothership.latitude = mothership.latitude + text[9];
+//    mothership.latitude = mothership.latitude/10;    
     shiftReg   = text[6];
     shiftReg   = (shiftReg << 8) | text[7];
     shiftReg   = (shiftReg << 8) | text[8];
     shiftReg   = (shiftReg << 8) | text[9];
     if(shiftReg )
-       fuckership.latitude  = shiftReg / 10;
+       mothership.latitude  = shiftReg / 10;
     
     
-//    tempgprmc = text[10]; fuckership.longitude = tempgprmc << 24;
-//    tempgprmc = text[11]; fuckership.longitude = fuckership.longitude + (tempgprmc << 16);
-//    tempgprmc = text[12]; fuckership.longitude = fuckership.longitude + (tempgprmc << 8);
-//    fuckership.longitude = fuckership.longitude + text[13];
-//    fuckership.longitude = fuckership.longitude/10;
+//    tempgprmc = text[10]; mothership.longitude = tempgprmc << 24;
+//    tempgprmc = text[11]; mothership.longitude = mothership.longitude + (tempgprmc << 16);
+//    tempgprmc = text[12]; mothership.longitude = mothership.longitude + (tempgprmc << 8);
+//    mothership.longitude = mothership.longitude + text[13];
+//    mothership.longitude = mothership.longitude/10;
       
     shiftReg   = text[10];
     shiftReg   = (shiftReg << 8) | text[11];
     shiftReg   = (shiftReg << 8) | text[12];
     shiftReg   = (shiftReg << 8) | text[13];
     if(shiftReg)
-       fuckership.longitude  = shiftReg / 10;
+       mothership.longitude  = shiftReg / 10;
     
-//    tempgprmc = text[14]; fuckership.SOG = fuckership.SOG + (tempgprmc << 8);
-//    fuckership.SOG = fuckership.SOG + text[15];
+//    tempgprmc = text[14]; mothership.SOG = mothership.SOG + (tempgprmc << 8);
+//    mothership.SOG = mothership.SOG + text[15];
 
       shiftReg   = text[14];
       shiftReg   = (shiftReg << 8) | text[15];
-      fuckership.SOG  = shiftReg;
+      mothership.SOG  = shiftReg;
    
-//    tempgprmc = text[16]; fuckership.COG = fuckership.COG + (tempgprmc << 8);
-//    fuckership.COG = fuckership.COG + text[17];
+//    tempgprmc = text[16]; mothership.COG = mothership.COG + (tempgprmc << 8);
+//    mothership.COG = mothership.COG + text[17];
 
       shiftReg   = text[16];
       shiftReg   = (shiftReg << 8) | text[17];
-      fuckership.COG  = shiftReg;
+      mothership.COG  = shiftReg;
 
 //    tempgprmc = text[18]; SYS_Date = tempgprmc << 24;
 //    tempgprmc = text[19]; SYS_Date = SYS_Date + (tempgprmc << 16);
