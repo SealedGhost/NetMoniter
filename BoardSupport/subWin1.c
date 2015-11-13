@@ -415,8 +415,6 @@ static void updateListViewContent(WM_HWIN thisHandle)
 }
 
 
-//int getSelectedBoatIndex(WM_HWIN thisHandle, int col, int row)
-
 
 
 /*************************** End of file ****************************/

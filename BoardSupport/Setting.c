@@ -58,7 +58,6 @@ int MNT_getAddrOffset(uint8_t * addr)
  */
 int MNT_makeSettingUp (MNT_SETTING * pMNT_Setting)
 {
-   int i  = 0;
    int Cnt  = 0;
    MNT_BERTH * pIterator  = pMntHeader;
    while(pIterator)
@@ -130,7 +129,35 @@ INFO("Error!");
   
 
          EEPROM_Write( 0, MNT_PAGE_ID+(pIterator-MNT_Berthes),
-                       &(pIterator->mntBoat),MODE_8_BIT,sizeof(MNT_BOAT));                   
+                       &(pIterator->mntBoat),MODE_8_BIT,sizeof(MNT_BOAT));  
+
+       /*********************************************************************************************
+        *
+        *   Have no boat         ---->Init
+        *   Hvae no lg & lt      ---->Pending
+        *   Hvae lg & lt         ---->Monitored
+        *
+        **/
+             if(pIterator->pBerth == NULL || pIterator->pBerth->Boat.user_id != pIterator->mntBoat.mmsi)   
+             {
+                pIterator->cfgState  = MNTState_Init;
+             }      
+             else if(pIterator->pBerth->Boat.dist > 100000)
+             {
+                pIterator->cfgState  = MNTState_Pending;
+             }
+             else 
+             {
+                if(pMNT_Setting->DRG_Setting.isEnable)
+                {
+                   pIterator->mntBoat.lg  = pIterator->pBerth->Boat.longitude;
+                   pIterator->mntBoat.lt  = pIterator->pBerth->Boat.latitude;
+       //INFO("update drg:(%ld,%ld)",pIterator->mntBoat.lg, pIterator->mntBoat.lt);            
+                }
+                pIterator->cfgState  = MNTState_Monitored;
+             }
+             
+       //      MNT_DumpSetting(pIterator);                       
       }
       
       else if(pIterator->chsState == MNTState_None)
@@ -142,38 +169,12 @@ INFO("Error!");
          Cnt++;
       }
       
-/*********************************************************************************************
- *
- *   Have no boat         ---->Init
- *   Hvae no lg & lt      ---->Pending
- *   Hvae lg & lt         ---->Monitored
- *
- **/
-      if(pIterator->pBerth == NULL || pIterator->pBerth->Boat.user_id != pIterator->mntBoat.mmsi)   
-      {
-         pIterator->cfgState  = MNTState_Init;
-      }      
-      else if(pIterator->pBerth->Boat.dist > 100000)
-      {
-         pIterator->cfgState  = MNTState_Pending;
-      }
-      else 
-      {
-         if(pMNT_Setting->DRG_Setting.isEnable)
-         {
-            pIterator->mntBoat.lg  = pIterator->pBerth->Boat.longitude;
-            pIterator->mntBoat.lt  = pIterator->pBerth->Boat.latitude;
-INFO("update drg:(%ld,%ld)",pIterator->mntBoat.lg, pIterator->mntBoat.lt);            
-         }
-         pIterator->cfgState  = MNTState_Monitored;
-      }
-      
-      MNT_DumpSetting(pIterator);
+
       
       pIterator  = pIterator->pNext;
    }
    
-   MNT_printSetting();
+//   MNT_printSetting();
    return Cnt;
 }
 

@@ -607,8 +607,7 @@ void updateTimeStamp()
 //            }
 //         }
          if(pCur->isInvader)
-         {
-printf("deleteAddr\n");         
+         {        
             INVD_deleteByAddr(pCur);    
          }
          /// Delete at header

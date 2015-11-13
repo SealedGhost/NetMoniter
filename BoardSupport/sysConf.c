@@ -25,10 +25,8 @@ void printSysConf(CONF_SYS * p)
 {
    printf("\n\r");
    printf("Skin:           %s-%d\n\r",p->Skin?"Night":"Day",p->Skin);
-   printf("Snd -- Vol      %d\n\r",p->Snd.Vol);
+   printf("Snd -- Vol      %d\n\r",p->Vol);
    printf("Brightness      %d\n\r",p->Brt);
-   printf("Snd -- ArmSnd   %d\n\r",p->Snd.ArmSnd);
-   printf("Snd -- KeySnd   %d\n\r",p->Snd.KeySnd);
    printf("Unit            %s-%d\n\r",p->Unit?"nm":"km",p->Unit);
    printf("Shape           %s-%d\n\r",p->Shape?"Fish":"Boat",p->Shape);
 }
@@ -49,24 +47,13 @@ static Bool checkSysConf()
       printf("Brt  load error! load %d as brg\n\r",SysConf.Brt);
       SysConf.Brt  = 3;
    }
-   if(SysConf.Snd.Vol < 0  ||  SysConf.Snd.Vol > 6)            
+   if(SysConf.Vol < 0  ||  SysConf.Vol > 6)            
    {
       flag  = FALSE;   
-      printf("Vol  load error! load %d as vol\n\r",SysConf.Snd.Vol);
-      SysConf.Snd.Vol  = 1;
+      printf("Vol  load error! load %d as vol\n\r",SysConf.Vol);
+      SysConf.Vol  = 1;
    }
-   if(SysConf.Snd.ArmSnd < 1  ||  SysConf.Snd.ArmSnd > 2)      
-   {
-      flag  = FALSE;   
-      printf("ArmSnd  load error! load %d as arm snd\n\r",SysConf.Snd.ArmSnd);
-      SysConf.Snd.ArmSnd  = 1;
-   }
-   if(SysConf.Snd.KeySnd < 0  || SysConf.Snd.KeySnd > 2)       
-   {
-      flag  = FALSE;   
-      printf("KeySnd  load error! load %d as key snd\n\r",SysConf.Snd.KeySnd);
-      SysConf.Snd.KeySnd  = 1;
-   }
+
    if(SysConf.Unit != UNIT_km  &&  SysConf.Unit != UNIT_nm)     
    {
       flag  = FALSE;   
@@ -100,6 +87,7 @@ Bool sysLoad()
    printSysConf(&SysConf);
    if(!checkSysConf())
    {
+      sysStore();
 printf("after fix:\n\r");   
       printSysConf(&SysConf);
       flag  = FALSE;

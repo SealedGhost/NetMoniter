@@ -52,4 +52,4 @@ const SysWin_COLOR SysWinSkins[2]  = {
   { 0x00000000, 0x00171717, 0x00cccccc,  0x00171717, 0x00404647, 0x0006b940, 0x00cf9b18}
 };    
 
-                          
+

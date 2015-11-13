@@ -28,15 +28,6 @@ enum _BOAT_SHAPES{SHAPE_Boat=0, SHAPE_Fish};
 
 
 
-/// Sound config struct.
-typedef struct _CONF_SND CONF_SND;
-struct _CONF_SND
-{
-   char Vol;       ///  Volumn.
-   char ArmSnd;
-   char KeySnd;  
-};
-
 
 /// Light config struct.
 typedef struct _CONF_LIGHT CONF_LIGHT;
@@ -70,26 +61,7 @@ struct _CONF_BOAT_SHAPE
 
 
 typedef struct _MapWin_COLOR MapWin_COLOR;
-//struct _MapWin_COLOR
-//{
-//  GUI_COLOR BackGround;
-//    
-//  GUI_COLOR Title_Background;    /// 
-//	 GUI_COLOR Title_Label;
-// 	GUI_COLOR Title_Context;
-// 	GUI_COLOR Title_HorLine;
-//	
-//	 GUI_COLOR Map_Grid;            /// Color of grid.
-//	 GUI_COLOR Map_Text;            /// Color of text.
-//     
-//  GUI_COLOR Boat_ORG;            /// Color of boat with nono setting.
-//  GUI_COLOR Boat_Dsp;            /// Color of boat with DSP setting.
-//  GUI_COLOR Boat_Bgl;            /// Color of boat with BGL setting.
-//  GUI_COLOR Boat_Drg;            /// Color of boat with DRG setting.
-//  GUI_COLOR Boat_Tip_Border;     /// Color of tip's border.
-//  GUI_COLOR Boat_Name;           /// Color of boat's name in tip.
-//  GUI_COLOR Boat_Cdnt;           /// Color of boat's coordiate in tip.
-//};
+
 
 struct _MapWin_COLOR
 {
@@ -119,17 +91,7 @@ struct _MapWin_COLOR
 
 
 typedef struct _MenuWin_COLOR MenuWin_COLOR;
-//struct _MenuWin_COLOR 
-//{
-//  GUI_COLOR BackGround;
-//  
-//  GUI_COLOR Menu_Label;           /// Color of string "Main Menu".
-//  
-//  GUI_COLOR Bt_Sel;
-//  GUI_COLOR Bt_Unsel;
-//  GUI_COLOR Bt_Text;
-//  GUI_COLOR Bt_Focus;
-//};
+
 
 struct _MenuWin_COLOR
 {
@@ -149,25 +111,7 @@ struct _MenuWin_COLOR
 
 
 typedef struct _LVWin_COLOR LVWin_COLOR;
-//struct _LVWin_COLOR
-//{
-//  GUI_COLOR BackGround;
-//    
-//  GUI_COLOR Win_Label;
-//  
-//  GUI_COLOR LV_Header_Bk;
-//  GUI_COLOR LV_Header_Text;
-//  GUI_COLOR LV_Header_Grid;
-//  
-//  GUI_COLOR LV_bkUnsel;
-//  GUI_COLOR LV_bkSel; 
-//  GUI_COLOR LV_bkFocus;
-//  GUI_COLOR LV_tx_Unsel;
-//  GUI_COLOR LV_tx_Sel;
-//  GUI_COLOR LV_tx_Focus;
-//  
-//  GUI_COLOR String;   
-//};
+
 struct _LVWin_COLOR 
 {
    GUI_COLOR bkColor; 
@@ -283,7 +227,7 @@ typedef struct _CONF_SYS  CONF_SYS;
 struct _CONF_SYS
 {
   SKINS                Skin;        /// Skin  config.
- 	CONF_SND             Snd;         /// Sound config.
+ 	char                 Vol;         /// Sound config.
 	 char                 Brt;          /// Light config.
   UNITS                Unit;        /// Unit  config.
   BOAT_SHAPES          Shape;       /// Shape config.

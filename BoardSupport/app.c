@@ -189,10 +189,10 @@ void Refresh_Task(void *p_arg)//»ŒŒÒRefresh_Task
   OSMutexPost(Refresher);
 
 //  UART_SendByte(2, 'k');
-#ifdef CODE_CHECK 
+
        check();
        isChecked  = 1;
-#endif 
+
 
 //  CurMntBoatIndex++;
 //  CurMntBoatIndex  = CurMntBoatIndex%N_monitedBoat;
@@ -270,13 +270,15 @@ int translate_(unsigned char *text,message_18 *text_out,message_24_partA *text_o
           i++;     
           tmp  = change_table(text[i]);
            
+          
           switch(tmp)
           {
-            case 18:   
-            case 19:            
-                 (*text_out)=translate_m18(text,i);
+            case 19: 
+                 (*text_out)  = translate_m18(text,i);
                  return 18;
-
+            case 18:
+                 (*text_out)=translate_m18(text,i);
+                 return 18;           
             case 24:            
                 if(change_table(text[i+6])&12)
                 {
@@ -290,6 +292,7 @@ int translate_(unsigned char *text,message_18 *text_out,message_24_partA *text_o
                 }
                             
            default:
+           
                 return tmp;
            
          }

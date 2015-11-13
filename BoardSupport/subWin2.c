@@ -139,15 +139,14 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
 */
 static void _cbDialog(WM_MESSAGE * pMsg) {
   WM_HWIN hItem;
-  int     NCode;
-  int     Id;
+
   int     SelectedRow  = -1;
   long    SelectedMMSI = 0;
   int     i;
  
   switch (pMsg->MsgId) {	
   case USER_MSG_LV_UPDATE:
-       updateListViewContent(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0));      
+       updateListViewContent(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0));
        break;
   
   case USER_MSG_SKIN: 
@@ -713,12 +712,10 @@ static void updateListViewContent(WM_HWIN thisHandle)
    }
    
    selRow  = LISTVIEW_GetSel(thisListView);
-INFO("selRow:%d",selRow);   
    LISTVIEW_GetItemText(thisListView, LV_AllList_Col_MMSI, selRow, pStrBuf, 11);
    
    selectedMMSI  = strtoi(pStrBuf);
    
-INFO("selMMSI:%09ld",selectedMMSI);   
    if(selectedMMSI)
    {
       for(i=N_boat; i>=0; i--)
@@ -735,7 +732,6 @@ INFO("selMMSI:%09ld",selectedMMSI);
    {
       LV_Page  = (N_boat-1) / LV_PAGE_SIZE;
       selRow  = (N_boat-1) % LV_PAGE_SIZE;
-INFO("N:%d, LV_Page:%d, selRow:%d", N_boat, LV_Page, selRow);      
    }
    
    LV_turnPage(thisListView, LV_Page);

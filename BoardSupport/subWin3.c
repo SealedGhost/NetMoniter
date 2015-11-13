@@ -18,8 +18,7 @@
 #define ID_TEXT_NIGHT       (GUI_ID_USER + 0x11)
 #define ID_TEXT_VOL         (GUI_ID_USER + 0x12)
 #define ID_TEXT_BRIGHT      (GUI_ID_USER + 0x13)
-#define ID_TEXT_ARMSND      (GUI_ID_USER + 0x14)
-#define ID_TEXT_KEYSND      (GUI_ID_USER + 0x15)
+
 #define ID_TEXT_UNIT        (GUI_ID_USER + 0x16)
 #define ID_TEXT_SHAPE       (GUI_ID_USER + 0x17)
 #define ID_TEXT_UPDATE      (GUI_ID_USER + 0x18)
@@ -142,7 +141,7 @@ static void  _cbDialog(WM_MESSAGE * pMsg)
            WM_SetCallback(Slideres[2], &sldListenter);
            HSD_SLIDER_SetNumTicks(Slideres[2], 5);
            HSD_SLIDER_SetRange(Slideres[2], 0, 4);
-           HSD_SLIDER_SetValue(Slideres[2], SysConf.Snd.Vol);
+           HSD_SLIDER_SetValue(Slideres[2], SysConf.Vol);
            
            Slideres[3]  = WM_GetDialogItem(pMsg->hWin, ID_SLIDER_UNIT);
            WM_SetCallback(Slideres[3], &sldListenter);
@@ -194,9 +193,7 @@ static void  _cbDialog(WM_MESSAGE * pMsg)
                SysConf.Brt             = agentConf.Brt;
                SysConf.Shape           = agentConf.Shape;
                SysConf.Skin            = agentConf.Skin;
-               SysConf.Snd.Vol         = agentConf.Snd.Vol;
-               SysConf.Snd.ArmSnd      = agentConf.Snd.ArmSnd;
-               SysConf.Snd.KeySnd      = agentConf.Snd.KeySnd;
+               SysConf.Vol             = agentConf.Vol;
                SysConf.Unit            = agentConf.Unit;
                
                sysStore();
@@ -206,9 +203,7 @@ static void  _cbDialog(WM_MESSAGE * pMsg)
                /// Roll back
                HSD_SLIDER_SetValue(Slideres[0], SysConf.Skin);
                HSD_SLIDER_SetValue(Slideres[1], SysConf.Brt);
-               HSD_SLIDER_SetValue(Slideres[2], SysConf.Snd.Vol);
-               HSD_SLIDER_SetValue(Slideres[3], SysConf.Snd.ArmSnd);
-               HSD_SLIDER_SetValue(Slideres[4], SysConf.Snd.KeySnd);
+               HSD_SLIDER_SetValue(Slideres[2], SysConf.Vol);
                HSD_SLIDER_SetValue(Slideres[5], SysConf.Unit);
                HSD_SLIDER_SetValue(Slideres[6], SysConf.Shape);
               
@@ -379,9 +374,9 @@ static void _OnBrtChanged(WM_MESSAGE * pMsg,int val)
 
 static void _OnVolChanged(WM_MESSAGE * pMsg,int val)
 {
-   if(agentConf.Snd.Vol != val)
+   if(agentConf.Vol != val)
    {
-      agentConf.Snd.Vol  = val;
+      agentConf.Vol  = val;
       SND_SetVol(val);
    }
 }

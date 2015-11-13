@@ -51,7 +51,6 @@ void INVD_deleteByAddr(BERTH * pBerth)
  */
 Bool INVD_add(int row, BERTH * pBerth)
 {
-   unsigned int  i  = 0;
    INVADER * pIterator  = NULL;
    INVADER * buf  = NULL;
  

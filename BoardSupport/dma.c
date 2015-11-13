@@ -47,7 +47,6 @@ void DMA_IRQHandler (void)
 
        if(DMADest_Buffer[0] == '!'  ||  DMADest_Buffer[0] == '$')
        {
-          xlCnt=0;
           for(index=0;index<50;index++)	
           {
             Partition[myCnt][index]=DMADest_Buffer[index];

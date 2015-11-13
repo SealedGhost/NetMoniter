@@ -100,7 +100,6 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
 };
 
 
-static WM_HTIMER lvRefshTimer ;
 
 static const LVWin_COLOR * pSkin  = &lvWinSkins[0];
 
@@ -132,14 +131,10 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 
   switch (pMsg->MsgId) {
   case USER_MSG_LV_UPDATE: 
-       updateListViewContent(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0));      
+
+       updateListViewContent(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0));     
        WM_InvalidateRect(hItem, &lvIndicate);
        break;
-//  case USER_MSG_BRING:
-//       hItem  = WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0);
-//       updateListViewContent(hItem);
-//       WM_InvalidateRect(hItem, &lvIndicate);
-//       break;
   
   case USER_MSG_SKIN: 
        pSkin  = &(lvWinSkins[pMsg->Data.v]);
@@ -204,7 +199,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        // USER END
        isSub0Inited  = 1;
        break;
-/*			
+
   case WM_PAINT:
 
        GUI_SetColor(pSkin->inf_bkColor);
@@ -250,7 +245,6 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH-80, LV_MoniteList_Y-25);
        
        pIterator  = pMntHeader;
-INFO("SelectedRow:%d",SelectedRow);       
        for(i=0;i<SelectedRow;i++)
        {
           pIterator  = pIterator->pNext;
@@ -320,7 +314,7 @@ INFO("SelectedRow:%d",SelectedRow);
        }
   
        break;
-*/
+
   case WM_NOTIFY_PARENT:
        Id    = WM_GetId(pMsg->hWinSrc);
        NCode = pMsg->Data.v;
@@ -568,7 +562,6 @@ static void updateListViewContent(WM_HWIN thisHandle)
          LISTVIEW_SetItemText(thisListView, 1, Cnt-1, pStrBuf);   
          
          tmpTrgState  = pIterator->trgState>>4;                 
-INFO("%09ld trgState :%0x %x", pIterator->mntBoat.mmsi, pIterator->trgState,pIterator->trgState>>4);        
          switch(tmpTrgState)
          {
             case 0x01: /// DSP
@@ -601,6 +594,8 @@ INFO("%09ld trgState :%0x %x", pIterator->mntBoat.mmsi, pIterator->trgState,pIte
    {
       LISTVIEW_AddRow(thisListView, NULL);
    }
+   
+   WM_InvalidateRect(subWins[0], &lvIndicate);
 }
 
 
