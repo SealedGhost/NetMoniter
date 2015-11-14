@@ -65,10 +65,10 @@ int insert_18(struct message_18 * p_msg)
    int i  = 0; 
    
    /// Give up berthes out of range .
-   if( (p_msg->longitude < mothership.longitude-30000)  ||  (p_msg->longitude > mothership.longitude+30000) ) 
-        return 0;
-   if( (p_msg->latitude < mothership.latitude-30000)  ||  (p_msg->latitude > mothership.latitude+30000) )
-        return 0; 
+//   if( (p_msg->longitude < mothership.longitude-30000)  ||  (p_msg->longitude > mothership.longitude+30000) ) 
+//        return 0;
+//   if( (p_msg->latitude < mothership.latitude-30000)  ||  (p_msg->latitude > mothership.latitude+30000) )
+//        return 0; 
    /// Update existent berth
    for(i=0;i<BOAT_NUM_MAX;i++)
    {
@@ -203,18 +203,18 @@ int update_18(BERTH * pBerth, struct message_18 * p_msg)
    if(Dist < lastDist)
    {
       /// pBerth do not need to change location
-      if(pBerth->pLast == NULL)
+      if(pBerth->pPrev == NULL)
       {
          return 1; 
       }         
-      if(Dist >= pBerth->pLast->Boat.dist)
+      if(Dist >= pBerth->pPrev->Boat.dist)
       {     
          return 1;
       }
       /// pBerth need to change location 
       while(tmp)
       {
-         tmp  = tmp->pLast;
+         tmp  = tmp->pPrev;
          
 
         /// pBerth->dist is smallest,move it to header
@@ -224,19 +224,19 @@ int update_18(BERTH * pBerth, struct message_18 * p_msg)
   *      @here    NODE     NODE    |NODE|    NODE   NODE
   *               tmp                
   */
-//         if(tmp->pLast == NULL)
+//         if(tmp->pPrev == NULL)
          if(tmp == pHeader)
          {  
-            pBerth->pLast->pNext  = pBerth->pNext;
+            pBerth->pPrev->pNext  = pBerth->pNext;
 //            if(pBerth->pNext)
             if(pBerth != pTail)
-               pBerth->pNext->pLast  = pBerth->pLast;
+               pBerth->pNext->pPrev  = pBerth->pPrev;
             else  
-               pTail  = pBerth->pLast;
+               pTail  = pBerth->pPrev;
                
-            tmp->pLast  = pBerth;
+            tmp->pPrev  = pBerth;
             pBerth->pNext  = tmp;
-            pBerth->pLast  = NULL;
+            pBerth->pPrev  = NULL;
             pHeader  = pBerth;
             return 1;
          }
@@ -248,19 +248,19 @@ int update_18(BERTH * pBerth, struct message_18 * p_msg)
   *      NODE   @here    NODE    NODE   |NODE|    NODE
   *                      tmp
   */
-         if(Dist >= tmp->pLast->Boat.dist)
+         if(Dist >= tmp->pPrev->Boat.dist)
          {        
-            pBerth->pLast->pNext  = pBerth->pNext;
+            pBerth->pPrev->pNext  = pBerth->pNext;
 //            if(pBerth->pNext)
             if(pBerth != pTail)
-               pBerth->pNext->pLast  = pBerth->pLast;
+               pBerth->pNext->pPrev  = pBerth->pPrev;
             else
-               pTail  = pBerth->pLast;
+               pTail  = pBerth->pPrev;
              
-            pBerth->pLast  = tmp->pLast;
+            pBerth->pPrev  = tmp->pPrev;
             pBerth->pNext  = tmp;
-            tmp->pLast->pNext  = pBerth;
-            tmp->pLast  = pBerth;
+            tmp->pPrev->pNext  = pBerth;
+            tmp->pPrev  = pBerth;
             return 1;
          }
       }
@@ -295,13 +295,13 @@ INFO("Err!");
          if(tmp == pTail)
          { 
             if(pBerth != pHeader)
-               pBerth->pLast->pNext  = pBerth->pNext;
+               pBerth->pPrev->pNext  = pBerth->pNext;
             else
                pHeader  = pBerth->pNext;
-            pBerth->pNext->pLast  = pBerth->pLast;
+            pBerth->pNext->pPrev  = pBerth->pPrev;
             
             tmp->pNext  = pBerth;
-            pBerth->pLast  = tmp;
+            pBerth->pPrev  = tmp;
             pBerth->pNext  = NULL;
             
             pTail  = pBerth;
@@ -318,14 +318,14 @@ INFO("Err!");
          if(Dist <= tmp->pNext->Boat.dist)
          {       
             if(pBerth != pHeader)
-               pBerth->pLast->pNext  = pBerth->pNext;
+               pBerth->pPrev->pNext  = pBerth->pNext;
              else
                pHeader  = pBerth->pNext;
-             pBerth->pNext->pLast  = pBerth->pLast;
+             pBerth->pNext->pPrev  = pBerth->pPrev;
              
-             pBerth->pLast  = tmp;
+             pBerth->pPrev  = tmp;
              pBerth->pNext  = tmp->pNext;
-             tmp->pNext ->pLast  = pBerth;
+             tmp->pNext ->pPrev  = pBerth;
              tmp->pNext   = pBerth;
              return 1;
          }
@@ -377,7 +377,7 @@ INFO("alloc berth failed!");
    if(Dist <= pHeader->Boat.dist)
    {
       buf->pNext  = pHeader;
-      pHeader->pLast  = buf;
+      pHeader->pPrev  = buf;
       pHeader  = buf;     
       return 1;
    }
@@ -394,7 +394,7 @@ INFO("alloc berth failed!");
       if(tmp == pTail)
       {    
          tmp->pNext  = buf;
-         buf->pLast  = tmp;
+         buf->pPrev  = tmp;
          buf->pNext  = NULL;
          
          pTail  = buf;
@@ -411,8 +411,8 @@ INFO("alloc berth failed!");
       if(Dist <= tmp->pNext->Boat.dist)
       {       
          buf->pNext  = tmp->pNext;
-         buf->pLast  = tmp;
-         tmp->pNext->pLast  = buf;
+         buf->pPrev  = tmp;
+         tmp->pNext->pPrev  = buf;
          tmp->pNext  = buf;
        
          return 2;
@@ -466,7 +466,7 @@ int add_24A(struct message_24_partA * p_msg)
 INFO("alloc berth failed!");   
       return -1;
    }
-//   buf->pLast  = NULL;
+//   buf->pPrev  = NULL;
 //   buf->pNext  = NULL;
    
    buf->Boat.user_id  = p_msg->user_id;
@@ -497,7 +497,7 @@ INFO("alloc berth failed!");
    *                           tail
    */                       
    pTail->pNext  = buf;
-   buf->pLast    = pTail;
+   buf->pPrev    = pTail;
    
    buf->pNext  = NULL;
    pTail  = buf;
@@ -558,7 +558,7 @@ INFO("alloc berth failed!");
    }
    
    pTail->pNext  = buf;
-   buf->pLast    = pTail;
+   buf->pPrev    = pTail;
    
    buf->pNext  = NULL;
    pTail       = buf;
@@ -615,20 +615,20 @@ void updateTimeStamp()
          {
             pHeader  = pCur->pNext;
             if(pCur->pNext)
-               pCur->pNext->pLast  = NULL;          
+               pCur->pNext->pPrev  = NULL;          
          }
          ///  Delete at middle
          else if(pCur->pNext)
          {
-            pCur->pLast->pNext  = pCur->pNext;
-            pCur->pNext->pLast  = pCur->pLast;
+            pCur->pPrev->pNext  = pCur->pNext;
+            pCur->pNext->pPrev  = pCur->pPrev;
          }
          /// Delete at tail
          else
          {
 
-            pCur->pLast->pNext  = NULL;
-            pTail  = pCur->pLast;
+            pCur->pPrev->pNext  = NULL;
+            pTail  = pCur->pPrev;
          }
          tmp  = pCur->pNext;
          

@@ -49,7 +49,6 @@ void SND_SetVol(uint8_t SndVol)
       vol  = SndVol;
       
    UART_Send(UART_0, VOL[vol], 5, BLOCKING);
-printf("vol:%d\n",vol);  
 }
 
 

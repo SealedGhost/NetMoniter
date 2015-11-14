@@ -4,6 +4,7 @@
 #include "string.h"
 #include "lpc177x_8x_eeprom.h"
 #include "pwm.h"
+#include "sound.h"
 
 
 /*--------------------- External variables ------------------------*/
@@ -47,11 +48,11 @@ static Bool checkSysConf()
       printf("Brt  load error! load %d as brg\n\r",SysConf.Brt);
       SysConf.Brt  = 3;
    }
-   if(SysConf.Vol < 0  ||  SysConf.Vol > 6)            
+   if( SysConf.Vol > 6)            
    {
       flag  = FALSE;   
       printf("Vol  load error! load %d as vol\n\r",SysConf.Vol);
-      SysConf.Vol  = 1;
+      SysConf.Vol  = 3;
    }
 
    if(SysConf.Unit != UNIT_km  &&  SysConf.Unit != UNIT_nm)     
@@ -173,5 +174,6 @@ INFO("Error happened when system load.System will be configed with default value
    }
   
    PWM_SET(SysConf.Brt * 2); 
+   SND_SetVol(SysConf.Vol);
 }
 

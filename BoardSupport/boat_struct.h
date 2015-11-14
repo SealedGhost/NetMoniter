@@ -49,7 +49,7 @@ struct _BERTH
    boat Boat;
    unsigned char mntState;
    long isInvader;
-   BERTH * pLast;
+   BERTH * pPrev;
    BERTH * pNext;
 };
 

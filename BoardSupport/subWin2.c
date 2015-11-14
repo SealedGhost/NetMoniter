@@ -146,7 +146,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
  
   switch (pMsg->MsgId) {	
   case USER_MSG_LV_UPDATE:
-       updateListViewContent(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0));
+       updateListViewContent(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0));      
        break;
   
   case USER_MSG_SKIN: 
@@ -243,13 +243,14 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 
        GUI_SetFont(&GUI_Font24_1);
        GUI_SetColor(pSkin->inf_txColor);
-       GUI_SetTextMode(GUI_TM_TRANS);
-     
-       SelectedRow  = LISTVIEW_GetSel(WM_GetDialogItem(pMsg->hWin,ID_LISTVIEW_0)); 
        
        if( N_boat <= 0 )
-          break;
-       
+          break;  
+          
+       GUI_SetTextMode(GUI_TM_TRANS);
+           
+       SelectedRow  = LISTVIEW_GetSel(WM_GetDialogItem(pMsg->hWin,ID_LISTVIEW_0)); 
+            
        LISTVIEW_GetItemText(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0),  LV_AllList_Col_MMSI, SelectedRow, pStrBuf, 11);
        SelectedMMSI  = strtoi(pStrBuf);     
        if(SelectedMMSI <= 0)
@@ -297,41 +298,12 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
           pStrBuf[4]  = 176;
           pStrBuf[5]  = '\0';
           GUI_DispStringAt(pStrBuf,LV_AllList_WIDTH+80,245); 
-       }
+       }      
        break;		
-		
-//  case WM_NOTIFY_PARENT:
-//    Id    = WM_GetId(pMsg->hWinSrc);
-//    NCode = pMsg->Data.v;
-//    switch(Id) {
-//    case ID_LISTVIEW_0: // Notifications sent by 'Listview'
-//      switch(NCode) {
-//      case WM_NOTIFICATION_CLICKED:
-//        // USER START (Optionally insert code for reacting on notification message)
-//        // USER END
-//        break;
-//      case WM_NOTIFICATION_RELEASED:
-//        // USER START (Optionally insert code for reacting on notification message)
-//        // USER END
-//        break;
-//      case WM_NOTIFICATION_SEL_CHANGED:
-//        // USER START (Optionally insert code for reacting on notification message)
-//			  // WM_InvalidateRect(pMsg->hWin,&infoRect);		// 可以,但逻辑不对			
-//        // USER END
-//        break;
-//      // USER START (Optionally insert additional code for further notification handling)
-//      // USER END
-//      }
-//      break;
-//    // USER START (Optionally insert additional code for further Ids)
-//    // USER END
-//    }
-//    break;
-  // USER START (Optionally insert additional message handling)
-  // USER END
+       
   default:
-    WM_DefaultProc(pMsg);
-    break;
+       WM_DefaultProc(pMsg);
+       break;
   }
 }
 
@@ -393,7 +365,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 			 pInfo  = (WM_KEY_INFO*)pMsg->Data.p; 
 		  switch(pInfo->Key)
 		 	{
-       case GUI_KEY_PWM_INC:       
+       case GUI_KEY_PWM_INC:     
             WM_SendMessageNoPara(subWins[3], USER_MSG_DIM);
             break;
 				   case GUI_KEY_UP:
@@ -709,13 +681,10 @@ static void updateListViewContent(WM_HWIN thisHandle)
    if(N_boat <= 0)
    {
       return ;
-   }
-   
-   selRow  = LISTVIEW_GetSel(thisListView);
-   LISTVIEW_GetItemText(thisListView, LV_AllList_Col_MMSI, selRow, pStrBuf, 11);
-   
-   selectedMMSI  = strtoi(pStrBuf);
-   
+   } 
+   selRow  = LISTVIEW_GetSel(thisListView);  
+   LISTVIEW_GetItemText(thisListView, LV_AllList_Col_MMSI, selRow, pStrBuf, 11); 
+   selectedMMSI  = strtoi(pStrBuf);  
    if(selectedMMSI)
    {
       for(i=N_boat; i>=0; i--)
@@ -738,7 +707,7 @@ static void updateListViewContent(WM_HWIN thisHandle)
    
    LISTVIEW_SetSel(thisListView, selRow);
    
-   WM_InvalidateRect(subWins[2], &lvIndicate);
+   WM_InvalidateRect(subWins[2], &lvIndicate);  
 }
 
 

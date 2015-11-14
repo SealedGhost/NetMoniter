@@ -372,7 +372,7 @@ static void disp_boat(const long lg, const long lt, const map_scale * pScale,sho
          if((base_x >=MAP_LEFT)&&(base_x<= MAP_RIGHT)&&(base_y >=MAP_TOP)&&(base_y <= MAP_BOTTOM))
          {  
             /// And its tip should to be drew.         
-            if( !isAdsorbed  &&  isCursorVisible  &&  ( MYABS(base_x-__cursor.x) <=10)  &&  ( MYABS(base_y-__cursor.y) <= 10) )
+            if( !isAdsorbed  &&  isCursorVisible  &&  ( MYABS(base_x-__cursor.x) <= 8)  &&  ( MYABS(base_y-__cursor.y) <= 8) )
             {
                GUI_SetColor(pSkin->ttl_Context);
                draw_boat(&SimpBerthes[i].pBerth->Boat, base_x, base_y, Points_boat, 3);
@@ -442,7 +442,7 @@ static void disp_mntBoat(const long center_lg,const long center_lt, const map_sc
          }
          if((base_x >=MAP_LEFT)&&(base_x<= MAP_RIGHT)&&(base_y >=MAP_TOP)&&(base_y <= MAP_BOTTOM))
          {
-            if(!isAdsorbed  &&  isCursorVisible  && ( MYABS(base_x-__cursor.x) <= 5)  &&  ( MYABS(base_y-__cursor.y) <= 5) )
+            if(!isAdsorbed  &&  isCursorVisible  && ( MYABS(base_x-__cursor.x) <= 8)  &&  ( MYABS(base_y-__cursor.y) <= 8) )
             {
                GUI_SetColor(pSkin->ttl_Context);
                   draw_boat(&(pIterator->pBerth->Boat), base_x, base_y,pPoints, PointNum);
@@ -488,7 +488,7 @@ static void disp_mntBoat(const long center_lg,const long center_lt, const map_sc
          }        
          
          ///   BGL circle conf.
-         if(pIterator->mntBoat.mntSetting.BGL_Setting.isEnable == ENABLE  &&  (pIterator->trgState&0xf0) <= (0x01<<6) )
+         if(pIterator->mntBoat.mntSetting.BGL_Setting.isEnable == ENABLE  &&  (pIterator->trgState&0xf0) < (0x01<<6) )
          {
             GUI_SetColor(pSkin->boat_Bgl);
             

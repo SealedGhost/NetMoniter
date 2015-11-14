@@ -91,17 +91,10 @@ void UART2_IRQHandler(void)
 		{	
  		  UART_Receive(UART_2, &tmpc, 1, NONE_BLOCKING);
     if(tmpc >= GUI_KEY_MENU  &&  tmpc <= GUI_KEY_PGDOWN)   
-			 {
+			 {   
              isKeyTrigged  = 1;
              switch(tmpc)
-             {
-//               case GUI_KEY_PWM_INC:
-//                 WM_SendMessageNoPara(WM_GetClientWindow(subWins[3]), GUI_KEY_PWM_INC);
-//                 break;								
-//               case GUI_KEY_PWM_DEC:
-//                 WM_SendMessageNoPara(WM_GetClientWindow(subWins[3]), GUI_KEY_PWM_DEC);
-//                 break;	
-                   
+             {                  
                case GUI_KEY_TRACE_ENABLE:
                  break;
                case GUI_KEY_TRACE_DISABLE:

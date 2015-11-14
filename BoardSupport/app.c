@@ -111,7 +111,6 @@ extern volatile int xlCnt;
 struct message_18 msg_18;
 
 int N_boat = 0;
-static int LPC_recCnt  = 0;
 /*----------------- local   function  --------------------*/
 
 
@@ -119,100 +118,70 @@ void SysTick_Init(void);
 
 
 
-
-
-
-///* ADDRESS: 0xAC000000  SIZE: 0x400000  */
-
-
-
-
 void UI_Task(void *p_arg)/*描述(Description):	任务UI_Task*/
 {
-	
-//	while(1)
-//	{ 
-//		OSTimeDly(200);	
 		MainTask();
-//	}
 }
-/*描述(Description):	任务Insert_Task*/
+
+
+
 void Insert_Task(void *p_arg)  //等待接收采集到的数据
 { 
-	int tmp  = 0;
+   int tmp  = 0;
 
-	uint8_t *s; 
-	INT8U err;
-//	static int a=0;
-	message_18 text_out;
-	message_24_partA text_out_24A;
-	type_of_ship text_out_type_of_ship; 
-// USER_Init();
-	while(1)
-	{	
+   uint8_t *s; 
+   INT8U err;
+  //	static int a=0;
+   message_18 text_out;
+   message_24_partA text_out_24A;
+   type_of_ship text_out_type_of_ship; 
+  // USER_Init();
+   while(1)
+   {	
 
-		s = OSQPend(QSem,0,&err);
-  
-  LPC_recCnt++; 
- 
-    tmp  = translate_(s,&text_out,&text_out_24A,&text_out_type_of_ship); 
-    OSMutexPend(Refresher, 0, &myErr);        
-    switch(tmp)
-    {
-       case 18:
-            insert_18(&text_out);
-            break;
-        case 240:
-            insert_24A(&text_out_24A);
-            break;
-        case 241:       
-            insert_24B(&text_out_type_of_ship);       
-            break;
-        default:
-         break;
-    }
-OSMutexPost(Refresher);    
-//		OSMemPut(PartitionPt,s);
+     s = OSQPend(QSem,0,&err);
+    
 
+      tmp  = translate_(s,&text_out,&text_out_24A,&text_out_type_of_ship); 
+      OSMutexPend(Refresher, 0, &myErr);        
+      switch(tmp)
+      {
+         case 18:      
+              insert_18(&text_out);
+              break;
+          case 240:
+              insert_24A(&text_out_24A);
+              break;
+          case 241:       
+              insert_24B(&text_out_type_of_ship);       
+              break;
+          default:
+           break;
+      }
+    OSMutexPost(Refresher);    
+    OSTimeDly(20); 
 
-		OSTimeDly(20); 
-
-	}
+   }
 }
+
+
 void Refresh_Task(void *p_arg)//任务Refresh_Task
 {
-	while(1)
-	{
-  OSMutexPend(Refresher, 0, &myErr);
-//  OSMutexPend(Updater, 0, &myErr_2);
-  updateTimeStamp();
-  OSMutexPost(Refresher);
+   while(1)
+   {
+    OSMutexPend(Refresher, 0, &myErr);
+    updateTimeStamp();
+    OSMutexPost(Refresher);
 
-//  UART_SendByte(2, 'k');
-
-       check();
-       isChecked  = 1;
-
-
-//  CurMntBoatIndex++;
-//  CurMntBoatIndex  = CurMntBoatIndex%N_monitedBoat;
-  
-  
-		OSTimeDlyHMSM(0,0,5,0);
-	}
+    check();
+    isChecked  = 1;
+         
+    OSTimeDlyHMSM(0,0,5,0);
+   }
 }
-void Task_Stack_Use(void *p_arg)
-{
-	OS_MEM_DATA MemInfo;
-	
-	while(1)
-	{
-		OSMemQuery(PartitionPt,&MemInfo);
-		printf("\r\n**********%d----------\n\r",MemInfo.OSNUsed);
-		printf("\r\n**********%d**********\n\r",MemInfo.OSNFree);
-		OSTimeDly(1000); 		/* 延时8000ms */
-	}
-}
+ 
+ 
+ 
 void App_TaskStart(void)//初始化UCOS，初始化SysTick节拍，并创建三个任务
 {
 	INT8U err;
@@ -226,22 +195,19 @@ void App_TaskStart(void)//初始化UCOS，初始化SysTick节拍，并创建三个任务
   
   SPI1_DMA_Init();
   SPI1_Int();
+   
+  OSInit();  
+  SysTick_Init();/* 初始化SysTick定时器 */
+  Refresher  = OSMutexCreate(6,&myErr);
+  Updater    = OSMutexCreate(6,&myErr_2);
+  QSem = OSQCreate(&MsgQeueTb[0],MSG_QUEUE_TABNUM); //创建消息队列，10条消息
+  PartitionPt=OSMemCreate(Partition,MSG_QUEUE_TABNUM,100,&err);
   
-	OSInit();  
-	SysTick_Init();/* 初始化SysTick定时器 */
- Refresher  = OSMutexCreate(6,&myErr);
- Updater    = OSMutexCreate(6,&myErr_2);
-	QSem = OSQCreate(&MsgQeueTb[0],MSG_QUEUE_TABNUM); //创建消息队列，10条消息
-	PartitionPt=OSMemCreate(Partition,MSG_QUEUE_TABNUM,100,&err);
-	
-	OSTaskCreateExt(UI_Task, (void *)0,(OS_STK *)&UI_Task_Stack[USER_TASK_STACK_SIZE-1],  UI_Task_PRIO, UI_Task_PRIO, (OS_STK *)&UI_Task_Stack[0], USER_TASK_STACK_SIZE,(void*)0, OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR );/* 创建任务 UI_Task */
-	OSTaskCreateExt(Insert_Task,(void *)0,(OS_STK *)&Insert_Task_Stack[TOUCH_TASK_STACK_SIZE-1],Insert_Task_PRIO,Insert_Task_PRIO,(OS_STK *)&Insert_Task_Stack[0],TOUCH_TASK_STACK_SIZE,(void*)0,OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR );/* 创建任务 Insert_Task */
-	OSTaskCreateExt(Refresh_Task,  (void *)0,(OS_STK *)&Refresh_Task_Stack[KEY_TASK_STACK_SIZE-1],    Refresh_Task_PRIO,  Refresh_Task_PRIO  ,(OS_STK *)&Refresh_Task_Stack[0],  KEY_TASK_STACK_SIZE,(void*)0,  OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR);/* 创建任务 Refresh_Task */
-//	OSTaskCreate(Task_Stack_Use,(void *)0,(OS_STK *)&Task_Stack_Use_Stack[Task_Stack_Use_STACK_SIZE-1],  Task_Stack_Use_PRIO);/* 创建任务 Refresh_Task */
-//lpc1788_DMA_Init();  
-//	DMA_Config(1);
+  OSTaskCreateExt(UI_Task, (void *)0,(OS_STK *)&UI_Task_Stack[USER_TASK_STACK_SIZE-1],  UI_Task_PRIO, UI_Task_PRIO, (OS_STK *)&UI_Task_Stack[0], USER_TASK_STACK_SIZE,(void*)0, OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR );/* 创建任务 UI_Task */
+  OSTaskCreateExt(Insert_Task,(void *)0,(OS_STK *)&Insert_Task_Stack[TOUCH_TASK_STACK_SIZE-1],Insert_Task_PRIO,Insert_Task_PRIO,(OS_STK *)&Insert_Task_Stack[0],TOUCH_TASK_STACK_SIZE,(void*)0,OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR );/* 创建任务 Insert_Task */
+  OSTaskCreateExt(Refresh_Task,  (void *)0,(OS_STK *)&Refresh_Task_Stack[KEY_TASK_STACK_SIZE-1],    Refresh_Task_PRIO,  Refresh_Task_PRIO  ,(OS_STK *)&Refresh_Task_Stack[0],  KEY_TASK_STACK_SIZE,(void*)0,  OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR);/* 创建任务 Refresh_Task */
 
-	OSStart();
+  OSStart();
 }
 
 //		switch(translate_(s,&text_out,&text_out_24A,&text_out_type_of_ship))

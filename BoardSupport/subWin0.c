@@ -131,9 +131,8 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 
   switch (pMsg->MsgId) {
   case USER_MSG_LV_UPDATE: 
-
-       updateListViewContent(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0));     
-       WM_InvalidateRect(hItem, &lvIndicate);
+ 
+       updateListViewContent(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0));   
        break;
   
   case USER_MSG_SKIN: 
@@ -201,7 +200,6 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        break;
 
   case WM_PAINT:
-
        GUI_SetColor(pSkin->inf_bkColor);
        GUI_FillRectEx(&infoRect);
        
@@ -312,7 +310,6 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
           sprintf(pStrBuf, "%d.%2d", tmpDist/1000, (tmpDist%1000)/100);
           GUI_DispStringAt(pStrBuf,  LV_MoniteList_WIDTH+160,320);  
        }
-  
        break;
 
   case WM_NOTIFY_PARENT:
@@ -458,14 +455,20 @@ static void myListViewListener(WM_MESSAGE* pMsg)
     case GUI_KEY_ENTER:
     case GUI_KEY_CANCEL:
          SelRow  = LISTVIEW_GetSel(thisListView);
- 
-         myMsg.hWin  = WM_GetClientWindow(confirmWin);
-         myMsg.hWinSrc  = thisListView;
-         myMsg.MsgId  = USER_MSG_CHOOSE;
-         myMsg.Data.v  = CANCEL_MONITED;
-         WM_SendMessage(myMsg.hWin, &myMsg);
-         WM_BringToTop(confirmWin);
-         WM_SetFocus(WM_GetDialogItem (confirmWin,GUI_ID_BUTTON0));
+         if(SelRow>=0)
+         {
+           LISTVIEW_GetItemText(thisListView, 1, SelRow, pStrBuf, 11);
+           if(strtoi(pStrBuf))
+           {
+             myMsg.hWin  = WM_GetClientWindow(confirmWin);
+             myMsg.hWinSrc  = thisListView;
+             myMsg.MsgId  = USER_MSG_CHOOSE;
+             myMsg.Data.v  = CANCEL_MONITED;
+             WM_SendMessage(myMsg.hWin, &myMsg);
+             WM_BringToTop(confirmWin);
+             WM_SetFocus(WM_GetDialogItem (confirmWin,GUI_ID_BUTTON0));
+             }
+         }
          break;
          
 				default:
@@ -595,7 +598,7 @@ static void updateListViewContent(WM_HWIN thisHandle)
       LISTVIEW_AddRow(thisListView, NULL);
    }
    
-   WM_InvalidateRect(subWins[0], &lvIndicate);
+   WM_InvalidateRect(subWins[0], &lvIndicate);   
 }
 
 
