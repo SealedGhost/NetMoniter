@@ -64,15 +64,15 @@ extern MNT_BERTH MNT_Berthes[MNT_NUM_MAX];
 extern MNT_BERTH * pMntHeader;
 extern MNT_SETTING mntSetting; 
 
-int MNT_getAddrOffset(uint8_t * addr);
+int  MNT_getAddrOffset(uint8_t * addr);
 Bool MNT_add(BERTH * pBerth);
 void MNT_initSetting(void);
 void MNT_load(void);
-int MNT_makeSettingUp(MNT_SETTING * pMNT_Setting);
+int  MNT_makeSettingUp(MNT_SETTING * pMNT_Setting);
 void MNT_printSetting(void);
 void MNT_DumpSetting(MNT_BERTH * pBerth);
 Bool MNT_removeById(long Id);
-uint8_t MNT_getDefaultNum(void);
+int  MNT_getDefaultNum(void);
 
 
 //__inline void MNT_resetIterator()

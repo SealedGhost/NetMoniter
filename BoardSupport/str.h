@@ -8,6 +8,7 @@ void disttostr( char * str, int num);
 long strtoi(const char*str);
 void lltostr(long l_o_l,char *str);
 char * ttoi(long num , char *str);
+void str_trim(char * pszSrc, int nMaxLen);
 
 #endif
 

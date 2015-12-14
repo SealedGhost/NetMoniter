@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include "Setting.h"
 #include "invader.h"
+#include "str.h"
 // find if id exist in aux_boat, yes return 1, otherwise 0, size exclusive
 
 /*----------------------- Macro defination -----------------------*/
@@ -442,6 +443,7 @@ int update_24A(BERTH * pBerth, struct message_24_partA * p_msg)
          }
       }
       pBerth->Boat.name[19]  = '\0';
+      str_trim(pBerth->Boat.name, 20);
    }
    else
    {
@@ -482,6 +484,8 @@ INFO("alloc berth failed!");
       }
    }
    buf->Boat.name[19]  = '\0';
+   
+   str_trim(buf->Boat.name, 20);
    
    if(pHeader == NULL)
    {

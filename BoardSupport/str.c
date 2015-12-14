@@ -105,3 +105,28 @@ char * ttoi(long num, char * str)
     }
     return str;
 }
+
+
+void str_trim(char * pszSrc, int nMaxLen)
+{
+   int i  = 0;
+  
+   for(; i< nMaxLen-1; i++)
+   {
+      if(pszSrc[i] == 0)
+         break;
+   }
+      
+   for(; i; i--)
+   {
+      if(pszSrc[i] == 0 || pszSrc[i] == 32)
+      {
+         pszSrc[i]  = 0;      
+      }
+      else
+      {
+         return;
+      }
+   }
+   return;   
+}

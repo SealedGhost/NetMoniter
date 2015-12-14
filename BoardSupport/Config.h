@@ -124,7 +124,7 @@
  */
 #define MSG_QUEUE_TABNUM    20
 #define BOAT_NUM_MAX        500
-#define MNT_NUM_MAX         20
+#define MNT_NUM_MAX         50
 #define INVD_NUM_MAX        10
 
 

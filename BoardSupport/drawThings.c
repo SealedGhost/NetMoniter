@@ -224,7 +224,7 @@ static void draw_boatInfo( short base_x, short base_y, boat * pBoat,unsigned cha
    {
       fixPos(&base_x,  &base_y);
       GUI_SetTextMode(GUI_TM_NORMAL);
-      GUI_SetColor(pSkin->map_tip_Text);
+
        
       /// Show battery in tip.
       if(options & SHOW_OPTION_BAT)
@@ -232,19 +232,20 @@ static void draw_boatInfo( short base_x, short base_y, boat * pBoat,unsigned cha
          if(pBoat->isHSD)
          {                
             char   i  = 0;            
-            char   power      = pBoat->SOG % 10;
+            char   power      = pBoat->COG % 10;
             short  batBody_x  = base_x +10;
             short  batBody_y  = base_y -10;
             
             GUI_SetColor(pSkin->map_tip_Bat);
             GUI_DrawRect(batBody_x, batBody_y, batBody_x + 19, batBody_y+10); 
             GUI_DrawVLine(batBody_x+20, batBody_y+3, batBody_y+7);
-            
+//printf("SOG:%d,power:%d\n\r",pBoat->SOG,power);            
             i  = (power + 2) / 3;
             if(i>1)
                GUI_SetColor(GUI_DARKGREEN);
             else 
                GUI_SetColor(GUI_DARKRED);
+//printf("i:%d\n\r",i);               
             for(;i>0;i--)
             {
                GUI_FillRect(batBody_x + i*6 -4, batBody_y + 2, batBody_x+i*6-1, batBody_y+8);
@@ -252,7 +253,7 @@ static void draw_boatInfo( short base_x, short base_y, boat * pBoat,unsigned cha
          }
       }
      
-      
+      GUI_SetColor(pSkin->map_tip_Text);
       /// Show name in tip.
       if(options & SHOW_OPTION_NAME)
       {
@@ -446,7 +447,7 @@ static void disp_mntBoat(const long center_lg,const long center_lt, const map_sc
             {
                GUI_SetColor(pSkin->ttl_Context);
                   draw_boat(&(pIterator->pBerth->Boat), base_x, base_y,pPoints, PointNum);
-               draw_boatInfo(base_x, base_y, &(pIterator->pBerth->Boat), SHOW_OPTION_NAME | SHOW_OPTION_LL | SHOW_OPTION_MMSI);
+               draw_boatInfo(base_x, base_y, &(pIterator->pBerth->Boat), SHOW_OPTION_NAME | SHOW_OPTION_LL | SHOW_OPTION_MMSI | SHOW_OPTION_BAT);
                isAdsorbed  = 1;
             }
             else

@@ -138,24 +138,24 @@ INFO("Error!");
         *   Hvae lg & lt         ---->Monitored
         *
         **/
-             if(pIterator->pBerth == NULL || pIterator->pBerth->Boat.user_id != pIterator->mntBoat.mmsi)   
-             {
-                pIterator->cfgState  = MNTState_Init;
-             }      
-             else if(pIterator->pBerth->Boat.dist > 100000)
-             {
-                pIterator->cfgState  = MNTState_Pending;
-             }
-             else 
-             {
-                if(pMNT_Setting->DRG_Setting.isEnable)
-                {
-                   pIterator->mntBoat.lg  = pIterator->pBerth->Boat.longitude;
-                   pIterator->mntBoat.lt  = pIterator->pBerth->Boat.latitude;
-       //INFO("update drg:(%ld,%ld)",pIterator->mntBoat.lg, pIterator->mntBoat.lt);            
-                }
-                pIterator->cfgState  = MNTState_Monitored;
-             }
+         if(pIterator->pBerth == NULL || pIterator->pBerth->Boat.user_id != pIterator->mntBoat.mmsi)   
+         {
+            pIterator->cfgState  = MNTState_Init;
+         }      
+         else if(pIterator->pBerth->Boat.dist > 100000)
+         {
+            pIterator->cfgState  = MNTState_Pending;
+         }
+         else 
+         {
+            if(pMNT_Setting->DRG_Setting.isEnable)
+            {
+               pIterator->mntBoat.lg  = pIterator->pBerth->Boat.longitude;
+               pIterator->mntBoat.lt  = pIterator->pBerth->Boat.latitude;
+   //INFO("update drg:(%ld,%ld)",pIterator->mntBoat.lg, pIterator->mntBoat.lt);            
+            }
+            pIterator->cfgState  = MNTState_Monitored;
+         }
              
        //      MNT_DumpSetting(pIterator);                       
       }
@@ -237,7 +237,7 @@ INFO("allco mnt berth failed!");
       return FALSE;
    }
    
-   for(i=0;i<20;i++)
+   for(i=0;i<19;i++)
    {
       buf->mntBoat.name[i]  = pBerth->Boat.name[i];
       if(pBerth->Boat.name[i] == '\0')
@@ -314,10 +314,10 @@ Bool MNT_removeById(long Id)
  *  @dscrp Get the number of mntBoat with MNTState_Init state.
  *
  */
- uint8_t MNT_getDefaultNum()
+ int MNT_getDefaultNum()
  {
     MNT_BERTH * pIterator  = pMntHeader;
-    uint8_t cnt  = 0;
+    int cnt  = 0;
     
     while(pIterator)
     {
@@ -340,10 +340,16 @@ Bool MNT_removeById(long Id)
  */
 void MNT_initSetting()
 {  
-   memset((void*)&mntSetting, 0, sizeof(mntSetting));
+//   memset((void*)&mntSetting, 0, sizeof(mntSetting));
    mntSetting.DSP_Setting.isEnable  = ENABLE;
+   
    mntSetting.BGL_Setting.Dist      = 5;
-   mntSetting.DRG_Setting.Dist      = 10;  
+   mntSetting.BGL_Setting.isSndEnable  = ENABLE;
+   mntSetting.BGL_Setting.isEnable     = DISABLE;
+   
+   mntSetting.DRG_Setting.Dist      = 10; 
+   mntSetting.DRG_Setting.isSndEnable  = ENABLE;   
+   mntSetting.DRG_Setting.isEnable     = DISABLE;
 }
 
 

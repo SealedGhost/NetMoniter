@@ -143,8 +143,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
  WM_HWIN  hItem  = 0;
  
   int     i  = 0;
-  int     NCode;
-  int     Id;
+
   // USER START (Optionally insert additional variables)
   // USER END
   switch (pMsg->MsgId) {
@@ -199,8 +198,6 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     GUI_DrawHLine(256, 83, 140);
 				
 
-//  				GUI_DispStringAt("是",30,250);
-// 				GUI_DispStringAt("否",30,290);
 				
 				
 			break;
@@ -222,13 +219,13 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
   case WM_INIT_DIALOG:
        pSkin  = &(MntSetWinSkins[SysConf.Skin]);
 	
-		WINDOW_SetBkColor(pMsg->hWin, pSkin->bkColor);
+		  WINDOW_SetBkColor(pMsg->hWin, pSkin->bkColor);
 		
     //
     // Initialization of 'text'
     //    
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_0);
-		TEXT_SetFont(hItem,&GUI_Font24);
+		  TEXT_SetFont(hItem,&GUI_Font24);
     TEXT_SetTextColor(hItem, pSkin->bt_bkColor);
     
     hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_1);
@@ -316,111 +313,11 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
     // USER START (Optionally insert additional code for further widget initialization)
     // USER END
     break;
-
-	
-  case WM_NOTIFY_PARENT:
-    Id    = WM_GetId(pMsg->hWinSrc);
-    NCode = pMsg->Data.v;
-    switch(Id) {
-    case ID_BUTTON_0: // Notifications sent by 'et_0'
-      switch(NCode) {
-      case WM_NOTIFICATION_CLICKED:
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      case WM_NOTIFICATION_RELEASED:
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      case WM_NOTIFICATION_VALUE_CHANGED:
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      // USER START (Optionally insert additional code for further notification handling)
-      // USER END
-      }
-      break;
-    case ID_BUTTON_1: // Notifications sent by 'et_1'
-      switch(NCode) {
-      case WM_NOTIFICATION_CLICKED:
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      case WM_NOTIFICATION_RELEASED:
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      case WM_NOTIFICATION_VALUE_CHANGED:
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      // USER START (Optionally insert additional code for further notification handling)
-      // USER END
-      }
-      break;
-    case ID_BUTTON_2: // Notifications sent by 'et_2'
-      switch(NCode) {
-      case WM_NOTIFICATION_CLICKED:
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      case WM_NOTIFICATION_RELEASED:
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      case WM_NOTIFICATION_VALUE_CHANGED:
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      // USER START (Optionally insert additional code for further notification handling)
-      // USER END
-      }
-      break;
-    case ID_BUTTON_3: // Notifications sent by 'et_3'
-      switch(NCode) {
-      case WM_NOTIFICATION_CLICKED:
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      case WM_NOTIFICATION_RELEASED:
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      case WM_NOTIFICATION_VALUE_CHANGED:
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      // USER START (Optionally insert additional code for further notification handling)
-      // USER END
-      }
-      break;
-    case ID_BUTTON_4: // Notifications sent by 'et_4'
-      switch(NCode) {
-      case WM_NOTIFICATION_CLICKED:
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      case WM_NOTIFICATION_RELEASED:
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      case WM_NOTIFICATION_VALUE_CHANGED:
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      // USER START (Optionally insert additional code for further notification handling)
-      // USER END
-      }
-      break;
-    // USER START (Optionally insert additional code for further Ids)
-    // USER END
-    }
-    break;
-  // USER START (Optionally insert additional message handling)
-  // USER END
+    
+    
   default:
-    WM_DefaultProc(pMsg);
-    break;
+      WM_DefaultProc(pMsg);
+      break;
   }
 }
 
@@ -446,6 +343,8 @@ static void myButtonListener(WM_MESSAGE* pMsg)
 {
 	const WM_KEY_INFO* pInfo;
 	WM_MESSAGE myMsg;
+ 
+ MNT_BERTH * pIterator  = NULL;
 	
 	WM_HWIN focussedButton  = 0;
 	
@@ -461,12 +360,12 @@ static void myButtonListener(WM_MESSAGE* pMsg)
            if(pMsg->Data.v)
            {
               BUTTON_SetBkColor(hBts[i], BUTTON_CI_UNPRESSED, pSkin->bt_bkFocus);
-							BUTTON_SetTextColor(hBts[i], BUTTON_CI_UNPRESSED,pSkin->bt_txFocus);
+						       	BUTTON_SetTextColor(hBts[i], BUTTON_CI_UNPRESSED,pSkin->bt_txFocus);
            }
            else
            {
-             BUTTON_SetBkColor(hBts[i], BUTTON_CI_UNPRESSED, pSkin->bt_bkColor);
-						 BUTTON_SetTextColor(hBts[i], BUTTON_CI_UNPRESSED,pSkin->bt_txColor);
+              BUTTON_SetBkColor(hBts[i], BUTTON_CI_UNPRESSED, pSkin->bt_bkColor);
+						        BUTTON_SetTextColor(hBts[i], BUTTON_CI_UNPRESSED,pSkin->bt_txColor);
            }
            BUTTON_Callback(pMsg);
            break;				
@@ -476,17 +375,14 @@ static void myButtonListener(WM_MESSAGE* pMsg)
 		
 		  switch(pInfo->Key)
 			{
-    case GUI_KEY_PWM_INC:       
-      WM_SendMessageNoPara(subWins[3], USER_MSG_DIM);
-      break;
 				case GUI_KEY_UP:
-					GUI_StoreKeyMsg(GUI_KEY_BACKTAB,1);
-					break;
+         GUI_StoreKeyMsg(GUI_KEY_BACKTAB,1);
+         break;
 				
 				case GUI_KEY_DOWN:
-					GUI_StoreKeyMsg(GUI_KEY_TAB,1);
-					break;
-		
+         GUI_StoreKeyMsg(GUI_KEY_TAB,1);
+         break;
+      
     case GUI_KEY_RIGHT:
          Step  = 10;
     case GUI_KEY_LEFT:
@@ -580,18 +476,40 @@ static void myButtonListener(WM_MESSAGE* pMsg)
          break;
     	
     case GUI_KEY_BACKSPACE:
-         myMsg.hWin  = WM_GetClientWindow(confirmWin);
-         myMsg.hWinSrc  = pMsg->hWin;
-         myMsg.MsgId  = USER_MSG_CHOOSE;
-         myMsg.Data.v = STORE_SETTING;
-         WM_SendMessage(myMsg.hWin, &myMsg);
+         pIterator  = pMntHeader;
+         while(pIterator)         
+         {
+            if(pIterator->chsState == MNTState_Choosen  ||  pIterator->chsState == MNTState_Default)
+            {
+               break;
+            }
+            else
+            {
+               pIterator   = pIterator->pNext;
+            }
+         }
          
-         WM_BringToTop(confirmWin);
-         WM_SetFocus(WM_GetDialogItem (confirmWin,GUI_ID_BUTTON0));
-    break; 
+         if(pIterator)
+         {
+            myMsg.hWin  = WM_GetClientWindow(confirmWin);
+            myMsg.hWinSrc  = pMsg->hWin;
+            myMsg.MsgId  = USER_MSG_CHOOSE;
+            myMsg.Data.v = STORE_SETTING;
+            WM_SendMessage(myMsg.hWin, &myMsg);
+            
+            WM_BringToTop(confirmWin);
+            WM_SetFocus(WM_GetDialogItem (confirmWin,GUI_ID_BUTTON0));         
+         }
+         else
+         {
+            btReset(mntSettingWin);
+            WM_SetFocus(subWins[1]);
+         }
+          
+         break; 
          
 				default:
-					BUTTON_Callback(pMsg);
+					    BUTTON_Callback(pMsg);
 				break;
 			}
    break;
@@ -600,6 +518,7 @@ static void myButtonListener(WM_MESSAGE* pMsg)
        switch(pMsg->Data.v)
        {
           case REPLY_OK:
+               WM_SetFocus(WM_GetDialogItem(pMsg->hWin, ID_BUTTON_0));
                i  = MNT_makeSettingUp(&mntSetting);  
                MNT_initSetting();
                btReset(mntSettingWin);  
@@ -609,7 +528,9 @@ static void myButtonListener(WM_MESSAGE* pMsg)
                WM_SendMessage(myMsg.hWin, &myMsg);
                WM_SetFocus(menuWin);
                break;
-          case REPLY_CANCEL:         
+          case REPLY_CANCEL:   
+               MNT_initSetting();
+               btReset(mntSettingWin);               
                WM_SetFocus(subWins[1]);
                break;
                

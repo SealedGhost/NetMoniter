@@ -12,6 +12,7 @@
 // #include "exfuns.h"
 #include "lpc177x_8x_eeprom.h"
 #include "lpc177x_8x_uart.h"
+#include "sdram.h"
 
 ////////
 ///////
@@ -51,13 +52,15 @@ int main(void)
 //初始化UART0 ，UART2，打开Timer2
 	USER_Init();
 	lpc1788_Lcd_Init();	  /* 初始化LCD */	
+
+// lpc1788_SDRAM_Test();
  lpc1788_PWM_Init();
  EEPROM_Init();
- 
-//	LCD_test();
-  //fs_test();
-//  	exfuns_init();
-//  	load_font(); //加载flash字库  7E 02 01 EF
+// 
+////	LCD_test();
+////  //fs_test();
+////  	exfuns_init();
+////  	load_font(); //加载flash字库  7E 02 01 EF
 
 	App_TaskStart();
 

@@ -26,5 +26,6 @@
 
 void lpc1788_SDRAM_Init(void);
 void lpc1788_SDRAM_Clean(void);
+void lpc1788_SDRAM_Test(void);
 
 /************************************* End *************************************/

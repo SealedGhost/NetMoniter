@@ -212,7 +212,7 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
               break;
          /*----------------------   捕捉到中心按键按下的响应:    -----------------------*/
          /*   中心按键按下后：将本船位置和光标显示到map中心点 */
-          
+         case GUI_KEY_CENTER: 
          case GUI_KEY_ENTER:         
             /* 光标定位到中心 */
               __cursor.x = (MAP_LEFT+MAP_RIGHT)/2;

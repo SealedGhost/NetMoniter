@@ -23,6 +23,7 @@ void INVD_delete(int row, BERTH * pBerth);
 void INVD_clear(int row);
 
 Bool INVD_isAllMasked(int row);
+Bool INVD_isAlone(int row);
 
 void INVD_updataMask(void);
 

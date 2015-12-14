@@ -97,15 +97,9 @@ static int btIndex  = 0;
 *       _cbDialog
 */
 static void _cbDialog(WM_MESSAGE * pMsg) {
-  int     NCode;
-  int     Id;
  	char     i;
   
   switch (pMsg->MsgId) { 
-    case USER_MSG_BRING:
-         HSD_BUTTON_SetBkColor(hButtons[pMsg->Data.v], pSkin->btBkFocus);
-INFO("Case BRING");         
-         break; 
      
     case USER_MSG_DFULT_CNT:
          HSD_BUTTON_SetValue(hButtons[1], pMsg->Data.v);
@@ -186,77 +180,7 @@ INFO("case msg skin");
        WM_SetCallback(hButtons[i], &myButtonListener);
 		  }
     break;
-  case WM_NOTIFY_PARENT:
-		
-    Id    = WM_GetId(pMsg->hWinSrc);
-    NCode = pMsg->Data.v;
-    switch(Id) {
-    case ID_BUTTON_0: // Notifications sent by 'bt_0'
-				
-      switch(NCode) {     
 
-      case WM_NOTIFICATION_CLICKED:
-			
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      case WM_NOTIFICATION_RELEASED:
-				
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      // USER START (Optionally insert additional code for further notification handling)
-      // USER END
-      }
-      break;
-    case ID_BUTTON_1: // Notifications sent by 'bt_1'
-		
-      switch(NCode) {
-      case WM_NOTIFICATION_CLICKED:
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      case WM_NOTIFICATION_RELEASED:
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      // USER START (Optionally insert additional code for further notification handling)
-      // USER END
-      }
-      break;
-    case ID_BUTTON_2: // Notifications sent by 'bt_2'
-      switch(NCode) {
-      case WM_NOTIFICATION_CLICKED:
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      case WM_NOTIFICATION_RELEASED:
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      // USER START (Optionally insert additional code for further notification handling)
-      // USER END
-      }
-      break;
-    case ID_BUTTON_3: // Notifications sent by 'bt_3'
-      switch(NCode) {
-      case WM_NOTIFICATION_CLICKED:
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      case WM_NOTIFICATION_RELEASED:
-        // USER START (Optionally insert code for reacting on notification message)
-        // USER END
-        break;
-      // USER START (Optionally insert additional code for further notification handling)
-      // USER END
-      }
-      break;
-
-    }
-    break;
-  // USER START (Optionally insert additional message handling)
-  // USER END
   default:
     WM_DefaultProc(pMsg);
     break;
@@ -301,15 +225,22 @@ static void myButtonListener(WM_MESSAGE * pMsg)
          if(pMsg->Data.v)
          {      
             selIndex  = btIndex;   
+            
+            /**Background color can't change with focus in HSD_BUTTON_Callbak  */
             HSD_BUTTON_SetBkColor(thisButton, pSkin->btBkFocus);    
             WM_BringToTop(subWins[btIndex]);
-            if(btIndex < 2)
+//            if(btIndex < 2)
+//            {
+//               if(btIndex)
+//               {
+//                  WM_BringToTop(mntSettingWin);
+//               }
+//               WM_SendMessageNoPara(subWins[btIndex], USER_MSG_BRING);
+//            }
+            if(btIndex == 1)
             {
-               if(btIndex)
-               {
-                  WM_BringToTop(mntSettingWin);
-               }
-               WM_SendMessageNoPara(subWins[btIndex], USER_MSG_BRING);
+               WM_BringToTop(mntSettingWin);
+               WM_SendMessageNoPara(subWins[btIndex], USER_MSG_LV_UPDATE);
             }
          }
          else

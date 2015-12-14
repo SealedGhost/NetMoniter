@@ -89,7 +89,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
   // USER END
   switch (pMsg->MsgId) {
   
-  case USER_MSG_BRING:
+  case USER_MSG_LV_UPDATE:
        updateListViewContent( WM_GetDialogItem(pMsg->hWin,ID_LISTVIEW_0));
        break;
   
@@ -234,6 +234,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
 	 const WM_KEY_INFO * pInfo;
 	 WM_HWIN thisListView  = pMsg->hWin; 
 	 WM_MESSAGE myMsg;
+  int i  = 0;
  
   MNT_BERTH * pIterator  = NULL;
  
@@ -269,21 +270,8 @@ static void myListViewListener(WM_MESSAGE* pMsg)
             break;
        
        case GUI_KEY_RIGHT:
-//            pIterator  = pMntHeader;
-//            while(pIterator->pNext)
-//            {
-//               if(pIterator->chsState == MNTState_Choosen  ||  pIterator->chsState == MNTState_Default)
-//               {
-//                  WM_SetFocus(mntSettingWin);
-//                  break;
-//               }
-//               else
-//               {
-//                  pIterator  = pIterator->pNext;
-//               }
-//            }
-            WM_SetFocus(mntSettingWin);
-//            WM_SetFocus(_mntSettingWin);
+//            WM_SetFocus(mntSettingWin);
+            WM_SetFocus(WM_GetDialogItem(mntSettingWin,GUI_ID_USER + 0x10));
             break;
           
        case GUI_KEY_ENTER:
@@ -318,16 +306,37 @@ static void myListViewListener(WM_MESSAGE* pMsg)
             break;
         
        case GUI_KEY_BACKSPACE:   
-
+            
+            pIterator  = pMntHeader;
+            
+            while(pIterator)            
+            {
+               if(pIterator->chsState == MNTState_Choosen  ||  pIterator->chsState == MNTState_Default)
+               {
+                  break;
+               }
+               else
+               {
+                  pIterator  = pIterator->pNext;
+               }
+            }
+                 
+            if(pIterator)
+            {
                myMsg.hWin  = WM_GetClientWindow(confirmWin);
                myMsg.hWinSrc  = thisListView;
                myMsg.MsgId  = USER_MSG_CHOOSE;
                myMsg.Data.v = STORE_SETTING;
                WM_SendMessage(myMsg.hWin, &myMsg);
-                     
                WM_BringToTop(confirmWin);
-               WM_SetFocus(WM_GetDialogItem (confirmWin,GUI_ID_BUTTON0));
-               break;	
+               WM_SetFocus(WM_GetDialogItem (confirmWin,GUI_ID_BUTTON0));               
+            }
+            else
+            {
+               WM_SetFocus(menuWin);
+            }
+            
+            break;	
        
        case GUI_KEY_MENU:
             WM_BringToTop(mapWin);
@@ -344,11 +353,16 @@ static void myListViewListener(WM_MESSAGE* pMsg)
         switch(pMsg->Data.v)
         {
            case REPLY_OK:
-                MNT_makeSettingUp(&mntSetting);        
+                MNT_makeSettingUp(&mntSetting);   
+                i  = MNT_makeSettingUp(&mntSetting);  
+                myMsg.hWin  = WM_GetClientWindow(menuWin);                
+                myMsg.MsgId  = USER_MSG_DFULT_CNT;
+                myMsg.Data.v  = i;
+                WM_SendMessage(myMsg.hWin, &myMsg);
                 WM_SetFocus(menuWin);
                 break;
            case REPLY_CANCEL:        
-                WM_SetFocus(pMsg->hWin);
+                WM_SetFocus(menuWin);
                 break;
                 
             default:
@@ -372,7 +386,6 @@ static void updateListViewContent(WM_HWIN thisHandle)
 {
  	WM_HWIN thisListView  = thisHandle;
 	
-  int i  = 0;
   int Cnt = 0;
   int NumOfRows  = 0;
   MNT_BERTH * pIterator  = NULL;
@@ -384,22 +397,23 @@ static void updateListViewContent(WM_HWIN thisHandle)
   pIterator  = pMntHeader;
   while(pIterator)
   {
-
-     Cnt++;  
-     if(Cnt > NumOfRows)
+     if(pIterator->chsState != MNTState_Cancel)
      {
-        LISTVIEW_AddRow(thisListView, NULL);
-        NumOfRows  = LISTVIEW_GetNumRows(thisListView);
+        Cnt++;  
+        if(Cnt > NumOfRows)
+        {
+           LISTVIEW_AddRow(thisListView, NULL);
+           NumOfRows  = LISTVIEW_GetNumRows(thisListView);
+        }
+        
+        sprintf(pStrBuf, "%s", pIterator->mntBoat.name);
+        LISTVIEW_SetItemText(thisListView, 0, Cnt-1, pStrBuf);
+      
+        sprintf(pStrBuf, "%09ld", pIterator->mntBoat.mmsi);
+        LISTVIEW_SetItemText(thisListView, 1, Cnt-1, pStrBuf);
+        
+        LISTVIEW_SetItemText(thisListView, 2, Cnt-1, (MNTState_Default==pIterator->chsState)?"吖":"啊");  
      }
-     
-     sprintf(pStrBuf, "%s", pIterator->mntBoat.name);
-     LISTVIEW_SetItemText(thisListView, 0, Cnt-1, pStrBuf);
-   
-     sprintf(pStrBuf, "%09ld", pIterator->mntBoat.mmsi);
-     LISTVIEW_SetItemText(thisListView, 1, Cnt-1, pStrBuf);
-     
-     LISTVIEW_SetItemText(thisListView, 2, Cnt-1, (MNTState_Default==pIterator->chsState)?"吖":"啊");  
-     
      pIterator  = pIterator->pNext;
   }
   while(NumOfRows > Cnt)

@@ -30,7 +30,9 @@ void lpc1788_Lcd_Init(void)
  
 	/* 初始化SDRAM */
 	lpc1788_SDRAM_Init();
+
  lpc1788_SDRAM_Clean();
+// lpc1788_SDRAM_Test();
 
 
  	/* 配置LCD参数 */

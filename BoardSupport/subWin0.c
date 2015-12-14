@@ -119,8 +119,6 @@ static const LVWin_COLOR * pSkin  = &lvWinSkins[0];
 */
 static void _cbDialog(WM_MESSAGE * pMsg) {
   WM_HWIN hItem;
-  int     NCode;
-  long  Id;
   int  SelectedRow  = -1;
   int i  = 0;
   int TotalRows  = 0;
@@ -131,7 +129,6 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 
   switch (pMsg->MsgId) {
   case USER_MSG_LV_UPDATE: 
- 
        updateListViewContent(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0));   
        break;
   
@@ -171,7 +168,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
       
        LISTVIEW_AddColumn(hItem, LV_MoniteList_Col_0_WIDTH, "距离", GUI_TA_HCENTER | GUI_TA_VCENTER);
        LISTVIEW_AddColumn(hItem, LV_MoniteList_Col_1_WIDTH, "MMSI", GUI_TA_HCENTER | GUI_TA_VCENTER);
-       LISTVIEW_AddColumn(hItem, LV_MoniteList_Col_2_WIDTH, "S      ", GUI_TA_HCENTER | GUI_TA_VCENTER);
+       LISTVIEW_AddColumn(hItem, LV_MoniteList_Col_2_WIDTH, "S   ", GUI_TA_HCENTER | GUI_TA_VCENTER);
 
  
        LISTVIEW_SetGridVis(hItem, 1);
@@ -279,8 +276,6 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
           pStrBuf[4]  = 176;
           pStrBuf[5]  = '\0'; 
           GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH+260, 200);
-//          GUI_DispDecAt(pIterator->pBoat->SOG, LV_MoniteList_WIDTH+80, 200, 3);
-//          GUI_DispDecAt(pIterator->pBoat->COG, LV_MoniteList_WIDTH+300, 200, 3);
        }
       
        if(pIterator->mntBoat.mntSetting.DSP_Setting.isEnable == DISABLE)
@@ -290,12 +285,12 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        
        if(SysConf.Unit == UNIT_nm)       
        {
-          sprintf(pStrBuf, "%d.%2d", pIterator->mntBoat.mntSetting.BGL_Setting.Dist/1000,
-                                     (pIterator->mntBoat.mntSetting.BGL_Setting.Dist%1000)/100);
+          sprintf(pStrBuf, "%d.%02d", pIterator->mntBoat.mntSetting.BGL_Setting.Dist/1000,
+                                     (pIterator->mntBoat.mntSetting.BGL_Setting.Dist%1000)/10);
           GUI_DispStringAt(pStrBuf,  LV_MoniteList_WIDTH+160,280);
           
-          sprintf(pStrBuf, "%d.%2d", pIterator->mntBoat.mntSetting.DRG_Setting.Dist/1000,
-                                     (pIterator->mntBoat.mntSetting.DRG_Setting.Dist%1000)/100);
+          sprintf(pStrBuf, "%d.%02d", pIterator->mntBoat.mntSetting.DRG_Setting.Dist/1000,
+                                     (pIterator->mntBoat.mntSetting.DRG_Setting.Dist%1000)/10);
           GUI_DispStringAt(pStrBuf,  LV_MoniteList_WIDTH+160,320);                                     
        }
        else
@@ -312,36 +307,6 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        }
        break;
 
-  case WM_NOTIFY_PARENT:
-       Id    = WM_GetId(pMsg->hWinSrc);
-       NCode = pMsg->Data.v;
-       
-       switch(Id) {
-       case ID_LISTVIEW_0: // Notifications sent by 'Listview'
-         switch(NCode) {
-         case WM_NOTIFICATION_CLICKED:
-           // USER START (Optionally insert code for reacting on notification message)
-           // USER END
-           break;
-         case WM_NOTIFICATION_RELEASED:
-           // USER START (Optionally insert code for reacting on notification message)
-           // USER END
-           break;
-         case WM_NOTIFICATION_SEL_CHANGED:
-           // USER START (Optionally insert code for reacting on notification message)	
-           // USER END
-           break;
-         // USER START (Optionally insert additional code for further notification handling)
-         // USER END
-         }
-         break;
-
-       // USER START (Optionally insert additional code for further Ids)
-       // USER END
-       }
-       break;
-     // USER START (Optionally insert additional message handling)
-     // USER END
      default:
        WM_DefaultProc(pMsg);
        break;
@@ -578,7 +543,10 @@ static void updateListViewContent(WM_HWIN thisHandle)
                  LISTVIEW_SetItemText(thisListView, 2, Cnt-1, "走锚");
                  break;
             default:
-                 LISTVIEW_SetItemText(thisListView, 2, Cnt-1, "");
+                 if(pIterator->cfgState == MNTState_Pending || pIterator->trgState == MNTState_Pending)
+                    LISTVIEW_SetItemText(thisListView, 2, Cnt-1, "??");
+                 else
+                    LISTVIEW_SetItemText(thisListView, 2, Cnt-1, " ");
                  break;
          }
  
@@ -587,7 +555,7 @@ static void updateListViewContent(WM_HWIN thisHandle)
       pIterator  = pIterator->pNext;
    }
 
-   while(NumOfRows > Cnt)
+   while(NumOfRows > Cnt+1)
    {
       LISTVIEW_DeleteRow(thisListView, NumOfRows-1);
       NumOfRows  = LISTVIEW_GetNumRows(thisListView);

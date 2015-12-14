@@ -340,34 +340,23 @@ static void myListViewListener(WM_MESSAGE* pMsg)
  int selectedRow  = -1;
  long selectedMMSI  = 0;
 	int i  = 0;
- int Cnt  = 0;
  Bool isAdded  = FALSE;
 	switch(pMsg->MsgId)
 	{  
-//		case WM_SET_FOCUS:
-
-//       if(pMsg->Data.v)
-//       {
-//          if( LISTVIEW_GetSel(pMsg->hWin)<0 )
-//             LISTVIEW_SetSel(pMsg->hWin, 0);
-//          WM_InvalidateRect(subWins[2],&lvRect);
-//          WM_InvalidateRect(subWins[2],&lvIndicate);        
-//       }
-       
-//       LISTVIEW_Callback(pMsg);
-//       break;	
-       
-//   case WM_PAINT:
-//        _Paint(thisListView, LISTVIEW_H2P(thisListView), pMsg);
-//        break;   
-        
+    case WM_SET_FOCUS:
+         if(pMsg->Data.v)
+         {
+            LV_Page  = 0;
+            LV_turnPage(thisListView, LV_Page);
+            LISTVIEW_SetSel(thisListView, 0);
+            WM_InvalidateRect(subWins[2], &lvIndicate); 
+         }
+         LISTVIEW_Callback(pMsg);
+         break;
     case WM_KEY:
 			 pInfo  = (WM_KEY_INFO*)pMsg->Data.p; 
 		  switch(pInfo->Key)
-		 	{
-       case GUI_KEY_PWM_INC:     
-            WM_SendMessageNoPara(subWins[3], USER_MSG_DIM);
-            break;
+		 	{            
 				   case GUI_KEY_UP:
             selectedRow  = LISTVIEW_GetSel(thisListView);
             if(selectedRow == 0)
@@ -407,13 +396,6 @@ static void myListViewListener(WM_MESSAGE* pMsg)
           break;
 				
     case GUI_KEY_RIGHT:
-    
-//         selectedRow  = LISTVIEW_GetSel(thisListView);
-//         totalRows    = LISTVIEW_GetNumRows(thisListView);
-//         LISTVIEW_SetSel(thisListView, totalRows);
-//         if(selectedRow/10 < totalRows/10)
-//            LISTVIEW_SetSel(thisListView,selectedRow-selectedRow%10+10);
-
          if(LV_Page < (N_boat-1)/LV_PAGE_SIZE)
          {
            LV_Page++;
@@ -425,16 +407,6 @@ static void myListViewListener(WM_MESSAGE* pMsg)
          break;
          
     case GUI_KEY_LEFT:
-//         selectedRow  = LISTVIEW_GetSel(thisListView);
-//         totalRows    = LISTVIEW_GetNumRows(thisListView);
-//         if(selectedRow >9 )
-//         {
-//            LISTVIEW_SetSel(thisListView, totalRows);
-//            LISTVIEW_SetSel(thisListView,selectedRow-selectedRow%10-10);
-//         }
-//         WM_InvalidateRect(subWins[2],&lvRect);
-//         WM_InvalidateRect(subWins[2],&lvIndicate);            
-//         showSelectedBoatInfo(thisListView);
          if(LV_Page > 0)
          {
             LV_Page--;
@@ -445,8 +417,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
          WM_InvalidateRect(subWins[2],&lvIndicate);          
          break;
     
-				case GUI_KEY_BACKSPACE:    
-         
+				case GUI_KEY_BACKSPACE:             
          for(i=N_boat-1;i>=0;i--) 
          {
             if(MNTState_Choosen == SimpBerthes[i].pBerth->mntState)
@@ -455,7 +426,6 @@ static void myListViewListener(WM_MESSAGE* pMsg)
                if( isAdded )
                {         
                   SimpBerthes[i].pBerth->mntState  = MNTState_Monitored ;   
-                  Cnt++;
                }
                else
                {
@@ -465,35 +435,45 @@ static void myListViewListener(WM_MESSAGE* pMsg)
          }
          myMsg.hWin  = WM_GetClientWindow(menuWin);
          myMsg.MsgId  = USER_MSG_DFULT_CNT;
-         myMsg.Data.v  = Cnt;
-         WM_SendMessage(myMsg.hWin, &myMsg);
-         MNT_printSetting();         
+         myMsg.Data.v  = MNT_getDefaultNum(); 
+//INFO("default num:%d",myMsg.Data.v);   
+         WM_SendMessage(myMsg.hWin, &myMsg);      
          WM_SetFocus(menuWin);
          break;
+         
     case GUI_KEY_MONITORING:
          selectedRow  = LISTVIEW_GetSel(thisListView);
          
-         LISTVIEW_GetItemText(thisListView, LV_AllList_Col_MMSI, selectedRow, pStrBuf, 10);
+         LISTVIEW_GetItemText(thisListView, LV_AllList_Col_MMSI, selectedRow, pStrBuf, 11);
          selectedMMSI  = strtoi(pStrBuf);
          
          if(selectedMMSI <= 0)
             break;
          
-         for(i=N_boat-1;i>=0;i--)
+         for(i=N_boat;i>0;i--)
          {
      
-            if(SimpBerthes[i].pBerth->Boat.user_id == selectedMMSI)
+            if(SimpBerthes[i-1].pBerth->Boat.user_id == selectedMMSI)
             {          
                break;
             }
+         }
+         
+         if(i)
+            i--;
+         else
+         {
+            INFO("Err!");
+            break;
          }
               
          if(SimpBerthes[i].pBerth->mntState == MNTState_None)     
          {
             SimpBerthes[i].pBerth->mntState  = MNTState_Choosen;
-            LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, selectedRow, "啊");
+            LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, selectedRow, "吖");
          }
          break;
+         
     case GUI_KEY_CANCEL:
          selectedRow  = LISTVIEW_GetSel(thisListView);
          
@@ -503,20 +483,27 @@ static void myListViewListener(WM_MESSAGE* pMsg)
          if(selectedMMSI <= 0)
             break;
          
-         for(i=N_boat-1;i>=0;i--)
+         for(i=N_boat;i>0;i--)
          {
-     
-            if(SimpBerthes[i].pBerth->Boat.user_id == selectedMMSI)
+            if(SimpBerthes[i-1].pBerth->Boat.user_id == selectedMMSI)
             {          
                break;
             }
+         }
+         
+         if(i)
+            i--;
+         else 
+         {
+            INFO("Err!");
+            break;
          }
 
          if(MNTState_Choosen  == SimpBerthes[i].pBerth->mntState)
          {
      
             SimpBerthes[i].pBerth->mntState  = MNTState_None;
-            LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, selectedRow, "吖");
+            LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, selectedRow, "啊");
          }
          
          else if(MNTState_Monitored  <= SimpBerthes[i].pBerth->mntState)
@@ -528,7 +515,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
             myMsg.Data.v   = CANCEL_MONITED;
             WM_SendMessage(myMsg.hWin, &myMsg); 
            	WM_BringToTop(confirmWin);
-				    WM_SetFocus(WM_GetDialogItem (confirmWin,GUI_ID_BUTTON0));  
+				        WM_SetFocus(WM_GetDialogItem (confirmWin,GUI_ID_BUTTON0));  
          }               
          break;    
      
@@ -573,9 +560,8 @@ static void myListViewListener(WM_MESSAGE* pMsg)
             myMsg.Data.v   = CANCEL_MONITED;
             WM_SendMessage(myMsg.hWin, &myMsg); 
            	WM_BringToTop(confirmWin);
-				    WM_SetFocus(WM_GetDialogItem (confirmWin,GUI_ID_BUTTON0));  
+				        WM_SetFocus(WM_GetDialogItem (confirmWin,GUI_ID_BUTTON0));  
          }
-//         OSMutexPost(Updater);
          break;
 
          
@@ -601,7 +587,6 @@ static void myListViewListener(WM_MESSAGE* pMsg)
                      }
                   }
                                  
-//                  MNT_printSetting();
                  WM_SetFocus(subWins[2]);
                }
                else 
@@ -709,98 +694,4 @@ static void updateListViewContent(WM_HWIN thisHandle)
    
    WM_InvalidateRect(subWins[2], &lvIndicate);  
 }
-
-
-/* 更新所有船舶列表的条目
-*
-*/
-
-//static void updateListViewContent(WM_HWIN thisHandle)
-//{	
-//	WM_HWIN thisListView  = thisHandle;
-//	
-//	int i  = 0;
-//	int NumOfRows  = 0;
-// int SelectedRow  = -1;
-// long Id  = 0;
-// 
-//   SelectedRow  = LISTVIEW_GetSel(thisListView);
-// 
-//   LISTVIEW_GetItemText(thisListView, LV_AllList_Col_MMSI, SelectedRow, pStrBuf, 10);
-//   Id  = strtoi(pStrBuf);
-
-//  
-//	  NumOfRows  = LISTVIEW_GetNumRows(thisListView);
-//	
-//   for(i=0; i<N_boat; i++)
-//   {
-
-//      if(i+1 > NumOfRows)
-//      {
-//         LISTVIEW_AddRow(thisListView, NULL);
-//         NumOfRows  = LISTVIEW_GetNumRows(thisListView);
-//      }
-////      if(SimpBerthes[i].pBoat->user_id == Id)
-//       if(SimpBerthes[i].pBerth->Boat.user_id == Id)
-//       {
-//      
-//          SelectedRow  = i;      
-//       }
-////      sprintf(pStrBuf, "%d", SimpBerthes[i].Dist);
-
-
-//      disttostr(pStrBuf, SimpBerthes[i].Dist);
-//      LISTVIEW_SetItemText(thisListView, LV_AllList_Col_DIST, i, pStrBuf);
-//      
-//      sprintf(pStrBuf, "%09ld", SimpBerthes[i].pBerth->Boat.user_id);
-//      LISTVIEW_SetItemText(thisListView, LV_AllList_Col_MMSI, i, pStrBuf);
-//      
-//      if(MNTState_None == SimpBerthes[i].pBerth->mntState)
-//      {
-//         LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, i, "啊");
-//      }
-//      else
-//      {
-//         LISTVIEW_SetItemText(thisListView, LV_AllList_Col_STT, i, "吖");
-//      }
-//   }
-//	
-//	// LISTVIEW 行数大于要显示的船的数量，删除行 
-// /// Warning: Delete first row error!
-//	while(NumOfRows > N_boat)
-//	{
-//	 	LISTVIEW_DeleteRow(thisListView, NumOfRows-1);
-//	 	NumOfRows  = LISTVIEW_GetNumRows(thisListView);
-//	}
-//	
-// if(NumOfRows == 0)
-// {
-//    LISTVIEW_AddRow(thisListView, NULL);
-//    NumOfRows  = LISTVIEW_GetNumRows(thisListView);
-// }
-// 
-// LISTVIEW_SetSel(thisListView, SelectedRow);
-// TotalRows  = NumOfRows;
-//    WM_InvalidateRect(subWins[2],&lvRect);
-//    WM_InvalidateRect(subWins[2],&lvIndicate); 
-//}
-
-
-//int getSelectedIndex(WM_HWIN thisListView,  int col)
-//{
-//   int i  = -1;
-//   long Id  = 0;
-//   i  = LISTVIEW_GetSel(thisListView);
-//   LISTVIEW_GetItemText(thisListView, col, i, pStrBuf, 10);
-//   i  = strtoi(pStrBuf);
-//   for(Index=0;Index<N_boat;Index++)
-//   {
-//      if(SimpBerthes[i].pBerth->Boat.user_id == Id)
-//      {
-//         return i;      
-//      }
-//   }
-//   return -1;
-//}
-
 
