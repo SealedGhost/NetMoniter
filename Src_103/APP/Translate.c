@@ -39,7 +39,7 @@ int translate_(unsigned char *text)//,message_18 *text_out,message_24_partA *tex
        }      
        if(i<20)
        {
-          if(text[i+1] == 'B')
+          if(text[i+1] == 'B' || text[i+1] == 'C')
           {          
              for(i=0; i<48; i++)
              {
@@ -66,7 +66,8 @@ int translate_(unsigned char *text)//,message_18 *text_out,message_24_partA *tex
   
   
 
-	else if((text[1]=='G')&&(text[2]=='P')&&(text[3]=='R')&&(text[4]=='M')&&(text[5]=='C')) //GPS GPRMC
+	///else if((text[1]=='G')&&(text[2]=='P')&&(text[3]=='R')&&(text[4]=='M')&&(text[5]=='C')) //GPS GPRMC
+ 	else if((text[3]=='R')&&(text[4]=='M')&&(text[5]=='C'))
 	{
 		if(gpscnt == 0) 
 		{

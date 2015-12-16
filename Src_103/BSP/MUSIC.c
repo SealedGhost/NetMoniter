@@ -1,24 +1,24 @@
 #include "MUSIC.h"
 #include "STM32F10x_GPIO.H"
-static void delay_us(u16 time)
-{    
-   u16 i=0;  
-   while(time--)
-   {
-      i=10;  //????
-      while(i--) ;    
-   }
-}
+// static void delay_us(u16 time)
+// {    
+//    u16 i=0;  
+//    while(time--)
+//    {
+//       i=10;  //????
+//       while(i--) ;    
+//    }
+// }
 
-static void delay_ms(u16 time)
-{    
-   u16 i=0;  
-   while(time--)
-   {
-      i=12000;  //????
-      while(i--) ;    
-   }
-}
+// static void delay_ms(u16 time)
+// {    
+//    u16 i=0;  
+//    while(time--)
+//    {
+//       i=12000;  //????
+//       while(i--) ;    
+//    }
+// }
 void Music_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;

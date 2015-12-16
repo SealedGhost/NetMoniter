@@ -8,7 +8,7 @@ OS_STK task_key_stk[TASK_KEY_STK_SIZE];
 int main(void)
 {
 	INT8U err;
-	u32 i;
+//	u32 i;
 	BSP_Init();
 	
 	OSInit();

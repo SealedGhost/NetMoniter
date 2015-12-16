@@ -31,27 +31,27 @@ void TIM4_IRQHandler(void)
 //这里使用的是定时器3!
 void TIM4_Int_Init(void)
 {	
-		TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
-	  NVIC_InitTypeDef         NVIC_InitStructure;
-	
-		RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
-		
-    TIM_TimeBaseStructure.TIM_Period=4999;//设置自动重装载寄存器周期值		 								
-    TIM_TimeBaseStructure.TIM_Prescaler= 7199;//设置时钟频率除数预分频值10KHz计数，计数到5000为500ms				    
-    //Tout=((4999+1)*(7199+1))/72=500000us=500ms
-	  TIM_TimeBaseStructure.TIM_ClockDivision=TIM_CKD_DIV1; 		
-    TIM_TimeBaseStructure.TIM_CounterMode=TIM_CounterMode_Up; 
-//		TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
-    TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure);
-	  TIM_ITConfig(TIM4,TIM_IT_Update,ENABLE ); //使能指定的TIM3中断,允许更新中断
+   TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
+   NVIC_InitTypeDef         NVIC_InitStructure;
+  
+   RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
+   
+   TIM_TimeBaseStructure.TIM_Period=4999;//设置自动重装载寄存器周期值		 								
+   TIM_TimeBaseStructure.TIM_Prescaler= 7199;//设置时钟频率除数预分频值10KHz计数，计数到5000为500ms				    
+     //Tout=((4999+1)*(7199+1))/72=500000us=500ms
+   TIM_TimeBaseStructure.TIM_ClockDivision=TIM_CKD_DIV1; 		
+   TIM_TimeBaseStructure.TIM_CounterMode=TIM_CounterMode_Up; 
+ //		TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
+   TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure);
+   TIM_ITConfig(TIM4,TIM_IT_Update,ENABLE ); //使能指定的TIM3中断,允许更新中断
 
-		NVIC_InitStructure.NVIC_IRQChannel = TIM4_IRQn; //TIM3
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=0;
-		NVIC_InitStructure.NVIC_IRQChannelSubPriority=3;
-		NVIC_InitStructure.NVIC_IRQChannelCmd=ENABLE;
-		NVIC_Init(&NVIC_InitStructure);
-		
-		TIM_Cmd(TIM4, ENABLE);	
+   NVIC_InitStructure.NVIC_IRQChannel = TIM4_IRQn; //TIM3
+   NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=3;
+   NVIC_InitStructure.NVIC_IRQChannelSubPriority=4;
+   NVIC_InitStructure.NVIC_IRQChannelCmd=ENABLE;
+   NVIC_Init(&NVIC_InitStructure);
+   
+   TIM_Cmd(TIM4, ENABLE);	
 }
 // void TIM1_Int_Init(void)
 // {	

@@ -28,7 +28,7 @@ void DMA_Configuration(void);
 void UART_Configuration(void);
 void USART1_IRQHandler(void);
 
-void  Putc_UART2(u8 ch);
+//void  Putc_UART2(u8 ch);
 void  Putc_UART1(u8 ch);
-void  Putc_UART3(u8 ch);
+//void  Putc_UART3(u8 ch);
 #endif
