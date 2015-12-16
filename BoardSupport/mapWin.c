@@ -7,6 +7,7 @@
 #include "skinColor.h"
 #include "str.h"
 #include "drawThings.h"
+#include "30.h"
 
 #define ID_WINDOW_0    (GUI_ID_USER + 0x00)
 
@@ -15,28 +16,27 @@
 /*-------------------------- Global variables -----------------------------*/
 WM_HWIN mapWin;
 
-
+char scale_choose = 1;
+FunctionalState isMntEnable  = ENABLE;
 
 
 /*-------------------------- external variables ---------------------------*/
 extern Bool isReleasedDet;
-
-
-/*-------------------------- global variables ------------------------------*/
 extern boat mothership;
-char scale_choose = 1;
+
 
 /*------------------------- local variables --------------------------------*/
 
-const GUI_RECT Rect_MapWin[]  = {MAP_LEFT, 0,       MAP_RIGHT, MAP_BOTTOM};   /// Map Window area.
-const GUI_RECT Rect_Title[]  =  {MAP_LEFT, 0,       MAP_RIGHT, MAP_TOP-1};    /// Title of mapWin area.
-const GUI_RECT Rect_Map[]  =    {MAP_LEFT, MAP_TOP, MAP_RIGHT, MAP_BOTTOM};   /// Map area in mapWin.
-
+const GUI_RECT Rect_MapWin  = {MAP_LEFT, 0,       MAP_RIGHT, MAP_BOTTOM};   /// Map Window area.
+const GUI_RECT Rect_Title  =  {MAP_LEFT, 0,       MAP_RIGHT, MAP_TOP-1};    /// Title of mapWin area.
+const GUI_RECT Rect_Map  =    {MAP_LEFT, MAP_TOP, MAP_RIGHT, MAP_BOTTOM};   /// Map area in mapWin.
+GUI_RECT Rect_WrapMntSwitcher  = {MAP_LEFT+20, MAP_BOTTOM-80, MAP_LEFT+20+150, MAP_BOTTOM-50};
 
 
 /// Timer about
 static WM_HTIMER reTimer;
 static WM_HTIMER cursorTimer;
+
 
 /// Cursor about
 static short Dir_x  = 0;
@@ -156,7 +156,7 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
              drawMapSwitch  = 0;
              GUI_CURSOR_Hide();
           }          
-          WM_InvalidateRect( hWin,Rect_MapWin);
+          WM_InvalidateRect( hWin,&Rect_MapWin);
           WM_RestartTimer(reTimer, MAP_REFRESH_SLOT);
        }
 
@@ -168,7 +168,7 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
        if(drawMapSwitch == 0)
        {
           drawMapSwitch  = 1;
-          WM_InvalidateRect(mapWin, Rect_Map);
+          WM_InvalidateRect(mapWin, &Rect_Map);
 //          WM_Paint(mapWin);
        }
        
@@ -227,7 +227,7 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
               
               GUI_CURSOR_Hide();
               GUI_CURSOR_SetPosition(__cursor.x, __cursor.y);
-              WM_InvalidateRect(mapWin,Rect_Map);
+              WM_InvalidateRect(mapWin,&Rect_Map);
               WM_Paint(mapWin);
               GUI_CURSOR_Show();
               break;
@@ -235,13 +235,13 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
         case GUI_KEY_LARGE: 
              if(scale_choose <MAX_GEAR)
                 scale_choose++;
-             WM_InvalidateRect( hWin,Rect_Map);//WM_Paint(hWin);
+             WM_InvalidateRect( hWin,&Rect_Map);//WM_Paint(hWin);
              break;
      
         case GUI_KEY_REDUCE:   
              if(scale_choose >0)
                 scale_choose--;
-             WM_InvalidateRect( hWin,Rect_Map);//WM_Paint(hWin);
+             WM_InvalidateRect( hWin,&Rect_Map);//WM_Paint(hWin);
              break;
 					
         case GUI_KEY_MENU:	         
@@ -257,6 +257,15 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
         case GUI_KEY_PWM_INC:       
              WM_SendMessageNoPara(subWins[3], USER_MSG_DIM);
              break;
+        case GUI_KEY_MONITORING:
+             isMntEnable  = ENABLE;  
+             MNT_Enable();             
+             break;
+             
+        case GUI_KEY_CANCEL:       
+             isMntEnable  = DISABLE;
+             MNT_Disable();
+             break;             
 			     }
 		      break;
 			
@@ -266,7 +275,7 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
     
     GUI_SetBkColor(pSkin->bkColor);
 //    GUI_ClearRect(0,40, 800, 480);
-    GUI_ClearRectEx(Rect_Map);
+    GUI_ClearRectEx(&Rect_Map);
 //    drawMapSwitch  = 1;
     if(drawMapSwitch)
     { 
@@ -277,7 +286,19 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
     {
        setAutoView();
     }
-   
+    
+    
+    if(isMntEnable == DISABLE)
+    {   
+       GUI_SetColor(GUI_RED);
+       
+       GUI_FillRectEx(&Rect_WrapMntSwitcher);
+//       GUI_FillRectEx(Rect_WrapMntSwitcher);
+       GUI_SetColor(GUI_WHITE);
+       GUI_SetFont(&GUI_Font30);
+       GUI_SetTextMode(GUI_TM_TRANS);
+       GUI_DispStringInRect("监控已关闭", &Rect_WrapMntSwitcher, GUI_TA_HCENTER|GUI_TA_VCENTER);
+    }   
 /// Draw map title 
 //    GUI_SetBkColor(pSkin->ttl_Label);   
 //    GUI_ClearRect(0,0,800,40);
@@ -335,6 +356,8 @@ static void _cbWindowAllFishMap(WM_MESSAGE* pMsg)
     GUI_AA_FillPolygon(Points_Compass_3, 3, 100, 100);  
     GUI_SetColor(GUI_DARKRED);
     GUI_AA_FillPolygon(Points_Compass_4, 3, 100, 100);
+    
+
 	  	break;
 
 		default:
@@ -382,7 +405,7 @@ static void onCursorMoved()
      
          GUI_CURSOR_Hide();
          GUI_CURSOR_SetPosition(__cursor.x, __cursor.y);
-         WM_InvalidateRect(mapWin,Rect_Map);
+         WM_InvalidateRect(mapWin,&Rect_Map);
          WM_Paint(mapWin);
          GUI_CURSOR_Show();
       }

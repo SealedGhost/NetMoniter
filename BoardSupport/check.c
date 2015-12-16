@@ -15,6 +15,8 @@ extern int N_boat;
 extern MNT_BERTH * pMntHeader;
 extern MNT_BERTH MNT_Berthes[MNT_NUM_MAX];
 
+extern FunctionalState isMntEnable;
+
 /// Defined in app.c.If key pressed , isKeyTrigged will be TRUE. Your apps must set iskeyTrigged FALSe after using it.
 extern int isKeyTrigged;
  
@@ -27,7 +29,7 @@ extern int isKeyTrigged;
 
 /*-------------------- Local variables ------------------------*/
 static uint8_t Numbers[3]   = {0};
-
+//static FunctionalState isCheckEnable  = ENABLE;
 
 MNT_BERTH NULL_Berth  = {0};
 
@@ -54,6 +56,25 @@ void check()
    /// Delete all MNTState_Delete .
 
    MNT_filter();
+  
+   if(isMntEnable == DISABLE)
+   {
+      for(i=N_boat-1; i>=0; i--)
+      {
+         if(SimpBerthes[i].pBerth->Boat.user_id == pMntBerth->mntBoat.mmsi)
+         {  
+            if(pMntBerth->pBerth != SimpBerthes[i].pBerth)
+            {
+               pMntBerth->pBerth  = SimpBerthes[i].pBerth;
+               SimpBerthes[i].pBerth->mntState  = MNTState_Monitored;
+            }           
+            break;
+         }
+      }
+      
+       return ;
+   }
+  
   
    if(isKeyTrigged)
    { 

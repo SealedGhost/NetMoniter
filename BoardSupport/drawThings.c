@@ -99,6 +99,8 @@ extern int N_boat;
 extern char scale_choose;
 extern _cursor __cursor;
 
+extern FunctionalState isMntEnable;
+
 /*-------------------------------- Local variables ------------------------------------*/
 static const GUI_POINT * pPoints  = Points_fish;
 static  int PointNum  = 11;
@@ -414,105 +416,130 @@ static void disp_mntBoat(const long center_lg,const long center_lt, const map_sc
    
    GUI_SetPenSize(1);
    
-   while(pIterator)
+   
+   if(isMntEnable)
    {
-      if(pIterator->cfgState != MNTState_Monitored)
-      {
-         pIterator  = pIterator->pNext;
-         continue;
-      }
-      /// Exist and ll valid
-      if(pIterator->pBerth  &&  pIterator->pBerth->Boat.user_id == pIterator->mntBoat.mmsi  && pIterator->pBerth->Boat.dist < 100000)
-      {
-         base_x  = pScale->pixel * (pIterator->pBerth->Boat.longitude - center_lg) / pScale->minute;
-         base_y  = pScale->pixel * (pIterator->pBerth->Boat.latitude - center_lt) / pScale->minute;
-         
-         base_x  = (MAP_LEFT/2 + MAP_RIGHT/2) + base_x;
-         base_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - base_y;
-         
-         base_cur_x = base_x;
-         base_cur_y = base_y;
-    
-  
-         GUI_SetLineStyle(GUI_LS_SOLID);
-         
-          ///DSP boat conf.      
-         if(pIterator->mntBoat.mntSetting.DSP_Setting.isEnable == ENABLE) 
+      while(pIterator)
+      { 
+         if(pIterator->cfgState != MNTState_Monitored)
          {
-            GUI_SetColor(pSkin->boat_Dsp);    
+            pIterator  = pIterator->pNext;
+            continue;
          }
-         if((base_x >=MAP_LEFT)&&(base_x<= MAP_RIGHT)&&(base_y >=MAP_TOP)&&(base_y <= MAP_BOTTOM))
+         /// Exist and ll valid
+         if(pIterator->pBerth  &&  pIterator->pBerth->Boat.user_id == pIterator->mntBoat.mmsi  && pIterator->pBerth->Boat.dist < 100000)
          {
-            if(!isAdsorbed  &&  isCursorVisible  && ( MYABS(base_x-__cursor.x) <= 8)  &&  ( MYABS(base_y-__cursor.y) <= 8) )
+            base_x  = pScale->pixel * (pIterator->pBerth->Boat.longitude - center_lg) / pScale->minute;
+            base_y  = pScale->pixel * (pIterator->pBerth->Boat.latitude - center_lt) / pScale->minute;
+            
+            base_x  = (MAP_LEFT/2 + MAP_RIGHT/2) + base_x;
+            base_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - base_y;
+            
+            base_cur_x = base_x;
+            base_cur_y = base_y;
+       
+     
+            GUI_SetLineStyle(GUI_LS_SOLID);
+            
+             ///DSP boat conf.      
+            if(pIterator->mntBoat.mntSetting.DSP_Setting.isEnable == ENABLE) 
             {
-               GUI_SetColor(pSkin->ttl_Context);
-                  draw_boat(&(pIterator->pBerth->Boat), base_x, base_y,pPoints, PointNum);
-               draw_boatInfo(base_x, base_y, &(pIterator->pBerth->Boat), SHOW_OPTION_NAME | SHOW_OPTION_LL | SHOW_OPTION_MMSI | SHOW_OPTION_BAT);
-               isAdsorbed  = 1;
+               GUI_SetColor(pSkin->boat_Dsp);    
             }
-            else
+            if((base_x >=MAP_LEFT)&&(base_x<= MAP_RIGHT)&&(base_y >=MAP_TOP)&&(base_y <= MAP_BOTTOM))
             {
-
-               GUI_SetColor(pSkin->boat_Org);  
-               if( (pIterator->trgState&0x0f) == MNTState_Triggered)
+               if(!isAdsorbed  &&  isCursorVisible  && ( MYABS(base_x-__cursor.x) <= 8)  &&  ( MYABS(base_y-__cursor.y) <= 8) )
                {
-                  if(pIterator->flsState&0x01)
+                  GUI_SetColor(pSkin->ttl_Context);
                      draw_boat(&(pIterator->pBerth->Boat), base_x, base_y,pPoints, PointNum);
-                  pIterator->flsState  = ~pIterator->flsState;
-               }   
+                  draw_boatInfo(base_x, base_y, &(pIterator->pBerth->Boat), SHOW_OPTION_NAME | SHOW_OPTION_LL | SHOW_OPTION_MMSI | SHOW_OPTION_BAT);
+                  isAdsorbed  = 1;
+               }
                else
                {
-                  draw_boat(&(pIterator->pBerth->Boat), base_x, base_y,pPoints, PointNum);
+
+                  GUI_SetColor(pSkin->boat_Org);  
+                  if( (pIterator->trgState&0x0f) == MNTState_Triggered)
+                  {
+                     if(pIterator->flsState&0x01)
+                        draw_boat(&(pIterator->pBerth->Boat), base_x, base_y,pPoints, PointNum);
+                     pIterator->flsState  = ~pIterator->flsState;
+                  }   
+                  else
+                  {
+                     draw_boat(&(pIterator->pBerth->Boat), base_x, base_y,pPoints, PointNum);
+                  }
                }
-            }
-         }   
-         
-         ///   Drg circle conf. 
-         if(pIterator->cfgState == MNTState_Monitored  &&  pIterator->mntBoat.mntSetting.DRG_Setting.isEnable == ENABLE)
+            }   
+            
+            ///   Drg circle conf. 
+            if(pIterator->cfgState == MNTState_Monitored  &&  pIterator->mntBoat.mntSetting.DRG_Setting.isEnable == ENABLE)
+            {
+               base_x  = pScale->pixel * (pIterator->mntBoat.lg - center_lg) / pScale->minute;
+               base_y  = pScale->pixel * (pIterator->mntBoat.lt - center_lt) / pScale->minute;
+               
+               base_x  = (MAP_LEFT/2 + MAP_RIGHT/2) + base_x;
+               base_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - base_y;
+               
+               GUI_SetColor(pSkin->boat_Drg);      
+               GUI_DrawCircle(base_x, base_y, pIterator->mntBoat.mntSetting.DRG_Setting.Dist*pScale->pixel/pScale->minute);
+               
+               if(pIterator->trgState&(0x01<<6))
+               {
+                  GUI_SetColor(GUI_GRAY);
+                  GUI_SetLineStyle(GUI_LS_DOT);
+                  GUI_DrawLine(base_cur_x, base_cur_y, base_x, base_y);
+                  GUI_SetLineStyle(GUI_LS_SOLID);
+               }
+            }        
+            
+            ///   BGL circle conf.
+            if(pIterator->mntBoat.mntSetting.BGL_Setting.isEnable == ENABLE  &&  (pIterator->trgState&0xf0) < (0x01<<6) )
+            {
+               GUI_SetColor(pSkin->boat_Bgl);
+               
+               GUI_DrawCircle(base_cur_x, base_cur_y,pIterator->mntBoat.mntSetting.BGL_Setting.Dist*pScale->pixel/pScale->minute);            
+            } 
+       
+
+         }
+         else if(pIterator->cfgState == MNTState_Monitored)
          {
             base_x  = pScale->pixel * (pIterator->mntBoat.lg - center_lg) / pScale->minute;
             base_y  = pScale->pixel * (pIterator->mntBoat.lt - center_lt) / pScale->minute;
             
             base_x  = (MAP_LEFT/2 + MAP_RIGHT/2) + base_x;
-            base_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - base_y;
-            
-            GUI_SetColor(pSkin->boat_Drg);      
-            GUI_DrawCircle(base_x, base_y, pIterator->mntBoat.mntSetting.DRG_Setting.Dist*pScale->pixel/pScale->minute);
-            
-            if(pIterator->trgState&(0x01<<6))
-            {
-               GUI_SetColor(GUI_GRAY);
-               GUI_SetLineStyle(GUI_LS_DOT);
-               GUI_DrawLine(base_cur_x, base_cur_y, base_x, base_y);
-               GUI_SetLineStyle(GUI_LS_SOLID);
-            }
-         }        
+            base_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - base_y; 
          
-         ///   BGL circle conf.
-         if(pIterator->mntBoat.mntSetting.BGL_Setting.isEnable == ENABLE  &&  (pIterator->trgState&0xf0) < (0x01<<6) )
-         {
-            GUI_SetColor(pSkin->boat_Bgl);
-            
-            GUI_DrawCircle(base_cur_x, base_cur_y,pIterator->mntBoat.mntSetting.BGL_Setting.Dist*pScale->pixel/pScale->minute);            
-         } 
-    
-
+            GUI_SetColor(GUI_YELLOW); 
+            GUI_SetLineStyle(GUI_LS_DOT);  
+            GUI_DrawPolygon(pPoints,  PointNum, base_x, base_y);      
+         }
+         
+         
+         pIterator  = pIterator->pNext;
       }
-      else if(pIterator->cfgState == MNTState_Monitored)
+   }
+   
+   /// GUI_KEY_MNT_Cancel
+   else
+   {
+      GUI_SetColor(pSkin->boat_Org);
+      while(pIterator)
       {
-         base_x  = pScale->pixel * (pIterator->mntBoat.lg - center_lg) / pScale->minute;
-         base_y  = pScale->pixel * (pIterator->mntBoat.lt - center_lt) / pScale->minute;
+         if(pIterator->pBerth  &&  pIterator->pBerth->Boat.user_id == pIterator->mntBoat.mmsi  && pIterator->pBerth->Boat.dist < 100000)
+         {
+            base_x  = pScale->pixel * (pIterator->pBerth->Boat.longitude - center_lg) / pScale->minute;
+            base_y  = pScale->pixel * (pIterator->pBerth->Boat.latitude - center_lt) / pScale->minute;
+            
+            base_x  = (MAP_LEFT/2 + MAP_RIGHT/2) + base_x;
+            base_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - base_y;
+
+            draw_boat(&(pIterator->pBerth->Boat), base_x, base_y,pPoints, PointNum);            
+         }
          
-         base_x  = (MAP_LEFT/2 + MAP_RIGHT/2) + base_x;
-         base_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - base_y; 
-      
-         GUI_SetColor(GUI_YELLOW); 
-         GUI_SetLineStyle(GUI_LS_DOT);  
-         GUI_DrawPolygon(pPoints,  PointNum, base_x, base_y);      
+         pIterator  = pIterator->pNext;
       }
-      
-      
-      pIterator  = pIterator->pNext;
    }
 }
 
@@ -866,7 +893,8 @@ void setView(const long lg, const long lt, const map_scale* pScale)
    disp_map(lg, lt, pScale);
    GUI_SetLineStyle(GUI_LS_SOLID);   
    disp_mntBoat(lg,lt,pScale);
-   disp_boat(lg,lt,pScale, N_boat);  
+   if(isMntEnable)
+      disp_boat(lg,lt,pScale, N_boat);  
    draw_mothership(lg,lt, pScale);
    draw_scale(pScale, 640, 440);
 }
@@ -894,7 +922,8 @@ void setAutoView()
    disp_map(lg, lt, &autoScale);
    GUI_SetLineStyle(GUI_LS_SOLID);   
    disp_mntBoat(lg, lt, &autoScale);  
-   disp_boat(lg, lt, &autoScale, N_boat);
+   if(isMntEnable)
+      disp_boat(lg, lt, &autoScale, N_boat);
    draw_mothership(lg,lt,&autoScale);
    draw_scale(&autoScale, 640,440);
 }

@@ -15,6 +15,7 @@
 #define USER_MSG_DIM       (WM_USER + 0x08)
 #define USER_MSG_LV_UPDATE (WM_USER + 0x09)
 #define USER_MSG_FOCUS     (WM_USER + 0x10)
+#define USER_MSG_MNT_SWT   (WM_USER + 0x11)
 
 
 #define STORE_SETTING   1

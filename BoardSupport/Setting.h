@@ -72,6 +72,8 @@ void printSetting(MNT_SETTING * p_setting);
 void MNT_printSetting(void);void MNT_DumpSetting(MNT_BERTH * pBerth);
 Bool MNT_removeById(long Id);
 int  MNT_getDefaultNum(void);
+void MNT_Disable(void);
+void MNT_Enable(void);
 
 
 //__inline void MNT_resetIterator()

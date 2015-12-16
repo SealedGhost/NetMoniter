@@ -287,6 +287,68 @@ Bool MNT_removeById(long Id)
 }
 
 
+/** @brief 监控开 按键的响应
+ *
+ *
+ *
+ */
+void MNT_Enable(void)
+{
+   MNT_BERTH* pIterator  = pMntHeader;
+   
+   while(pIterator)
+   {
+      /*********************************************************************************************
+      *
+      *   Have no boat         ---->Init
+      *   Hvae no lg & lt      ---->Pending
+      *   Hvae lg & lt         ---->Monitored
+      *
+      **/
+       if(pIterator->pBerth == NULL || pIterator->pBerth->Boat.user_id != pIterator->mntBoat.mmsi)   
+       {
+          pIterator->cfgState  = MNTState_Init;
+       }      
+       else if(pIterator->pBerth->Boat.dist > 100000)
+       {
+          pIterator->cfgState  = MNTState_Pending;
+       }
+       else 
+       {
+          if(pIterator->mntBoat.mntSetting.DRG_Setting.isEnable)
+          {
+             pIterator->mntBoat.lg  = pIterator->pBerth->Boat.longitude;
+             pIterator->mntBoat.lt  = pIterator->pBerth->Boat.latitude;
+   //INFO("update drg:(%ld,%ld)",pIterator->mntBoat.lg, pIterator->mntBoat.lt);            
+          }
+          pIterator->cfgState  = MNTState_Monitored;
+       }
+         
+       pIterator  = pIterator->pNext;  
+   }
+}
+
+/** @brief 监控关 按键的响应
+ *
+ *
+ *
+ */
+void MNT_Disable(void)
+{
+   MNT_BERTH* pIterator  = pMntHeader;
+   
+   while(pIterator)
+   {
+      INVD_clear(pIterator-MNT_Berthes);
+      pIterator->trgState  = MNTState_None;
+      pIterator->cfgState  = MNTState_Init;
+      
+      pIterator  = pIterator->pNext;
+   }
+INFO("invd print");   
+   INVD_printf();
+}
+
 
 /** @brief MNT_getDefaultNum
  *

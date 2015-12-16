@@ -225,8 +225,8 @@ void INVD_clear(int row)
       pIterator  = pInvdHeaders[row];
       
       while(pIterator)
-      {
-         if(pIterator->pBerth->isInvader  == MNT_Berthes[row].mntBoat.mmsi)
+      {         
+         if(pIterator->pBerth && pIterator->pBerth->isInvader  == MNT_Berthes[row].mntBoat.mmsi)
          {
             pIterator->pBerth->isInvader  = 0;
          }
@@ -246,6 +246,7 @@ INFO("pass error row:%d",row);
       return ;
    }
 }
+
 
 
 /**@brief  INVD_updataMask
