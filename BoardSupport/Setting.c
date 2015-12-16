@@ -12,7 +12,7 @@ MNT_BERTH MNT_Berthes[MNT_NUM_MAX];
 
 MNT_BERTH * pMntHeader  = NULL;
 
-MNT_SETTING mntSetting; 
+//MNT_SETTING mntSetting; 
 
 
 static char  strStates[9][10]  =
@@ -60,6 +60,17 @@ int MNT_makeSettingUp (MNT_SETTING * pMNT_Setting)
 {
    int Cnt  = 0;
    MNT_BERTH * pIterator  = pMntHeader;
+   
+   if(pMNT_Setting->BGL_Setting.Dist == 0)
+   {
+      pMNT_Setting->BGL_Setting.isEnable  = DISABLE;
+   }
+   
+   if(pMNT_Setting->DRG_Setting.Dist == 0)
+   {
+      pMNT_Setting->DRG_Setting.isEnable  = DISABLE;
+   }
+   
    while(pIterator)
    {    
       if(   (pIterator->chsState == MNTState_Choosen)
@@ -67,25 +78,9 @@ int MNT_makeSettingUp (MNT_SETTING * pMNT_Setting)
       {
          pIterator->chsState  = MNTState_Monitored;
          pIterator->trgState  = MNTState_None;        
-         
-         if(SysConf.Unit == UNIT_nm)
-         {        
-            pIterator->mntBoat.mntSetting.BGL_Setting.Dist  = 
-                      pMNT_Setting->BGL_Setting.Dist*10;
-            pIterator->mntBoat.mntSetting.DRG_Setting.Dist  = 
-                      pMNT_Setting->DRG_Setting.Dist*10;                       
-         }
-         else if(SysConf.Unit == UNIT_km)
-         {           
-            pIterator->mntBoat.mntSetting.BGL_Setting.Dist  =
-                      pMNT_Setting->BGL_Setting.Dist*54/10;
-            pIterator->mntBoat.mntSetting.DRG_Setting.Dist  = 
-                      pMNT_Setting->DRG_Setting.Dist*54/10; 
-         }  
-         else
-         {
-INFO("Error!");
-         }  
+ 
+         pIterator->mntBoat.mntSetting.BGL_Setting.Dist  = pMNT_Setting->BGL_Setting.Dist;
+         pIterator->mntBoat.mntSetting.DRG_Setting.Dist  = pMNT_Setting->DRG_Setting.Dist;
          
          pIterator->mntBoat.mntSetting.DSP_Setting.isEnable  = 
                    pMNT_Setting->DSP_Setting.isEnable;
@@ -93,40 +88,25 @@ INFO("Error!");
          pIterator->mntBoat.mntSetting.BGL_Setting.isSndEnable  = 
                    pMNT_Setting->BGL_Setting.isSndEnable;
                    
-         if(pMNT_Setting->BGL_Setting.Dist == 0)
+//          
+         if(pIterator->mntBoat.mntSetting.BGL_Setting.isEnable == DISABLE)
          {
-            pIterator->mntBoat.mntSetting.BGL_Setting.isEnable  = DISABLE;         
+            pIterator->mntBoat.mntSetting.BGL_Setting.isEnable  = pMNT_Setting->BGL_Setting.isEnable;
          }
          else
          {
-            pIterator->mntBoat.mntSetting.BGL_Setting.isEnable  = 
-                     pMNT_Setting->BGL_Setting.isEnable;        
-         }
-
-         if(pMNT_Setting->BGL_Setting.Dist > 0  &&  pIterator->mntBoat.mntSetting.BGL_Setting.isEnable)
-         {
-            pIterator->mntBoat.mntSetting.BGL_Setting.isEnable  = ENABLE;
-         }
-         else 
-         {
-            pIterator->mntBoat.mntSetting.BGL_Setting.isEnable  = DISABLE;
-            INVD_clear(pIterator-MNT_Berthes);
+           if(pMNT_Setting->BGL_Setting.isEnable == DISABLE)
+           {
+              pIterator->mntBoat.mntSetting.BGL_Setting.isEnable  = DISABLE;
+              INVD_clear(pIterator-MNT_Berthes);
+           }
          }
           
          pIterator->mntBoat.mntSetting.DRG_Setting.isSndEnable  = 
                    pMNT_Setting->DRG_Setting.isSndEnable;
-
-         if(pMNT_Setting->DRG_Setting.Dist == 0)
-         {
-            pIterator->mntBoat.mntSetting.DRG_Setting.isEnable  = DISABLE;
-         }   
-         else
-         {
-            pIterator->mntBoat.mntSetting.DRG_Setting.isEnable  = 
-                      pMNT_Setting->DRG_Setting.isEnable;
-         }         
-
   
+      
+         pIterator->mntBoat.mntSetting.DRG_Setting.isEnable  = pMNT_Setting->DRG_Setting.isEnable;
 
          EEPROM_Write( 0, MNT_PAGE_ID+(pIterator-MNT_Berthes),
                        &(pIterator->mntBoat),MODE_8_BIT,sizeof(MNT_BOAT));  
@@ -157,7 +137,9 @@ INFO("Error!");
             pIterator->cfgState  = MNTState_Monitored;
          }
              
-       //      MNT_DumpSetting(pIterator);                       
+//#if DEBUG_LEVEL >= DEBUG_LEVEL_TAG             
+//         MNT_DumpSetting(pIterator);                       
+//#endif         
       }
       
       else if(pIterator->chsState == MNTState_None)
@@ -174,7 +156,7 @@ INFO("Error!");
       pIterator  = pIterator->pNext;
    }
    
-//   MNT_printSetting();
+   MNT_printSetting();   
    return Cnt;
 }
 
@@ -288,14 +270,11 @@ INFO("allco mnt berth failed!");
  */
 Bool MNT_removeById(long Id)
 {
-   MNT_BERTH * pIterator  = pMntHeader;
-   
+   MNT_BERTH * pIterator  = pMntHeader; 
    while(pIterator)
    {
-//      if(pIterator->mntBoat.mmsi == Id)
       if(pIterator->mntBoat.mmsi == Id)
       {
-//         pIterator->mntBoat.mntState  = MNTState_Delete;
          pIterator->chsState  = MNTState_Cancel;
          return TRUE;
       }
@@ -338,19 +317,19 @@ Bool MNT_removeById(long Id)
  *  @output
  *  @return 
  */
-void MNT_initSetting()
-{  
-//   memset((void*)&mntSetting, 0, sizeof(mntSetting));
-   mntSetting.DSP_Setting.isEnable  = ENABLE;
-   
-   mntSetting.BGL_Setting.Dist      = 5;
-   mntSetting.BGL_Setting.isSndEnable  = ENABLE;
-   mntSetting.BGL_Setting.isEnable     = DISABLE;
-   
-   mntSetting.DRG_Setting.Dist      = 10; 
-   mntSetting.DRG_Setting.isSndEnable  = ENABLE;   
-   mntSetting.DRG_Setting.isEnable     = DISABLE;
-}
+//void MNT_initSetting()
+//{  
+////   memset((void*)&mntSetting, 0, sizeof(mntSetting));
+//   mntSetting.DSP_Setting.isEnable  = ENABLE;
+//   
+//   mntSetting.BGL_Setting.Dist      = 50;
+//   mntSetting.BGL_Setting.isSndEnable  = ENABLE;
+//   mntSetting.BGL_Setting.isEnable     = DISABLE;
+//   
+//   mntSetting.DRG_Setting.Dist      = 100; 
+//   mntSetting.DRG_Setting.isSndEnable  = ENABLE;   
+//   mntSetting.DRG_Setting.isEnable     = DISABLE;
+//}
 
 
 /** @brief   printSetting
@@ -360,8 +339,10 @@ void MNT_initSetting()
  *  @output
  *  @return 
  */
-static void printSetting(MNT_SETTING * p_setting)
+void printSetting(MNT_SETTING * p_setting)
 {
+   if(p_setting)
+   {
       printf("   DSP     %s\r\n",p_setting->DSP_Setting.isEnable>DISABLE?"Enable":"Disable");
       printf("   BGL     %s\r\n",p_setting->BGL_Setting.isEnable>DISABLE?"Enable":"Disable");
       printf("       snd %s\r\n",p_setting->BGL_Setting.isSndEnable>DISABLE?"Enable":"Disable");
@@ -369,6 +350,11 @@ static void printSetting(MNT_SETTING * p_setting)
       printf("   DRG     %s\r\n",p_setting->DRG_Setting.isEnable>DISABLE?"Enable":"Disable");
       printf("       snd %s\r\n",p_setting->DRG_Setting.isSndEnable>DISABLE?"Enable":"Disable");
       printf("      dist %d\r\n",p_setting->DRG_Setting.Dist);
+   }
+   else
+   {
+      printf(" NULL setting\n\r");
+   }
 }
 
 
@@ -384,31 +370,13 @@ void MNT_printSetting()
 {
    MNT_BERTH * pIterator  = pMntHeader;
    int cnt  = 0;
-   int i  = 0;
+   
    while(pIterator)
    {
-         if(pIterator->chsState == MNTState_Default)
-            cnt++;
          printf("\r\n");
-         printf("%d-mmsi %ld\r\n",i,pIterator->mntBoat.mmsi);
+         printf("mmsi %ld\r\n",pIterator->mntBoat.mmsi);
          printSetting(&(pIterator->mntBoat.mntSetting));
-         printf("rn State:%d",pIterator->chsState);
-         printf("still hava %d is default\r\n",cnt);
+         printf("rn State:%d\n\r",pIterator->chsState);
          pIterator  = pIterator->pNext;
-         i++;
-   }
-}
-
-
-void MNT_DumpSetting(MNT_BERTH * pBerth)
-{
-
-   if(pBerth)
-   {
-      printf("%09ld--chs:%s cfg:%s trg:%s\n\r",
-                  pBerth->mntBoat.mmsi, 
-                  strStates[pBerth->chsState&0x1f],
-                  strStates[pBerth->cfgState&0x1f],
-                  strStates[pBerth->trgState&0x1f]);
    }
 }

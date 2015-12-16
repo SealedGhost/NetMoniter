@@ -276,6 +276,10 @@ INFO("SLIDER ID Err!");
             GUI_DrawPolygon(Points_boat, 3, 160, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4+18);            
 //             GUI_DispStringAt("Boat",140,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+8);
 //             GUI_DispStringAt("Fish",310,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+8);
+            sprintf(pStrBuf, "%s", __TIME__);
+            GUI_DispStringAt(pStrBuf, 30,Win_SysSet_txOrg + (Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5);
+            sprintf(pStrBuf, "%s", __DATE__);
+            GUI_DispStringAt(pStrBuf, 30,Win_SysSet_txOrg + (Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6);            
             }break;
        default:
            WM_DefaultProc(pMsg);
@@ -308,14 +312,21 @@ static void sldListenter(WM_MESSAGE * pMsg)
                    WM_SendMessageNoPara(subWins[3], USER_MSG_DIM);
                    break;
               case GUI_KEY_BACKSPACE:
-                   myMsg.hWin  = WM_GetClientWindow(confirmWin);
-                   myMsg.hWinSrc  = subWins[3];
-                   myMsg.MsgId  = USER_MSG_CHOOSE;
-                   myMsg.Data.v  = SYS_SETTING;
-                   WM_SendMessage(myMsg.hWin, &myMsg);
-                   
-                   WM_BringToTop(confirmWin);
-                   WM_SetFocus(WM_GetDialogItem (confirmWin,GUI_ID_BUTTON0)); 
+                   if(Mem_isEqual(&SysConf, &agentConf, sizeof(SysConf)) )
+                   {
+                      WM_SetFocus(menuWin);                      
+                   }
+                   else
+                   {
+                      myMsg.hWin  = WM_GetClientWindow(confirmWin);
+                      myMsg.hWinSrc  = subWins[3];
+                      myMsg.MsgId  = USER_MSG_CHOOSE;
+                      myMsg.Data.v  = SYS_SETTING;
+                      WM_SendMessage(myMsg.hWin, &myMsg);
+                      
+                      WM_BringToTop(confirmWin);
+                      WM_SetFocus(WM_GetDialogItem (confirmWin,GUI_ID_BUTTON0));                    
+                   }
                    break;
                                  
               default:

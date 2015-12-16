@@ -29,6 +29,7 @@
 #include "GUI.h"
 #include "skinColor.h"
 #include "str.h"
+#include <string.h>
 #include "dlg.h"
 #include "28.h"
 #include "drawThings.h"
@@ -69,9 +70,14 @@ WM_HWIN mntSettingWin ;
 /*------------------- local    variables -------------------------*/
 
 static WM_HWIN hBts[7];
+static MNT_BERTH* pCurMntBerth  = NULL;
+
+static MNT_SETTING mntSetting;
 
 static void myButtonListener(WM_MESSAGE* pMsg);
-static void btReset(WM_HWIN thisWin);
+static void btReset(void);
+
+
 extern GUI_CONST_STORAGE GUI_BITMAP bmyu;
 extern GUI_CONST_STORAGE GUI_BITMAP bmmao;
 
@@ -94,20 +100,8 @@ extern GUI_CONST_STORAGE GUI_BITMAP bmmao;
 *       _aDialogCreate
 */
 static const GUI_WIDGET_CREATE_INFO _aDialogCreate[] = {
-  { WINDOW_CreateIndirect, "ETWin", ID_WINDOW_0, ETWin_X, SubWin_Y+40, ETWin_WIDHT, ETWin_HEIGHT-81, 0, 0x0, 0 },
-	
-	//{ TEXT_CreateIndirect, "监控设置项:",  ID_TEXT_0, 0,    0,                  ETWin_WIDHT,30, 0, 0x0, 0},
-	//{ TEXT_CreateIndirect, "消失报警:",   ID_TEXT_1,     10,    10,    130,   30, 0, 0x0, 0},
-	//{ TEXT_CreateIndirect, "防盗报警功能:",   ID_TEXT_2, 10,    45 ,   140,   30, 0, 0x0, 0},
-	//{ TEXT_CreateIndirect, "距离:",        ID_TEXT_3,    100,   80,    70,    30, 0, 0x0, 0},
-//  { TEXT_CreateIndirect, "nm",           ID_TEXT_8,    200,   82,    70,    30, 0, 0x0, 0},
-	//{ TEXT_CreateIndirect, "声音:",        ID_TEXT_4,    100,   160,   70,    30, 0x0, 0},
-	//{ TEXT_CreateIndirect, "走锚报警功能:",ID_TEXT_5,    10,    190,   140,   30, 0, 0x0, 0},
-	//{ TEXT_CreateIndirect, "距离:",        ID_TEXT_6,    100,   225,   70,    30,  0, 0x0, 0},
-//  { TEXT_CreateIndirect, "nm",           ID_TEXT_9,    200,   227,   70,    30,  0, 0x0,0},
-  //{ TEXT_CreateIndirect, "声音:",        ID_TEXT_7,    100,   305,   70,    30,  0, 0x0, 0},
-	//{ TEXT_CreateIndirect, "使用左右切换设置",        ID_TEXT_0,    50,   350,   300,    30,  0, 0x0, 0},
- 
+ { WINDOW_CreateIndirect, "ETWin", ID_WINDOW_0, ETWin_X, SubWin_Y+40, ETWin_WIDHT, ETWin_HEIGHT-81, 0, 0x0, 0 },
+
  { BUTTON_CreateIndirect, "bt_0", ID_BUTTON_0, 115, 10,  70, 30, 0, 0xa,  0 },
  { BUTTON_CreateIndirect, "bt_1", ID_BUTTON_1, 150, 45,  70, 30, 0, 0x64, 0 },
  { BUTTON_CreateIndirect, "bt_2", ID_BUTTON_2, 130, 80,  50, 30, 0, 0x64, 0 },
@@ -140,67 +134,146 @@ static const MntSetWin_COLOR * pSkin  = &MntSetWinSkins[0];
 */
 static void _cbDialog(WM_MESSAGE * pMsg) {
 	
- WM_HWIN  hItem  = 0;
- 
+  WM_HWIN  hItem  = 0;
+  WM_MESSAGE myMsg;
+  
   int     i  = 0;
-
-  // USER START (Optionally insert additional variables)
-  // USER END
+  
   switch (pMsg->MsgId) {
 		
 		case WM_PAINT:
-			
-				GUI_SetFont(&GUI_Font30);
-				GUI_SetColor(pSkin->txColor);
-				GUI_SetTextMode(GUI_TM_TRANS);
-				GUI_DispStringAt("消失报警:",10,10);
-				GUI_DispStringAt("防盗报警功能:",10,45);
-				GUI_DispStringAt("距离:",80,80);
-				GUI_DispStringAt("声音:",80,160);
-				GUI_DispStringAt("走锚报警功能:",10,190);
-				GUI_DispStringAt("距离:",80,225);
-				GUI_DispStringAt("声音:",80,305);
-    
-    if(SysConf.Unit == UNIT_nm)
-    {
-       GUI_DispStringAt("nm", 180, 82);
-       GUI_DispStringAt("nm", 180, 227);
-    }
-    else
-    {
-       GUI_DispStringAt("km", 180, 82);
-       GUI_DispStringAt("km", 180, 227);       
-    }
-    
-				GUI_SetFont(&GUI_Font24);
-				GUI_DispStringAt("使用空空切换设置:",43,350);
-				GUI_SetFont(&GUI_Font24);
-				GUI_SetColor(pSkin->bt_txColor);
-				GUI_DispStringAt("左右",80,350);
-				GUI_SetColor(GUI_WHITE);
-//				GUI_DrawBitmap(&bmyu,45,110);
-    GUI_DrawPolygon(Points_fish, 11,43, 130);
-				GUI_DrawBitmap(&bmmao,23,260);
-				
-				//GUI_SetPenSize(3);
-    GUI_SetColor(BGL_BOAT_COLOR);
-				GUI_DrawCircle(43,130,40);
-    GUI_SetColor(DRG_BOAT_COLOR);
-				GUI_DrawCircle(43,280,40);
-    
-    GUI_SetColor(GUI_BROWN);
-    GUI_DrawHLine(130, 43, 83);
-    GUI_DrawLine(70, 130, 83, 110);
-    GUI_DrawHLine(110, 83, 140);
-    
-    GUI_DrawHLine(276, 43, 83);
-    GUI_DrawLine(70, 276, 83, 256);
-    GUI_DrawHLine(256, 83, 140);
-				
+       GUI_SetFont(&GUI_Font30);
+       GUI_SetColor(pSkin->txColor);
+       GUI_SetTextMode(GUI_TM_TRANS);
+       GUI_DispStringAt("消失报警:",10,10);
+       GUI_DispStringAt("走锚报警功能:",10,45);
+       GUI_DispStringAt("距离:",80,80);
+       GUI_DispStringAt("声音:",80,160);
+       GUI_DispStringAt("防盗报警功能:",10,190);
+       GUI_DispStringAt("距离:",80,225);
+       GUI_DispStringAt("声音:",80,305);
+       
+       if(SysConf.Unit == UNIT_nm)
+       {
+          GUI_DispStringAt("nm", 180, 82);
+          GUI_DispStringAt("nm", 180, 227);
+       }
+       else
+       {
+          GUI_DispStringAt("km", 180, 82);
+          GUI_DispStringAt("km", 180, 227);       
+       }
+       
+       GUI_SetFont(&GUI_Font24);
+       GUI_DispStringAt("使用空空切换设置:",43,350);
+       GUI_SetFont(&GUI_Font24);
+       GUI_SetColor(pSkin->bt_txColor);
+       GUI_DispStringAt("左右",80,350);
+       GUI_SetColor(GUI_WHITE);
 
-				
-				
-			break;
+//       GUI_DrawPolygon(Points_fish, 11,43, 130);
+       GUI_DrawPolygon(Points_fish, 11, 43, 280);
+//       GUI_DrawBitmap(&bmmao,23,260);
+       GUI_DrawBitmap(&bmmao, 23, 110);
+       
+       //GUI_SetPenSize(3);
+       GUI_SetColor(DRG_BOAT_COLOR);
+       GUI_DrawCircle(43,130,40);
+       GUI_SetColor(BGL_BOAT_COLOR);
+       GUI_DrawCircle(43,280,40);
+       
+       GUI_SetColor(GUI_BROWN);
+       GUI_DrawHLine(130, 43, 83);
+       GUI_DrawLine(70, 130, 83, 110);
+       GUI_DrawHLine(110, 83, 140);
+       
+       GUI_DrawHLine(276, 43, 83);
+       GUI_DrawLine(70, 276, 83, 256);
+       GUI_DrawHLine(256, 83, 140);
+       break;
+       
+  case USER_MSG_REPLY:
+       switch(pMsg->Data.v)
+       { 
+          case REPLY_OK:         
+               WM_SetFocus(WM_GetDialogItem(pMsg->hWin, ID_BUTTON_0));
+               i  = MNT_makeSettingUp(&mntSetting);  
+ //               MNT_initSetting();
+               btReset();  
+               myMsg.hWin  = WM_GetClientWindow(menuWin);               
+               myMsg.MsgId  = USER_MSG_DFULT_CNT;
+               myMsg.Data.v  = i;
+               WM_SendMessage(myMsg.hWin, &myMsg);
+               WM_SetFocus(menuWin);
+               break;
+          case REPLY_CANCEL:   
+               WM_SetFocus(subWins[1]);
+               break;
+               
+           default:
+               INFO("Something err!");           
+               break;
+       }
+       break;       
+       
+  case USER_MSG_FOCUS:
+INFO("case USER_MSG_FOCUS");  
+       WM_SetFocus(hBts[0]);
+       
+       if(pMsg->Data.p)
+       {
+          pCurMntBerth  = (MNT_BERTH*)(pMsg->Data.p);
+          memcpy((void*)&mntSetting, (void*)(&pCurMntBerth->mntBoat.mntSetting), sizeof(MNT_SETTING));           
+       }
+             
+       printSetting(&mntSetting);
+      
+       break;
+       
+  case USER_MSG_LV_MOVE:
+INFO("case USER_MSG_LV_MOVE");  
+       {
+          MNT_SETTING *  pMntSetting  = NULL;
+          
+          pMntSetting    = (MNT_SETTING*)&(  ( (MNT_BERTH*)pMsg->Data.p)->mntBoat.mntSetting);
+          
+          printSetting(pMntSetting);
+   
+          if(pMntSetting)  
+          {          
+             BUTTON_SetText(hBts[0], pMntSetting->DSP_Setting.isEnable?"开启":"关闭");
+             
+             BUTTON_SetText(hBts[1], pMntSetting->BGL_Setting.isEnable?"开启":"关闭");
+
+             BUTTON_SetText(hBts[3], pMntSetting->BGL_Setting.isSndEnable?"开启":"关闭");
+             
+             BUTTON_SetText(hBts[4], pMntSetting->DRG_Setting.isEnable?"开启":"关闭");
+
+             BUTTON_SetText(hBts[6], pMntSetting->DRG_Setting.isSndEnable?"开启":"关闭");          
+             
+             if(SysConf.Unit == UNIT_nm)
+             {
+                sprintf(pStrBuf, "%d.%02d", pMntSetting->DRG_Setting.Dist/1000,pMntSetting->DRG_Setting.Dist%1000/10);
+                BUTTON_SetText(hBts[2], pStrBuf);
+                sprintf(pStrBuf, "%d.%02d", pMntSetting->BGL_Setting.Dist/1000, pMntSetting->BGL_Setting.Dist%1000/10);
+                BUTTON_SetText(hBts[5], pStrBuf);             
+             }
+             else 
+             {
+                int tmpDist  = 0;
+                tmpDist  = pMntSetting->DRG_Setting.Dist *100 /54;
+                
+                sprintf(pStrBuf, "%d.%02d", tmpDist/1000, (tmpDist%1000)/10);
+                BUTTON_SetText(hBts[2], pStrBuf);
+                
+                tmpDist  = pMntSetting->BGL_Setting.Dist *100 /54;
+                sprintf(pStrBuf, "%d.%02d", tmpDist/1000, (tmpDist%1000)/10);
+                BUTTON_SetText(hBts[5], pStrBuf);
+             }
+          }
+          
+       }
+       break;
   
   case USER_MSG_SKIN: 
        pSkin  = &(MntSetWinSkins[pMsg->Data.v]);
@@ -213,111 +286,130 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
           BUTTON_SetBkColor(hBts[i], BUTTON_CI_UNPRESSED, pSkin->bt_bkColor);
           BUTTON_SetTextColor(hBts[i], BUTTON_CI_UNPRESSED,pSkin->bt_txColor);
        } 
-       break;
-       
+       break;    
        
   case WM_INIT_DIALOG:
        pSkin  = &(MntSetWinSkins[SysConf.Skin]);
 	
-		  WINDOW_SetBkColor(pMsg->hWin, pSkin->bkColor);
-		
-    //
-    // Initialization of 'text'
-    //    
-    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_0);
-		  TEXT_SetFont(hItem,&GUI_Font24);
-    TEXT_SetTextColor(hItem, pSkin->bt_bkColor);
-    
-    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_1);
-    TEXT_SetTextColor(hItem, pSkin->txColor); 
-    
-    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_2);
-    TEXT_SetTextColor(hItem, pSkin->txColor); 
-    
-    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_3);
-    TEXT_SetTextColor(hItem, pSkin->txColor); 
-    
-    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_4);
-    TEXT_SetTextColor(hItem, pSkin->txColor); 
-    
-    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_5);
-    TEXT_SetTextColor(hItem, pSkin->txColor); 
-    
-    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_6);
-    TEXT_SetTextColor(hItem, pSkin->txColor); 
-    
-    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_7);
-    TEXT_SetTextColor(hItem, pSkin->txColor);    
-    
-    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_8);
-    TEXT_SetFont(hItem, GUI_FONT_24_1);
-    TEXT_SetTextColor(hItem, pSkin->txColor);
-    TEXT_SetText(hItem, SysConf.Unit==UNIT_km?"km":"nm");
-    
-    hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_9);
-    TEXT_SetFont(hItem, GUI_FONT_24_1);
-    TEXT_SetTextColor(hItem, pSkin->txColor);   
-    TEXT_SetText(hItem, SysConf.Unit==UNIT_km?"km":"nm");    
-  
-    //
-    // Initialization of 'et_0'
-    //
-    
-    hBts[0] = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_0);
-    BUTTON_SetText(hBts[0], mntSetting.DSP_Setting.isEnable>DISABLE?"开启":"关闭");   
-	   WM_SetCallback(hBts[0],&myButtonListener);
-    
-    //
-    // Initialization of 'et_1'
-    //
-    hBts[1] = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_1);
-    BUTTON_SetText(hBts[1], mntSetting.BGL_Setting.isEnable>DISABLE?"开启":"关闭"); 
-	   WM_SetCallback(hBts[1],&myButtonListener);  
-    //
-    // Initialization of 'et_2'
-    //
-    hBts[2] = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_2);
-    sprintf(pStrBuf, "%d.%02d", mntSetting.BGL_Setting.Dist/100, mntSetting.BGL_Setting.Dist%100);
-	  	BUTTON_SetText(hBts[2], pStrBuf);  
-	   WM_SetCallback(hBts[2],&myButtonListener);	
-    //
-    // Initialization of 'et_3'
-    //
-    hBts[3] = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_3);
-    BUTTON_SetText(hBts[3], mntSetting.BGL_Setting.isSndEnable>DISABLE?"开启":"关闭");
-	   WM_SetCallback(hBts[3] ,&myButtonListener);	  
-    //
-    // Initialization of 'et_4'
-    //
-    hBts[4]  = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_4);
-    BUTTON_SetText(hBts[4], mntSetting.DRG_Setting.isEnable>DISABLE?"开启":"关闭");
-	   WM_SetCallback(hBts[4],&myButtonListener);    
-    //
-    // Initialization of 'et_5'
-    //
-    hBts[5]  = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_5);   
-    sprintf(pStrBuf, "%d.%02d", mntSetting.DRG_Setting.Dist/100, mntSetting.DRG_Setting.Dist%100);
-    BUTTON_SetText(hBts[5], pStrBuf);     
-    WM_SetCallback(hBts[5],&myButtonListener);
-    
-    
-    hBts[6]  = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_6);
-    BUTTON_SetText(hBts[6], mntSetting.DRG_Setting.isSndEnable>DISABLE?"开启":"关闭");
-    WM_SetCallback(hBts[6], &myButtonListener);;
-    
-    for(i=0;i<7;i++)
-    {
-       BUTTON_SetBkColor(hBts[i], BUTTON_CI_UNPRESSED, pSkin->bt_bkColor);
-       BUTTON_SetTextColor(hBts[i], BUTTON_CI_UNPRESSED,pSkin->bt_txColor);
-    } 
-    // USER START (Optionally insert additional code for further widget initialization)
-    // USER END
-    break;
-    
-    
+       WINDOW_SetBkColor(pMsg->hWin, pSkin->bkColor);
+     
+       //
+       // Initialization of 'text'
+       //    
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_0);
+       TEXT_SetFont(hItem,&GUI_Font24);
+       TEXT_SetTextColor(hItem, pSkin->bt_bkColor);
+       
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_1);
+       TEXT_SetTextColor(hItem, pSkin->txColor); 
+       
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_2);
+       TEXT_SetTextColor(hItem, pSkin->txColor); 
+       
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_3);
+       TEXT_SetTextColor(hItem, pSkin->txColor); 
+       
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_4);
+       TEXT_SetTextColor(hItem, pSkin->txColor); 
+       
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_5);
+       TEXT_SetTextColor(hItem, pSkin->txColor); 
+       
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_6);
+       TEXT_SetTextColor(hItem, pSkin->txColor); 
+       
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_7);
+       TEXT_SetTextColor(hItem, pSkin->txColor);    
+       
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_8);
+       TEXT_SetFont(hItem, GUI_FONT_24_1);
+       TEXT_SetTextColor(hItem, pSkin->txColor);
+//       TEXT_SetText(hItem, SysConf.Unit==UNIT_km?"km":"nm");
+       
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_9);
+       TEXT_SetFont(hItem, GUI_FONT_24_1);
+       TEXT_SetTextColor(hItem, pSkin->txColor);   
+//       TEXT_SetText(hItem, SysConf.Unit==UNIT_km?"km":"nm");    
+     
+       //
+       // Initialization of 'et_0'
+       //
+       
+       hBts[0] = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_0);
+//       BUTTON_SetText(hBts[0], mntSetting.DSP_Setting.isEnable>DISABLE?"开启":"关闭");   
+       WM_SetCallback(hBts[0],&myButtonListener);
+       
+       //
+       // Initialization of 'et_1'
+       //
+       hBts[1] = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_1);
+//       BUTTON_SetText(hBts[1], mntSetting.DRG_Setting.isEnable>DISABLE?"开启":"关闭"); 
+       WM_SetCallback(hBts[1],&myButtonListener);  
+       //
+       // Initialization of 'et_2'
+       //
+       hBts[2] = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_2);
+//       if(SysConf.Unit == UNIT_nm)
+//       {
+//          sprintf(pStrBuf, "%d.%02d", mntSetting.DRG_Setting.Dist/1000, (mntSetting.DRG_Setting.Dist%1000)/10);
+//          BUTTON_SetText(hBts[2], pStrBuf);  
+//       }
+//       else
+//       {
+//          int tmpDist  = mntSetting.DRG_Setting.Dist *100 /54;
+//          sprintf(pStrBuf, "%d.%02d", tmpDist /1000,tmpDist %1000 /10);
+//          BUTTON_SetText(hBts[2],pStrBuf);
+//       }
+       WM_SetCallback(hBts[2],&myButtonListener);	
+       //
+       // Initialization of 'et_3'
+       //
+       hBts[3] = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_3);
+//       BUTTON_SetText(hBts[3], mntSetting.DRG_Setting.isSndEnable>DISABLE?"开启":"关闭");
+       WM_SetCallback(hBts[3] ,&myButtonListener);	  
+       //
+       // Initialization of 'et_4'
+       //
+       hBts[4]  = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_4);
+
+//       BUTTON_SetText(hBts[4], mntSetting.BGL_Setting.isEnable>DISABLE?"开启":"关闭");
+       WM_SetCallback(hBts[4],&myButtonListener);    
+       //
+       // Initialization of 'et_5'
+       //
+       hBts[5]  = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_5);   
+//       if(SysConf.Unit == UNIT_nm)
+//       {
+//          sprintf(pStrBuf, "%d.%02d", mntSetting.BGL_Setting.Dist/1000, mntSetting.BGL_Setting.Dist%10);
+//          BUTTON_SetText(hBts[5], pStrBuf);     
+//       }
+//       else
+//       {
+//          int tmpDist  = mntSetting.BGL_Setting.Dist *100 / 54;
+//          sprintf(pStrBuf, "%d.%02d", tmpDist /1000,tmpDist %1000 /10);
+//          BUTTON_SetText(hBts[5], pStrBuf);
+//       }
+       WM_SetCallback(hBts[5],&myButtonListener);
+       
+       
+       hBts[6]  = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_6);
+//       BUTTON_SetText(hBts[6], mntSetting.BGL_Setting.isSndEnable>DISABLE?"开启":"关闭");
+       WM_SetCallback(hBts[6], &myButtonListener);;
+       
+       for(i=0;i<7;i++)
+       {
+          BUTTON_SetBkColor(hBts[i], BUTTON_CI_UNPRESSED, pSkin->bt_bkColor);
+          BUTTON_SetTextColor(hBts[i], BUTTON_CI_UNPRESSED,pSkin->bt_txColor);
+       } 
+       // USER START (Optionally insert additional code for further widget initialization)
+       // USER END
+       btReset();
+       break;
+       
+       
   default:
-      WM_DefaultProc(pMsg);
-      break;
+       WM_DefaultProc(pMsg);
+       break;
   }
 }
 
@@ -350,11 +442,12 @@ static void myButtonListener(WM_MESSAGE* pMsg)
 	
 	int i  = 0;
 	int Step  = 0;
+ int tmpDist  = 0;
 
 	
 	switch(pMsg->MsgId)
 	{
-      case WM_SET_FOCUS:
+      case WM_SET_FOCUS:         
            i  = WM_GetId(pMsg->hWin) - ID_BUTTON_0;
            
            if(pMsg->Data.v)
@@ -379,18 +472,18 @@ static void myButtonListener(WM_MESSAGE* pMsg)
          GUI_StoreKeyMsg(GUI_KEY_BACKTAB,1);
          break;
 				
-				case GUI_KEY_DOWN:
+				case GUI_KEY_DOWN: 
+ 
          GUI_StoreKeyMsg(GUI_KEY_TAB,1);
          break;
       
     case GUI_KEY_RIGHT:
-         Step  = 10;
+         Step  = 100;
     case GUI_KEY_LEFT:
-         Step  = (Step>5)?5:-5;
+         Step  = (Step>50)?50:-50;
          focussedButton  = WM_GetFocussedWindow();
-         while( (focussedButton != hBts[i])  &&  (i<7) )
-              i++;
-
+         i  = WM_GetId(focussedButton) - ID_BUTTON_0;
+        
          switch(i)
          {
             case 0:
@@ -407,68 +500,87 @@ static void myButtonListener(WM_MESSAGE* pMsg)
                  break;
                  
             case 1:
-                 if(mntSetting.BGL_Setting.isEnable)
+                 if(mntSetting.DRG_Setting.isEnable)
                  {
-                    mntSetting.BGL_Setting.isEnable  = DISABLE;
+                    mntSetting.DRG_Setting.isEnable  = DISABLE;
                     BUTTON_SetText(hBts[1], "关闭");
                  }
                  else
                  {
-                    mntSetting.BGL_Setting.isEnable  = ENABLE;
+                    mntSetting.DRG_Setting.isEnable  = ENABLE;
                     BUTTON_SetText(hBts[1], "开启");
                  }
                  break;
                  
             case 2:
-                 mntSetting.BGL_Setting.Dist  += Step;
-                 mntSetting.BGL_Setting.Dist  = (mntSetting.BGL_Setting.Dist+105)%105;
+                 mntSetting.DRG_Setting.Dist  += Step;
+                 mntSetting.DRG_Setting.Dist  = (mntSetting.DRG_Setting.Dist+1050) %1050;
+INFO("DRG dist:%d",mntSetting.DRG_Setting.Dist);
                  
-                 sprintf(pStrBuf, "%d.%02d", mntSetting.BGL_Setting.Dist/100, mntSetting.BGL_Setting.Dist%100);
-                 BUTTON_SetText(hBts[2], pStrBuf);
+                 if(SysConf.Unit == UNIT_nm)
+                 {
+                    sprintf(pStrBuf, "%d.%02d", mntSetting.DRG_Setting.Dist /1000, mntSetting.DRG_Setting.Dist %1000 /10);
+                    BUTTON_SetText(hBts[2], pStrBuf);
+                 }
+                 else 
+                 {
+                    tmpDist  = mntSetting.DRG_Setting.Dist *100 / 54;
+                    sprintf(pStrBuf, "%d.%02d", tmpDist /1000, tmpDist %1000 /10);
+                    BUTTON_SetText(hBts[2], pStrBuf);
+                 }
                  break;
                  
             case 3:
-                 if(mntSetting.BGL_Setting.isSndEnable) 
+                 if(mntSetting.DRG_Setting.isSndEnable) 
                  {                 
-                    mntSetting.BGL_Setting.isSndEnable = DISABLE;
+                    mntSetting.DRG_Setting.isSndEnable = DISABLE;
                     BUTTON_SetText(hBts[3], "关闭");
                  } 
                  else
                  {                
-                    mntSetting.BGL_Setting.isSndEnable  = ENABLE;
+                    mntSetting.DRG_Setting.isSndEnable  = ENABLE;
                     BUTTON_SetText(hBts[3], "开启");
                  }                   
                  break;  
             case 4:
-                 if(mntSetting.DRG_Setting.isEnable)
+                 if(mntSetting.BGL_Setting.isEnable)
                  { 
-                    mntSetting.DRG_Setting.isEnable  = DISABLE;
+                    mntSetting.BGL_Setting.isEnable  = DISABLE;
                     BUTTON_SetText(hBts[4], "关闭");
                  }
                  else
                  {
-                    mntSetting.DRG_Setting.isEnable  = ENABLE;
+                    mntSetting.BGL_Setting.isEnable  = ENABLE;
                     BUTTON_SetText(hBts[4], "开启");
                  }
                  break;            
                  
             case 5:
-                 mntSetting.DRG_Setting.Dist  += Step;
-                 mntSetting.DRG_Setting.Dist  = (mntSetting.DRG_Setting.Dist+105)%105;
-                 
-                 sprintf(pStrBuf, "%d.%02d", mntSetting.DRG_Setting.Dist/100, mntSetting.DRG_Setting.Dist%100);
-                 BUTTON_SetText(hBts[5], pStrBuf);
+                 mntSetting.BGL_Setting.Dist  += Step;
+                 mntSetting.BGL_Setting.Dist  = (mntSetting.BGL_Setting.Dist+1050) %1050;
+INFO("DRG dist:%d",mntSetting.BGL_Setting.Dist);                
+                 if(SysConf.Unit == UNIT_nm)
+                 {
+                    sprintf(pStrBuf, "%d.%02d", mntSetting.BGL_Setting.Dist /1000, mntSetting.BGL_Setting.Dist %1000 /10);
+                    BUTTON_SetText(hBts[5], pStrBuf);
+                 }
+                 else
+                 {
+                    tmpDist  = mntSetting.BGL_Setting.Dist *100 /54;
+                    sprintf(pStrBuf, "%d.%02d", tmpDist /1000, tmpDist %1000 / 10);
+                    BUTTON_SetText(hBts[5], pStrBuf);
+                 }
                  break; 
             
             case 6:
-                 if(mntSetting.DRG_Setting.isSndEnable)
+                 if(mntSetting.BGL_Setting.isSndEnable)
                  {
-                    mntSetting.DRG_Setting.isSndEnable  = DISABLE;
+                    mntSetting.BGL_Setting.isSndEnable  = DISABLE;
                     BUTTON_SetText(hBts[6], "关闭");
                  }
                  else
                  {
-                    mntSetting.DRG_Setting.isSndEnable  = ENABLE;
+                    mntSetting.BGL_Setting.isSndEnable  = ENABLE;
                     BUTTON_SetText(hBts[6], "开启");
                  }
                  break;             
@@ -477,72 +589,65 @@ static void myButtonListener(WM_MESSAGE* pMsg)
     	
     case GUI_KEY_BACKSPACE:
          pIterator  = pMntHeader;
-         while(pIterator)         
+         while(pIterator)
          {
-            if(pIterator->chsState == MNTState_Choosen  ||  pIterator->chsState == MNTState_Default)
+            if(pIterator->chsState == MNTState_Choosen ||  pIterator->chsState == MNTState_Default)
             {
-               break;
+              if(Mem_isEqual(&pIterator->mntBoat.mntSetting, &mntSetting, sizeof(mntSetting)) == FALSE)
+              {
+                 myMsg.hWin  = WM_GetClientWindow(confirmWin);
+                 myMsg.hWinSrc  = WM_GetClientWindow(mntSettingWin);
+                 myMsg.MsgId  = USER_MSG_CHOOSE;
+                 myMsg.Data.v = STORE_SETTING;
+                 WM_SendMessage(myMsg.hWin, &myMsg);
+                 
+                 WM_BringToTop(confirmWin);
+                 WM_SetFocus(WM_GetDialogItem (confirmWin,GUI_ID_BUTTON0)); 
+                 return ;
+              }
+              {                  
+              }
             }
-            else
-            {
-               pIterator   = pIterator->pNext;
-            }
-         }
-         
-         if(pIterator)
-         {
-            myMsg.hWin  = WM_GetClientWindow(confirmWin);
-            myMsg.hWinSrc  = pMsg->hWin;
-            myMsg.MsgId  = USER_MSG_CHOOSE;
-            myMsg.Data.v = STORE_SETTING;
-            WM_SendMessage(myMsg.hWin, &myMsg);
             
-            WM_BringToTop(confirmWin);
-            WM_SetFocus(WM_GetDialogItem (confirmWin,GUI_ID_BUTTON0));         
+            pIterator  = pIterator->pNext;
          }
-         else
-         {
-            btReset(mntSettingWin);
-            WM_SetFocus(subWins[1]);
-         }
-          
+         WM_SetFocus(subWins[1]);         
          break; 
          
 				default:
 					    BUTTON_Callback(pMsg);
-				break;
+				     break;
 			}
    break;
 			
-   case USER_MSG_REPLY:
-       switch(pMsg->Data.v)
-       {
-          case REPLY_OK:
-               WM_SetFocus(WM_GetDialogItem(pMsg->hWin, ID_BUTTON_0));
-               i  = MNT_makeSettingUp(&mntSetting);  
-               MNT_initSetting();
-               btReset(mntSettingWin);  
-               myMsg.hWin  = WM_GetClientWindow(menuWin);               
-               myMsg.MsgId  = USER_MSG_DFULT_CNT;
-               myMsg.Data.v  = i;
-               WM_SendMessage(myMsg.hWin, &myMsg);
-               WM_SetFocus(menuWin);
-               break;
-          case REPLY_CANCEL:   
-               MNT_initSetting();
-               btReset(mntSettingWin);               
-               WM_SetFocus(subWins[1]);
-               break;
-               
-           default:
-INFO("Something err!");           
-           break;
-       }
- 
-   break;
+//   case USER_MSG_REPLY:
+//       switch(pMsg->Data.v)
+//       {
+//          case REPLY_OK:
+//               WM_SetFocus(WM_GetDialogItem(pMsg->hWin, ID_BUTTON_0));
+//               i  = MNT_makeSettingUp(&mntSetting);  
+////               MNT_initSetting();
+//               btReset(mntSettingWin);  
+//               myMsg.hWin  = WM_GetClientWindow(menuWin);               
+//               myMsg.MsgId  = USER_MSG_DFULT_CNT;
+//               myMsg.Data.v  = i;
+//               WM_SendMessage(myMsg.hWin, &myMsg);
+//               WM_SetFocus(menuWin);
+//               break;
+//          case REPLY_CANCEL:   
+////               MNT_initSetting();
+//               btReset(mntSettingWin);               
+//               WM_SetFocus(subWins[1]);
+//               break;
+//               
+//           default:
+//INFO("Something err!");           
+//           break;
+//       }
+//   break;
        
 				default:
-					BUTTON_Callback(pMsg);
+					   BUTTON_Callback(pMsg);
 				break;
 	}	 
   
@@ -550,17 +655,43 @@ INFO("Something err!");
 
 // USER END
 
-static void btReset(WM_HWIN thisWin)
+static void btReset(void)
 {
-   BUTTON_SetText(hBts[0], mntSetting.DSP_Setting.isEnable>DISABLE?"开启":"关闭");   
-   BUTTON_SetText(hBts[1], mntSetting.BGL_Setting.isEnable>DISABLE?"开启":"关闭"); 
-   sprintf(pStrBuf, "%d.%02d", mntSetting.BGL_Setting.Dist/100, mntSetting.BGL_Setting.Dist%100);
-   BUTTON_SetText(hBts[2], pStrBuf); 
-   BUTTON_SetText(hBts[3], mntSetting.BGL_Setting.isSndEnable>DISABLE?"开启":"关闭"); 
-   BUTTON_SetText(hBts[4], mntSetting.DRG_Setting.isEnable>DISABLE?"开启":"关闭"); 
-   sprintf(pStrBuf, "%d.%02d", mntSetting.DRG_Setting.Dist/100, mntSetting.DRG_Setting.Dist%100);
-   BUTTON_SetText(hBts[5], pStrBuf);  
-   BUTTON_SetText(hBts[6], mntSetting.DRG_Setting.isSndEnable>DISABLE?"开启":"关闭");    
+     int tmpDist  = 0;
+     mntSetting.DSP_Setting.isEnable  = ENABLE;
+     
+     mntSetting.DRG_Setting.isEnable  = ENABLE;
+     mntSetting.DRG_Setting.isSndEnable  = ENABLE;
+     mntSetting.DRG_Setting.Dist         = 100;
+     
+     mntSetting.BGL_Setting.isEnable  = ENABLE;
+     mntSetting.BGL_Setting.isSndEnable  = ENABLE;
+     mntSetting.BGL_Setting.Dist         = 50;
+     
+     BUTTON_SetText(hBts[0], mntSetting.DSP_Setting.isEnable>DISABLE?"开启":"关闭");
+     BUTTON_SetText(hBts[1], mntSetting.DRG_Setting.isEnable>DISABLE?"开启":"关闭");
+     BUTTON_SetText(hBts[3], mntSetting.DRG_Setting.isSndEnable>DISABLE?"开启":"关闭");
+     BUTTON_SetText(hBts[4], mntSetting.BGL_Setting.isEnable>DISABLE?"开启":"关闭");
+     BUTTON_SetText(hBts[6], mntSetting.BGL_Setting.isSndEnable>DISABLE?"开启":"关闭");
+     
+     if(SysConf.Unit == UNIT_nm)
+     {
+        sprintf(pStrBuf, "%d.%02d", mntSetting.DRG_Setting.Dist /1000, mntSetting.DRG_Setting.Dist %1000 /10);
+        BUTTON_SetText(hBts[2], pStrBuf);
+        
+        sprintf(pStrBuf, "%d.%02d", mntSetting.BGL_Setting.Dist /1000, mntSetting.BGL_Setting.Dist %1000 /10);
+        BUTTON_SetText(hBts[5], pStrBuf);
+     }
+     else
+     {
+        tmpDist  = mntSetting.DRG_Setting.Dist *100 /54;
+        sprintf(pStrBuf, "%d.%02d", tmpDist /1000, tmpDist %1000 / 10);
+        BUTTON_SetText(hBts[2], pStrBuf);
+        
+        tmpDist  = mntSetting.BGL_Setting.Dist *1000 /54;
+        sprintf(pStrBuf, "%d.%02d", tmpDist /1000, tmpDist %1000 /10);
+        BUTTON_SetText(hBts[5], pStrBuf);
+     }
 }
 
 

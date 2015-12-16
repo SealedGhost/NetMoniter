@@ -17,7 +17,7 @@ struct _BGL_SETTING
 {
    unsigned char isEnable;
    unsigned char isSndEnable;
-   short         Dist;
+   unsigned int  Dist;
 };
 
 typedef struct _DRG_SETTING DRG_SETTING;
@@ -25,7 +25,7 @@ struct _DRG_SETTING
 {
    unsigned char isEnable;
    unsigned char isSndEnable;
-   short         Dist;
+   unsigned int  Dist;
 };
 
 typedef struct _MNT_SETTING MNT_SETTING;
@@ -66,11 +66,10 @@ extern MNT_SETTING mntSetting;
 
 int  MNT_getAddrOffset(uint8_t * addr);
 Bool MNT_add(BERTH * pBerth);
-void MNT_initSetting(void);
 void MNT_load(void);
 int  MNT_makeSettingUp(MNT_SETTING * pMNT_Setting);
-void MNT_printSetting(void);
-void MNT_DumpSetting(MNT_BERTH * pBerth);
+void printSetting(MNT_SETTING * p_setting);
+void MNT_printSetting(void);void MNT_DumpSetting(MNT_BERTH * pBerth);
 Bool MNT_removeById(long Id);
 int  MNT_getDefaultNum(void);
 

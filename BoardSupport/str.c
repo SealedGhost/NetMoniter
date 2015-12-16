@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
+
 char strBuf[20]  = "?????.???";
 char* pStrBuf = strBuf;
 
@@ -21,7 +22,7 @@ void disttostr( char * str, int num)
 
 long strtoi(const char*str)
 {
-	int val = 0;
+	long val = 0;
 	int i = 0;
  int len  = 0;
  
@@ -29,7 +30,7 @@ long strtoi(const char*str)
  if(str != NULL)
  {
  
-    len  = strlen(str);
+    len  = strlen(str); 
     for(i=0; i<len; i++)
     {
        if(str[i]>='0'  &&  str[i]<='9')
@@ -37,7 +38,7 @@ long strtoi(const char*str)
           val  = val*10 + str[i]-'0';
        }
        else if(str[i] != ' ')
-       {
+       {     
           return 0;
        }
     }
@@ -130,3 +131,33 @@ void str_trim(char * pszSrc, int nMaxLen)
    }
    return;   
 }
+
+
+/** @brief      判断两个相同类型结构体是否相等
+ *
+ *  @dscrp 
+ *  @para [in]  两个结构体的起始地址和结构体的大小
+ *  @para [out] 如果有地址为NULL，或者不相等，返回FALSE。否则返回TRUE
+ */
+Bool Mem_isEqual(void* _pSrc, void* _pDst, unsigned int nSize)
+{
+   unsigned char* pSrc  = (unsigned char*)_pSrc;
+   unsigned char* pDst  = (unsigned char*)_pDst;
+   
+   if(pStrBuf == NULL  ||  pDst == NULL)
+      return FALSE;
+   
+   while(nSize)
+   {
+      if(pSrc[nSize-1] != pDst[nSize-1])
+      {
+         return FALSE;
+      }
+      else
+      {
+         nSize--;
+      }
+   }
+   return TRUE;
+}
+

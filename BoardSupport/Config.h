@@ -6,6 +6,25 @@
 
 
 
+//#define DEBUG_LEVEL  0
+//#define DEBUG_LEVEL DEBUG_LEVEL_ERROR
+//#define DEBUG_LEVEL DEBUG_LEVEL_WARNING
+//#define DEBUG_LEVEL DEBUG_LEVEL_WATCH
+#define DEBUG_LEVEL DEBUG_LEVEL_TAG
+
+#ifdef DEBUG_LEVEL_TAR
+  #define DEBUG_LEVEL_WATCH
+#endif
+
+#ifdef DEBUG_LEVEL_WATCH
+  #define DEBUG_LEVL_WARNING
+#endif
+
+#ifdef DEBUG_LEVEL_WARNING
+  #define DEBUG_LEVEL_ERROR
+#endif
+
+
 /********************************************************************
  *
  *               UI config
@@ -164,3 +183,4 @@
 
 
 #endif
+

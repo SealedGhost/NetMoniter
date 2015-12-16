@@ -10,9 +10,11 @@
 #define USER_MSG_SHAPE     (WM_USER + 0x04)
 #define USER_MSG_UNIT      (WM_USER + 0x05)
 //#define USER_MSG_BRING     (WM_USER + 0x06)
+#define USER_MSG_LV_MOVE   (WM_USER + 0x06)
 #define USER_MSG_DFULT_CNT (WM_USER + 0x07)
 #define USER_MSG_DIM       (WM_USER + 0x08)
 #define USER_MSG_LV_UPDATE (WM_USER + 0x09)
+#define USER_MSG_FOCUS     (WM_USER + 0x10)
 
 
 #define STORE_SETTING   1

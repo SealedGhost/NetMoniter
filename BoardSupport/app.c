@@ -207,6 +207,19 @@ void App_TaskStart(void)//初始化UCOS，初始化SysTick节拍，并创建三个任务
   OSTaskCreateExt(Insert_Task,(void *)0,(OS_STK *)&Insert_Task_Stack[TOUCH_TASK_STACK_SIZE-1],Insert_Task_PRIO,Insert_Task_PRIO,(OS_STK *)&Insert_Task_Stack[0],TOUCH_TASK_STACK_SIZE,(void*)0,OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR );/* 创建任务 Insert_Task */
   OSTaskCreateExt(Refresh_Task,  (void *)0,(OS_STK *)&Refresh_Task_Stack[KEY_TASK_STACK_SIZE-1],    Refresh_Task_PRIO,  Refresh_Task_PRIO  ,(OS_STK *)&Refresh_Task_Stack[0],  KEY_TASK_STACK_SIZE,(void*)0,  OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR);/* 创建任务 Refresh_Task */
 
+//#if DEBUG_LEVEL >= DEBUG_LEVEL_TAG
+//    INFO("DEBUG_LEVEL: TAG");
+//#elif DEBUG_LEVEL >= DEBUG_LEVEL_WATCH
+//    INFO("DEBUG_LEVEL: WATCH");
+//#elif DEBUG_LEVEL >= DEBUG_LEVEL_WARNING
+//    INFO("DEBUG_LEVEL: WARNKNG");  
+//#elif DEBUG_LEVEL >= DEBUG_LEVEL_ERROR
+//    INFO("DEBUG_LEVEL: ERROR");    
+//#else 
+//    INFO("DEBUG_LEVEL: 0");    
+//#endif
+       
+
   OSStart();
 }
 

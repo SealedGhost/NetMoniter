@@ -37,7 +37,7 @@ void MainTask(void)
    GUI_MEMDEV_Delete(hMem0);
    
    sysInit();
-   MNT_initSetting();
+//   MNT_initSetting();
    
    GUI_Delay(1000);
    GUI_Clear();

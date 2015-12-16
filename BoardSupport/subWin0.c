@@ -214,8 +214,8 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        GUI_DispStringAt("航速",              LV_MoniteList_WIDTH+20, LV_MoniteList_Y+160);
        GUI_DispStringAt("航向",              LV_MoniteList_WIDTH+200, LV_MoniteList_Y+160);
        GUI_DispStringAt("消失报警状态",     LV_MoniteList_WIDTH+20, LV_MoniteList_Y+200);
-       GUI_DispStringAt("防盗报警距离",     LV_MoniteList_WIDTH+20, LV_MoniteList_Y+240);
-       GUI_DispStringAt("走锚报警距离",     LV_MoniteList_WIDTH+20, LV_MoniteList_Y+280);
+       GUI_DispStringAt("走锚报警距离",     LV_MoniteList_WIDTH+20, LV_MoniteList_Y+240);
+       GUI_DispStringAt("防盗报警距离",     LV_MoniteList_WIDTH+20, LV_MoniteList_Y+280);
        if(SysConf.Unit == UNIT_km)
        {
           GUI_DispStringAt("km",             LV_MoniteList_WIDTH+210,LV_MoniteList_Y+240);
@@ -285,23 +285,23 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        
        if(SysConf.Unit == UNIT_nm)       
        {
-          sprintf(pStrBuf, "%d.%02d", pIterator->mntBoat.mntSetting.BGL_Setting.Dist/1000,
-                                     (pIterator->mntBoat.mntSetting.BGL_Setting.Dist%1000)/10);
-          GUI_DispStringAt(pStrBuf,  LV_MoniteList_WIDTH+160,280);
-          
           sprintf(pStrBuf, "%d.%02d", pIterator->mntBoat.mntSetting.DRG_Setting.Dist/1000,
                                      (pIterator->mntBoat.mntSetting.DRG_Setting.Dist%1000)/10);
+          GUI_DispStringAt(pStrBuf,  LV_MoniteList_WIDTH+160,280);
+          
+          sprintf(pStrBuf, "%d.%02d", pIterator->mntBoat.mntSetting.BGL_Setting.Dist/1000,
+                                     (pIterator->mntBoat.mntSetting.BGL_Setting.Dist%1000)/10);
           GUI_DispStringAt(pStrBuf,  LV_MoniteList_WIDTH+160,320);                                     
        }
        else
        {
           int tmpDist  = 0;
           
-          tmpDist  = pIterator->mntBoat.mntSetting.BGL_Setting.Dist * 100 / 54;
+          tmpDist  = pIterator->mntBoat.mntSetting.DRG_Setting.Dist * 100 / 54;
           sprintf(pStrBuf, "%d.%2d", tmpDist/1000, (tmpDist%1000)/100);
           GUI_DispStringAt(pStrBuf,  LV_MoniteList_WIDTH+160,280);
           
-          tmpDist  = pIterator->mntBoat.mntSetting.DRG_Setting.Dist * 100 / 54;
+          tmpDist  = pIterator->mntBoat.mntSetting.BGL_Setting.Dist * 100 / 54;
           sprintf(pStrBuf, "%d.%2d", tmpDist/1000, (tmpDist%1000)/100);
           GUI_DispStringAt(pStrBuf,  LV_MoniteList_WIDTH+160,320);  
        }
@@ -423,6 +423,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
          if(SelRow>=0)
          {
            LISTVIEW_GetItemText(thisListView, 1, SelRow, pStrBuf, 11);
+           
            if(strtoi(pStrBuf))
            {
              myMsg.hWin  = WM_GetClientWindow(confirmWin);
@@ -447,10 +448,10 @@ static void myListViewListener(WM_MESSAGE* pMsg)
        {
           case REPLY_OK:  
           
-               LISTVIEW_GetItemText(thisListView, 1, SelRow, pStrBuf, 10);
+               LISTVIEW_GetItemText(thisListView, 1, SelRow, pStrBuf, 11);
                MMSI  = strtoi(pStrBuf);
                if(MNT_removeById(MMSI))
-               {
+               {              
                   for(i=N_boat-1; i>=0; i--)
                   {
                      if(SimpBerthes[i].pBerth->Boat.user_id == MMSI)
