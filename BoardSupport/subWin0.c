@@ -33,6 +33,7 @@
 #include "str.h"
 #include "28.h"
 
+
 /*********************************************************************
 *
 *       Defines
@@ -168,7 +169,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
       
        LISTVIEW_AddColumn(hItem, LV_MoniteList_Col_0_WIDTH, "距离", GUI_TA_HCENTER | GUI_TA_VCENTER);
        LISTVIEW_AddColumn(hItem, LV_MoniteList_Col_1_WIDTH, "MMSI", GUI_TA_HCENTER | GUI_TA_VCENTER);
-       LISTVIEW_AddColumn(hItem, LV_MoniteList_Col_2_WIDTH, "S   ", GUI_TA_HCENTER | GUI_TA_VCENTER);
+       LISTVIEW_AddColumn(hItem, LV_MoniteList_Col_2_WIDTH, "状态", GUI_TA_HCENTER | GUI_TA_VCENTER);
 
  
        LISTVIEW_SetGridVis(hItem, 1);
@@ -213,28 +214,37 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        GUI_DispStringAt("东经",              LV_MoniteList_WIDTH+20, LV_MoniteList_Y+120);
        GUI_DispStringAt("航速",              LV_MoniteList_WIDTH+20, LV_MoniteList_Y+160);
        GUI_DispStringAt("航向",              LV_MoniteList_WIDTH+200, LV_MoniteList_Y+160);
-       GUI_DispStringAt("消失报警状态",     LV_MoniteList_WIDTH+20, LV_MoniteList_Y+200);
-       GUI_DispStringAt("走锚报警距离",     LV_MoniteList_WIDTH+20, LV_MoniteList_Y+240);
-       GUI_DispStringAt("防盗报警距离",     LV_MoniteList_WIDTH+20, LV_MoniteList_Y+280);
-       if(SysConf.Unit == UNIT_km)
-       {
-          GUI_DispStringAt("km",             LV_MoniteList_WIDTH+210,LV_MoniteList_Y+240);
-          GUI_DispStringAt("km",             LV_MoniteList_WIDTH+210,LV_MoniteList_Y+280);
-       }
-       else
-       {
-          GUI_DispStringAt("nm",             LV_MoniteList_WIDTH+210,LV_MoniteList_Y+240);
-          GUI_DispStringAt("nm",             LV_MoniteList_WIDTH+210,LV_MoniteList_Y+280);
-       }
+       GUI_DispStringAt("消失报警",     LV_MoniteList_WIDTH+20, LV_MoniteList_Y+200);
+       GUI_DispStringAt("走锚报警",     LV_MoniteList_WIDTH+20, LV_MoniteList_Y+240);
+       GUI_DispStringAt("防盗报警",     LV_MoniteList_WIDTH+20, LV_MoniteList_Y+280);
+//       if(SysConf.Unit == UNIT_km)
+//       {
+//          GUI_DispStringAt("km",             LV_MoniteList_WIDTH+210,LV_MoniteList_Y+240);
+//          GUI_DispStringAt("km",             LV_MoniteList_WIDTH+210,LV_MoniteList_Y+280);
+//       }
+//       else
+//       {
+//          GUI_DispStringAt("nm",             LV_MoniteList_WIDTH+210,LV_MoniteList_Y+240);
+//          GUI_DispStringAt("nm",             LV_MoniteList_WIDTH+210,LV_MoniteList_Y+280);
+//       }
        GUI_SetColor(pSkin->inf_txColor);
 
-     
-        
        
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0);
+       
+       if(WM_HasFocus(hItem) == FALSE)
+       {
+          sprintf(pStrBuf,"  0/%3d", TotalRows);
+          GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH-80, LV_MoniteList_Y - 25);
+          break;
+       }
        SelectedRow  = LISTVIEW_GetSel(hItem);
        if( !pMntHeader  ||  SelectedRow < 0)
+       {
+          GUI_DispStringAt("  0/0 ",LV_MoniteList_WIDTH-80, LV_MoniteList_Y - 25);
           break;
+       }
+          
        TotalRows  = LISTVIEW_GetNumRows(hItem);     
        sprintf(pStrBuf,"%3d/%3d",SelectedRow+1, TotalRows);
        GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH-80, LV_MoniteList_Y-25);
@@ -244,38 +254,51 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        {
           pIterator  = pIterator->pNext;
        }  
-       if(pIterator == NULL)
+       if(pIterator == NULL  ||  pIterator ->chsState == MNTState_Cancel)
        {
           break;
        }
        
        GUI_DispStringAt(pIterator->mntBoat.name, LV_MoniteList_WIDTH+80, 80);         
        
-       if(pIterator->pBerth  && pIterator->pBerth->Boat.dist < 100000)
+       /// Display LL information of boats which is not gone.
+       if(pIterator->pBerth) 
        {
-          lltostr(pIterator->pBerth->Boat.latitude, pStrBuf);
+          if(pIterator->pBerth->Boat.dist < 100000)
+          {
+             lltostr(pIterator->pBerth->Boat.latitude, pStrBuf);
+             GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH+100, 120);
+             
+             lltostr(pIterator->pBerth->Boat.longitude, pStrBuf);
+             GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH+100, 160);
+             
+   //          if(SysConf.Unit == UNIT_km)
+   //          {
+   //             int sog  = pIterator->pBerth->Boat.SOG * 18;
+   //             sprintf(pStrBuf, "%3d.%02dkm", sog/100, sog%100);
+   //          }
+   //          else
+   //          {
+   //             sprintf(pStrBuf, "%2d.%dkt",pIterator->pBerth->Boat.SOG/10, pIterator->pBerth->Boat.SOG%10);
+   //          }
+             sprintf(pStrBuf, "%2d.%dkt", pIterator->pBerth->Boat.SOG/10, pIterator->pBerth->Boat.SOG%10);
+             GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH+80, 200);
+             
+             sprintf(pStrBuf, "%3d", pIterator->pBerth->Boat.COG/10);
+             pStrBuf[3]  = 194;
+             pStrBuf[4]  = 176;
+             pStrBuf[5]  = '\0'; 
+             GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH+260, 200);
+          }
+       }
+       /// Display LL information of boats which is gone.
+       else if(pIterator->cfgState == MNTState_Monitored)
+       {
+          lltostr(pIterator->snapLt, pStrBuf);
           GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH+100, 120);
           
-          lltostr(pIterator->pBerth->Boat.longitude, pStrBuf);
+          lltostr(pIterator->snapLg, pStrBuf);
           GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH+100, 160);
-          
-          if(SysConf.Unit == UNIT_km)
-          {
-             int sog  = pIterator->pBerth->Boat.SOG * 18;
-             sprintf(pStrBuf, "%3d.%02dkm", sog/100, sog%100);
-          }
-          else
-          {
-             sprintf(pStrBuf, "%2d.%dkt",pIterator->pBerth->Boat.SOG/10, pIterator->pBerth->Boat.SOG%10);
-          }
-          
-          GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH+80, 200);
-          
-          sprintf(pStrBuf, "%3d", pIterator->pBerth->Boat.COG/10);
-          pStrBuf[3]  = 194;
-          pStrBuf[4]  = 176;
-          pStrBuf[5]  = '\0'; 
-          GUI_DispStringAt(pStrBuf, LV_MoniteList_WIDTH+260, 200);
        }
       
        if(pIterator->mntBoat.mntSetting.DSP_Setting.isEnable == DISABLE)
@@ -283,28 +306,49 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        else
           GUI_DispStringAt("开启",  LV_MoniteList_WIDTH+160,240);
        
-       if(SysConf.Unit == UNIT_nm)       
+       if(pIterator->mntBoat.mntSetting.DRG_Setting.isEnable)
        {
-          sprintf(pStrBuf, "%d.%02d", pIterator->mntBoat.mntSetting.DRG_Setting.Dist/1000,
-                                     (pIterator->mntBoat.mntSetting.DRG_Setting.Dist%1000)/10);
-          GUI_DispStringAt(pStrBuf,  LV_MoniteList_WIDTH+160,280);
-          
-          sprintf(pStrBuf, "%d.%02d", pIterator->mntBoat.mntSetting.BGL_Setting.Dist/1000,
-                                     (pIterator->mntBoat.mntSetting.BGL_Setting.Dist%1000)/10);
-          GUI_DispStringAt(pStrBuf,  LV_MoniteList_WIDTH+160,320);                                     
+          if(SysConf.Unit == UNIT_nm)       
+          {
+             sprintf(pStrBuf, "%d.%02d nm", pIterator->mntBoat.mntSetting.DRG_Setting.Dist/1000,
+                                        (pIterator->mntBoat.mntSetting.DRG_Setting.Dist%1000)/10);
+             GUI_DispStringAt(pStrBuf,  LV_MoniteList_WIDTH+160,280);                                   
+          }
+          else
+          {
+             int tmpDist  = 0;
+             
+             tmpDist  = pIterator->mntBoat.mntSetting.DRG_Setting.Dist * 100 / 54;
+             sprintf(pStrBuf, "%d.%2d km", tmpDist/1000, (tmpDist%1000)/100);
+             GUI_DispStringAt(pStrBuf,  LV_MoniteList_WIDTH+160,280);
+          }       
        }
        else
        {
-          int tmpDist  = 0;
-          
-          tmpDist  = pIterator->mntBoat.mntSetting.DRG_Setting.Dist * 100 / 54;
-          sprintf(pStrBuf, "%d.%2d", tmpDist/1000, (tmpDist%1000)/100);
-          GUI_DispStringAt(pStrBuf,  LV_MoniteList_WIDTH+160,280);
-          
-          tmpDist  = pIterator->mntBoat.mntSetting.BGL_Setting.Dist * 100 / 54;
-          sprintf(pStrBuf, "%d.%2d", tmpDist/1000, (tmpDist%1000)/100);
-          GUI_DispStringAt(pStrBuf,  LV_MoniteList_WIDTH+160,320);  
+          GUI_DispStringAt("开启", LV_MoniteList_WIDTH+160, 280);
        }
+       
+       if(pIterator->mntBoat.mntSetting.BGL_Setting.isEnable)
+       {
+          if(SysConf.Unit == UNIT_nm)       
+          {          
+             sprintf(pStrBuf, "%d.%02d nm", pIterator->mntBoat.mntSetting.BGL_Setting.Dist/1000,
+                                        (pIterator->mntBoat.mntSetting.BGL_Setting.Dist%1000)/10);
+             GUI_DispStringAt(pStrBuf,  LV_MoniteList_WIDTH+160,320);                                     
+          }
+          else
+          {
+             int tmpDist  = 0;
+             
+             tmpDist  = pIterator->mntBoat.mntSetting.BGL_Setting.Dist * 100 / 54;
+             sprintf(pStrBuf, "%d.%2d km", tmpDist/1000, (tmpDist%1000)/100);
+             GUI_DispStringAt(pStrBuf,  LV_MoniteList_WIDTH+160,320);  
+          } 
+       }
+       else
+       {
+          GUI_DispStringAt("关闭",LV_MoniteList_WIDTH+160, 320);
+       }      
        break;
 
      default:
@@ -362,7 +406,12 @@ static void myListViewListener(WM_MESSAGE* pMsg)
              LISTVIEW_SetSel(pMsg->hWin, 0);
           WM_InvalidateRect(subWins[0], &infoRect);
           WM_InvalidateRect(subWins[0], &lvIndicate);
-       }         
+       }   
+       else
+       {
+           WM_InvalidateRect(subWins[0], &lvIndicate);   
+           WM_InvalidateRect(subWins[0],&infoRect);
+       }       
        LISTVIEW_Callback(pMsg);
 
        break;
@@ -382,7 +431,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
          WM_InvalidateRect(subWins[0], &lvIndicate);       
          break;
          
-				case GUI_KEY_BACKSPACE:				
+				case GUI_KEY_BACKSPACE:		   
          WM_SetFocus(menuWin);
          break;
          

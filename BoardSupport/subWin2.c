@@ -151,7 +151,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
   
   case USER_MSG_SKIN: 
        pSkin  = &(lvWinSkins[pMsg->Data.v]);
-       
+INFO("case skin:%s",pMsg->Data.v==SKIN_Day?"Day":"Night");       
        WINDOW_SetBkColor(pMsg->hWin,pSkin->bkColor);
        hItem  = WM_GetDialogItem(pMsg->hWin, ID_TEXT_0);
        TEXT_SetTextColor(hItem, pSkin->ttl_Text);
@@ -208,7 +208,7 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
       
        LISTVIEW_AddColumn(hItem, LV_AllList_Col_0_WIDTH, "距离", GUI_TA_HCENTER | GUI_TA_VCENTER);
        LISTVIEW_AddColumn(hItem, LV_AllList_Col_2_WIDTH, "MMSI", GUI_TA_HCENTER | GUI_TA_VCENTER);
-       LISTVIEW_AddColumn(hItem, LV_AllList_Col_3_WIDTH, "State", GUI_TA_HCENTER | GUI_TA_VCENTER);	
+       LISTVIEW_AddColumn(hItem, LV_AllList_Col_3_WIDTH, "状态", GUI_TA_HCENTER | GUI_TA_VCENTER);	
        LISTVIEW_AddRow(hItem, NULL);
        LISTVIEW_SetGridVis(hItem, 1);
        LISTVIEW_SetHeaderHeight(hItem,LV_MoniteList_Header_HEIGHT);
@@ -240,22 +240,35 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
   case WM_PAINT:
        GUI_SetColor(pSkin->inf_bkColor);
        GUI_FillRectEx(&infoRect);
-
+       GUI_SetTextMode(GUI_TM_TRANS);
+       GUI_SetFont(&GUI_Font24);
+       GUI_SetColor(pSkin->inf_Label);
+       GUI_DispStringAt("按确定键选择或取消选择监控的网位仪",  LV_AllList_WIDTH+20, LV_AllList_Y+240);
+      
        GUI_SetFont(&GUI_Font24_1);
        GUI_SetColor(pSkin->inf_txColor);
        
        if( N_boat <= 0 )
           break;  
           
-       GUI_SetTextMode(GUI_TM_TRANS);
-           
-       SelectedRow  = LISTVIEW_GetSel(WM_GetDialogItem(pMsg->hWin,ID_LISTVIEW_0)); 
+
+       
+       hItem  = WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0);
+       
+       if(WM_HasFocus(hItem) == FALSE)
+       {
+          sprintf(pStrBuf, "  0/%3d", N_boat);
+          GUI_DispStringAt(pStrBuf,LV_AllList_WIDTH-80,LV_AllList_Y-20);
+          break;
+       }
+       
+       SelectedRow  = LISTVIEW_GetSel(hItem); 
             
        LISTVIEW_GetItemText(WM_GetDialogItem(pMsg->hWin, ID_LISTVIEW_0),  LV_AllList_Col_MMSI, SelectedRow, pStrBuf, 11);
        SelectedMMSI  = strtoi(pStrBuf);     
        if(SelectedMMSI <= 0)
        {
-          sprintf(pStrBuf,"%3d/%3d",0, N_boat);
+          sprintf(pStrBuf,"  0/%3d", N_boat);
           GUI_DispStringAt(pStrBuf,LV_AllList_WIDTH-80,LV_AllList_Y-20);    
           break;          
        }         
@@ -281,16 +294,18 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
           lltostr(SimpBerthes[i].longitude,pStrBuf);  
           GUI_DispStringAt(pStrBuf,LV_AllList_WIDTH+80,165);
           
-          if(SysConf.Unit == UNIT_km)
-          {
-             int sog  = SimpBerthes[i].pBerth->Boat.SOG *18;
-             sprintf(pStrBuf, "%3d.%02dkm",sog/100, sog%100);
-          }
-          else 
-          {
-             sprintf(pStrBuf, "%2d.%dkt", SimpBerthes[i].pBerth->Boat.SOG/10,
-                                          SimpBerthes[i].pBerth->Boat.SOG%10);
-          }
+//          if(SysConf.Unit == UNIT_km)
+//          {
+//             int sog  = SimpBerthes[i].pBerth->Boat.SOG *18;
+//             sprintf(pStrBuf, "%3d.%02dkm",sog/100, sog%100);
+//          }
+//          else 
+//          {
+//             sprintf(pStrBuf, "%2d.%dkt", SimpBerthes[i].pBerth->Boat.SOG/10,
+//                                          SimpBerthes[i].pBerth->Boat.SOG%10);
+//          }
+          sprintf(pStrBuf, "%2d.%dkt", SimpBerthes[i].pBerth->Boat.SOG/10, 
+                                       SimpBerthes[i].pBerth->Boat.SOG%10);
           GUI_DispStringAt(pStrBuf, LV_AllList_WIDTH+80,205);
                   
           sprintf(pStrBuf, "%3d", SimpBerthes[i].pBerth->Boat.COG/10);
@@ -350,6 +365,11 @@ static void myListViewListener(WM_MESSAGE* pMsg)
             LV_turnPage(thisListView, LV_Page);
             LISTVIEW_SetSel(thisListView, 0);
             WM_InvalidateRect(subWins[2], &lvIndicate); 
+         }
+         else
+         {
+            WM_InvalidateRect(subWins[2], &lvIndicate);
+            WM_InvalidateRect(subWins[2], &infoRect);
          }
          LISTVIEW_Callback(pMsg);
          break;

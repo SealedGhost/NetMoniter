@@ -117,28 +117,6 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        HEADER_SetBkColor(hItem,pSkin->Header_Bk);
        HEADER_SetTextColor(hItem,pSkin->Header_Text);
        break; 
-       
-//  case USER_MSG_REPLY:
-//          switch(pMsg->Data.v)
-//          {
-//             case REPLY_OK:
-//                  MNT_makeSettingUp(&mntSetting);   
-//                  i  = MNT_makeSettingUp(&mntSetting);  
-//                  myMsg.hWin  = WM_GetClientWindow(menuWin);                
-//                  myMsg.MsgId  = USER_MSG_DFULT_CNT;
-//                  myMsg.Data.v  = i;
-//                  WM_SendMessage(myMsg.hWin, &myMsg);
-//                  WM_SetFocus(menuWin);
-//                  break;
-//             case REPLY_CANCEL:        
-//                  WM_SetFocus(menuWin);
-//                  break;
-//                  
-//              default:
-//                  INFO("Something err!");           
-//                  break;
-//          }
-//          break;  
   
   case WM_INIT_DIALOG:
        pSkin  = &(lvWinSkins[SysConf.Skin]);
@@ -243,8 +221,7 @@ static void myListViewListener(WM_MESSAGE* pMsg)
            {
               myMsg.hWin  = WM_GetClientWindow(mntSettingWin);
               myMsg.MsgId = USER_MSG_LV_MOVE;
-              myMsg.Data.p  = (void*)pMntHeader;
-INFO("send USER_MSG_LV_MOVE message");            
+              myMsg.Data.p  = (void*)pMntHeader;           
               WM_SendMessage(myMsg.hWin, &myMsg);
            }
         }
@@ -271,13 +248,8 @@ INFO("send USER_MSG_LV_MOVE message");
             }
             myMsg.hWin     = WM_GetClientWindow(mntSettingWin);
             myMsg.MsgId    = USER_MSG_LV_MOVE;
-            myMsg.Data.p   = (void*)pIterator;
-INFO("send USER_MSG_LV_MOVE message");            
+            myMsg.Data.p   = (void*)pIterator;           
             WM_SendMessage(myMsg.hWin, &myMsg);
-            break;
-       
-       case GUI_KEY_LEFT:				
-            WM_SetFocus(menuWin);
             break;
        
        case GUI_KEY_RIGHT:
@@ -285,7 +257,7 @@ INFO("send USER_MSG_LV_MOVE message");
             {
                selectedRow  = LISTVIEW_GetSel(thisListView);
                pIterator  = pMntHeader;
-               for(index=0;index < selectedRow; index++)
+               for(index=0;  index < selectedRow; index++)
                {
                   pIterator  = pIterator->pNext;
                }
@@ -301,20 +273,18 @@ INFO("send USER_MSG_LV_MOVE message");
                   {
                      pIterator->chsState  = MNTState_Default;
                      LISTVIEW_SetItemText(thisListView, 2, selectedRow, "吖");
-                  }
-                  
-                  myMsg.hWin     = WM_GetClientWindow(mntSettingWin);
-                  myMsg.hWinSrc  = pMsg->hWin;
-                  myMsg.Data.p   = (void*)pIterator;           
-                  
-                  myMsg.MsgId    = USER_MSG_FOCUS;
-INFO("send USER_MSG_FOCUS message");                  
-                  WM_SendMessage(myMsg.hWin, &myMsg);   
+                  }     
                }
-               else
-               {
-                  INFO("Err!");            
-               }
+//               else
+//               {
+//                  INFO("Err!");            
+//               }
+               myMsg.hWin     = WM_GetClientWindow(mntSettingWin);
+               myMsg.hWinSrc  = pMsg->hWin;
+               myMsg.Data.p   = (void*)pIterator;           
+               
+               myMsg.MsgId    = USER_MSG_FOCUS;                
+               WM_SendMessage(myMsg.hWin, &myMsg);                
             }
 //            WM_SetFocus(mntSettingWin);
             break;

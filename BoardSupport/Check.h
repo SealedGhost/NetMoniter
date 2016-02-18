@@ -21,6 +21,7 @@
 
 //Bool isDisappear(MNT_BOAT * pMntBoat);
 void check(void);
+void CHECK_checkNickName(MNT_BERTH* pMntBerth);
 
 //int INVD_add(long MMSI,long targetMMSI);
 //Bool INVD_deleteByMMSI(long MMSI);

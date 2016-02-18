@@ -1,41 +1,15 @@
 #include "sound.h"
 #include "uart.h"
 
-uint8_t SND[SND_ID_MAX][6] = {  {0x7e, 0x04, 0x41, 0x00, 0x01, 0xef},  
-                                {0x7e, 0x04, 0x41, 0x00, 0x02, 0xef},   
-                                {0x7e, 0x04, 0x41, 0x00, 0x03, 0xef},
-                                {0x7e, 0x04, 0x41, 0x00, 0x04, 0xef},
-                                {0x7e, 0x04, 0x41, 0x00, 0x05, 0xef},
-                                {0x7e, 0x04, 0x41, 0x00, 0x06, 0xef},
-                                {0x7e, 0x04, 0x41, 0x00, 0x07, 0xef},
-                                {0x7e, 0x04, 0x41, 0x00, 0x08, 0xef},
-                                {0x7e, 0x04, 0x41, 0x00, 0x09, 0xef},
-                                {0x7e, 0x04, 0x41, 0x00, 0x0a, 0xef},
-                                {0x7e, 0x04, 0x41, 0x00, 0x0b, 0xef},
-                                {0x7e, 0x04, 0x41, 0x00, 0x0c, 0xef},
-                                {0x7e, 0x04, 0x41, 0x00, 0x0d, 0xef},
-                                {0x7e, 0x04, 0x41, 0x00, 0x0e, 0xef}
-//                                  {0x7e, 0x04, 0x41, 0x00, 0x0f, 0xef},
-                    };
-uint8_t VOL[5][5]  = { {0x7e, 0x03, 0x31,  0, 0xef},
-                       {0x7e, 0x03, 0x31,  7, 0xef},
+
+uint8_t VOL[6][5]  = { {0x7e, 0x03, 0x31,  5, 0xef},
+                       {0x7e, 0x03, 0x31, 10, 0xef},
                        {0x7e, 0x03, 0x31, 15, 0xef},                              
-                       {0x7e, 0x03, 0x31, 22, 0xef},                              
-                       {0x7e, 0x03, 0x31, 30, 0xef},                             
+                       {0x7e, 0x03, 0x31, 20, 0xef},                              
+                       {0x7e, 0x03, 0x31, 25, 0xef}, 
+                       {0x7e, 0x03, 0x31, 30, 0xef}                   
                       };
 
-void SND_SelectID(uint8_t SndID)
-{
-   uint8_t id  = 0;
-   if(SndID < SND_ID_MIN)
-      id  = SND_ID_MIN;
-   else if(SndID > SND_ID_MAX)
-      id  = SND_ID_MAX;
-   else 
-      id  = SndID;
-      
-   UART_Send(UART_0, SND[SndID-1], 6, BLOCKING);
-}
 
 
 void SND_SetVol(uint8_t SndVol)
@@ -60,10 +34,103 @@ void SND_Stop()
    UART_SendByte(UART_0, 0xef);
 }
 
-void SND_Play()
+//void SND_Play()
+//{
+//   UART_SendByte(UART_0, 0x7e);
+//   UART_SendByte(UART_0, 0x01);
+//   UART_SendByte(UART_0, 0x0e);
+//   UART_SendByte(UART_0, 0xef);
+//}
+
+
+void SND_Play(uint8_t id)
 {
-   UART_SendByte(UART_0, 0x7e);
-   UART_SendByte(UART_0, 0x01);
-   UART_SendByte(UART_0, 0x0e);
-   UART_SendByte(UART_0, 0xef);
+   if(id<=SND_ID_NM)
+   {
+      UART_SendByte(UART_0,0x7e);
+      UART_SendByte(UART_0,0x04);
+      UART_SendByte(UART_0,0x41);
+      UART_SendByte(UART_0,0x00);
+      if(id)
+         UART_SendByte(UART_0, id);
+      else 
+         UART_SendByte(UART_0, SND_ID_ZRO);
+      UART_SendByte(UART_0,0xef);
+   }
 }
+
+
+
+void SND_ParseDist(int dist, uint8_t* pNums)
+{
+   if(dist < 99999)
+   {
+//printf("dist:%d  %d.%d\n\r",dist ,dist/1000, dist%1000/100);
+      /// Dist >= 20 nm
+      if(dist > 19999)
+      {
+         if(dist > 999) /// Dist >= 21 nm
+         {
+            pNums[0]  = dist/10000;
+            pNums[1]  = SND_ID_TEN;
+            pNums[2]  = dist%10000/1000;
+         }
+         else
+         {
+            pNums[0]  = 0;
+            pNums[1]  = dist/10000;
+            pNums[2]  = SND_ID_TEN;
+         }
+      }
+      /// Dist >= 10 nm
+      else if(dist > 9999)
+      {
+         if(dist >999)
+         {
+            pNums[0]  = 0;
+            pNums[1]  = SND_ID_TEN;
+            pNums[2]  = dist%10000/1000;
+         }
+         else
+         {
+            pNums[0]  = 0;
+            pNums[1]  = 0;
+            pNums[2]  = SND_ID_TEN;
+         }
+      }
+      else if(dist > 99)
+      {
+         if(dist >999)
+           pNums[0]  = dist /1000;
+         else
+           pNums[0]  = SND_ID_ZRO;
+         pNums[1]  = SND_ID_DOT;
+         pNums[2]  = dist%1000/100;
+         if(pNums[2] == 0)
+            pNums[2]  = SND_ID_ZRO;
+      }
+      else
+      {
+         pNums[0]  = 0;
+         pNums[1]  = 0;
+         pNums[2]  = SND_ID_ZRO;
+      } 
+
+//printf(" %d %d %d\n\r", pNums[0], pNums[1], pNums[2]);      
+   }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

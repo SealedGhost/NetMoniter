@@ -6,6 +6,8 @@
 #include "28.h"
 #include "Compass.c"
 #include "map.h"
+#include "16.h"
+#include "snap.h"
 
 /// Just for copy
 
@@ -22,7 +24,20 @@
 #define MYABS(x)   ((x)>0?(x):(-(x)))
 
 
+#define NICK_SHIFT_X  16
+#define NICK_SHIFT_Y  50
+
 /*--------------------------------- Global variables ----------------------------------*/
+
+const GUI_POINT  Points_Mute[6]  = {
+                                    {  0, -15},
+                                    { 15, -15},
+                                    { 45, -30},
+                                    { 45,  30},
+                                    { 15,  15},
+                                    {  0,  15}
+                                               };
+                                    
 const GUI_POINT  Points_boat[3]  = {
                                            { 6, 12},
                                            {-6, 12},
@@ -92,6 +107,9 @@ const GUI_POINT bPoints[5] = {
 																																								{-9,-3}  
 	};
 
+///                                     0      1     2     3     4     5     6     7     8     9
+static const unsigned char Nums[10] = {0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f};
+map_scale AutoScale  = {100, 100};
 
 /*-------------------------------- External variables ---------------------------------*/
 extern SIMP_BERTH SimpBerthes[BOAT_NUM_MAX];
@@ -101,6 +119,12 @@ extern _cursor __cursor;
 
 extern FunctionalState isMntEnable;
 
+extern unsigned char* pacwater;
+
+extern void*  pSnapLink;
+extern char   snapType;
+
+
 /*-------------------------------- Local variables ------------------------------------*/
 static const GUI_POINT * pPoints  = Points_fish;
 static  int PointNum  = 11;
@@ -108,6 +132,8 @@ static  int PointNum  = 11;
 static const MapWin_COLOR * pSkin  = mapSkins;
 
 
+char isAdsorbed  = 0;
+long AdsorbedMMSI  = 0;
 
 /** @brief   draw_scale
  *
@@ -178,6 +204,34 @@ void setShape(BOAT_SHAPES shape)
    }
 }
 
+static void _drawNum(unsigned char num, short x, short y, short penSize)
+{
+   short size  = penSize-1;
+   
+   if(num&0x01)
+      GUI_FillRect(x,   y,   x+99,   y+size);
+   if(num&0x02)
+      GUI_FillRect(x+99-size, y, x+99, y+99);
+   if(num&0x04)
+      GUI_FillRect(x+99-size, y+100, x+99,y+199);
+   if(num&0x08)
+      GUI_FillRect(x, y+199-size, x+99, y+199);
+   if(num&0x10)
+      GUI_FillRect(x, y+100, x+size,y+199);
+   if(num&0x20)
+      GUI_FillRect(x, y, x+size, y+99);
+   if(num&0x40)
+      GUI_FillRect(x, y+99-size/2, x+99, y+99+size/2);
+}
+
+
+
+void  drawNum(unsigned char num, short x, short y, short penSize)
+{
+   _drawNum(Nums[num], x, y, penSize);
+}
+
+
 
 /** @brief    fixPos
  *  
@@ -190,7 +244,7 @@ static void fixPos(short * base_x, short * base_y)
 {
    if(*base_x + 10  > MAP_RIGHT-180)
    {
-      *base_x  = *base_x-10-180;
+      *base_x  = *base_x-10-130;
    }
    else
    {
@@ -207,6 +261,15 @@ static void fixPos(short * base_x, short * base_y)
    }
 }
 
+
+static void draw_batSlot(short x, short y)
+{
+   GUI_DrawRect(x+1, y,   x+2, y+1);
+   GUI_DrawRect(x,   y+2, x+1, y+3);
+   GUI_DrawRect(x-1, y+4, x,   y+5);
+   GUI_DrawRect(x-2, y+6, x-1, y+7);
+//   GUI_DrawVLine(x, y+6, y+7);
+}
 
 
 /** @brief   draw_boatInfo
@@ -229,29 +292,65 @@ static void draw_boatInfo( short base_x, short base_y, boat * pBoat,unsigned cha
 
        
       /// Show battery in tip.
-      if(options & SHOW_OPTION_BAT)
+      if( options & SHOW_OPTION_BAT )
       {
-         if(pBoat->isHSD)
+         if(1 && pBoat->isHSD)
          {                
             char   i  = 0;            
-            char   power      = pBoat->COG % 10;
+            char   power      = (pBoat->COG/10) % 10;
             short  batBody_x  = base_x +10;
-            short  batBody_y  = base_y -10;
+            short  batBody_y  = base_y -11;
             
             GUI_SetColor(pSkin->map_tip_Bat);
             GUI_DrawRect(batBody_x, batBody_y, batBody_x + 19, batBody_y+10); 
             GUI_DrawVLine(batBody_x+20, batBody_y+3, batBody_y+7);
-//printf("SOG:%d,power:%d\n\r",pBoat->SOG,power);            
-            i  = (power + 2) / 3;
-            if(i>1)
-               GUI_SetColor(GUI_DARKGREEN);
-            else 
-               GUI_SetColor(GUI_DARKRED);
-//printf("i:%d\n\r",i);               
-            for(;i>0;i--)
+            
+                  
+            i  = (power + 2) / 3;           
+            GUI_SetColor(SysConf.Skin == SKIN_Day?GUI_BLACK:GUI_WHITE);
+            GUI_DrawRect(batBody_x, batBody_y, batBody_x+22, batBody_y+11);
+            GUI_DrawRect(batBody_x+23, batBody_y+4, batBody_x+24, batBody_y+7);
+            GUI_SetColor(pSkin->bkColor);
+            GUI_FillRect(batBody_x+1, batBody_y+1, batBody_x+21, batBody_y+10);
+            switch(i)            
             {
-               GUI_FillRect(batBody_x + i*6 -4, batBody_y + 2, batBody_x+i*6-1, batBody_y+8);
+               case 1:
+                    GUI_SetColor(GUI_RED);
+                    GUI_FillRect(batBody_x+2, batBody_y+2,batBody_x+7, batBody_y+9);
+                    GUI_SetColor(pSkin->bkColor);
+                    draw_batSlot(batBody_x+7, batBody_y+2);
+                    GUI_DrawVLine(batBody_x+7, batBody_y+8, batBody_y+9);
+//                    GUI_DrawPixel(batBody_x+7, batBody_y+8);
+                    break;
+                case 2:
+                     GUI_SetColor(pSkin->map_tip_Bat);
+                     GUI_FillRect(batBody_x+2, batBody_y+2, batBody_x+15,batBody_y+9);
+                     GUI_SetColor(pSkin->bkColor);
+                     draw_batSlot(batBody_x+7, batBody_y+2);
+                     draw_batSlot(batBody_x+15,batBody_y+2);
+//                     GUI_DrawVLine(batBody_x+7, batBody_y+8, batBody_y+9);
+                     GUI_DrawPixel(batBody_x+7, batBody_y+8);
+                     GUI_DrawVLine(batBody_x+15,batBody_y+8, batBody_y+9);
+//                     GUI_DrawPixel(batBody_x+15,batBody_y+8);
+                     break;
+                 case 3:
+                     GUI_SetColor(pSkin->map_tip_Bat);
+                     GUI_FillRect(batBody_x+2, batBody_y+2, batBody_x+20,batBody_y+9);
+                     GUI_SetColor(mapSkins->bkColor);
+                     draw_batSlot(batBody_x+7, batBody_y+2);
+                     draw_batSlot(batBody_x+15,batBody_y+2);
+                     break;
             }
+            
+//            if(i>1)
+//               GUI_SetColor(GUI_DARKGREEN);
+//            else 
+//               GUI_SetColor(GUI_DARKRED);
+////printf("i:%d\n\r",i);               
+//            for(;i>0;i--)
+//            {
+//               GUI_FillRect(batBody_x + i*6 -4, batBody_y + 2, batBody_x+i*6-1, batBody_y+8);
+//            }
          }
       }
      
@@ -274,17 +373,93 @@ static void draw_boatInfo( short base_x, short base_y, boat * pBoat,unsigned cha
       }
       
       /// Show MMSI in tip.
-      if(options & SHOW_OPTION_MMSI)
+      if(options & SHOW_OPTION_SCOG)
       {
+//         GUI_SetFont(&GUI_Font16_1);
+//         sprintf(pStrBuf, "%09ld", pBoat->user_id);
+//         sprintf(pStrBuf, "%d  %d", pBoat->SOG,pBoat->COG);
+//         sprintf(pStrBuf, "SOG:%3d", pBoat->SOG);
+         GUI_SetFont(&GUI_Font16);
+         GUI_DispStringAt("航速", base_x+10, base_y+62); 
+         GUI_DispStringAt("航向", base_x+80, base_y+62);         
+         
          GUI_SetFont(&GUI_Font16_1);
-         sprintf(pStrBuf, "%09ld", pBoat->user_id);
-         GUI_DispStringAt(pStrBuf, base_x+10, base_y+62);         
+//         if(SysConf.Unit == UNIT_km)
+//         {
+//            int sog  = pBoat->SOG *18;
+//            sprintf(pStrBuf, "%d.%02d",sog/100, sog%100);
+//         }
+//         else
+//         {
+//            sprintf(pStrBuf, "%d.%d",pBoat->SOG/10, pBoat->SOG%10);
+//         }
+         sprintf(pStrBuf, "%d.%dkt", pBoat->SOG/10, pBoat->SOG%10);
+         GUI_DispStringAt(pStrBuf, base_x +32, base_y+62);
+         
+         sprintf(pStrBuf, "%3d", pBoat->COG/10);         
+         pStrBuf[3]  = 194;
+         pStrBuf[4]  = 176;
+         pStrBuf[5]  = '\0';
+         GUI_DispStringAt(pStrBuf, base_x+100, base_y +62);
       }
       
+      
+      if(options & SHOW_OPTION_DST)
+      {
+         if(pBoat->dist < 99999)
+         {
+            GUI_SetFont(&GUI_Font16);
+            GUI_DispStringAt("距离本船",base_x+10, base_y+78);
+            
+            GUI_SetFont(&GUI_Font16_1);
+         
+            if(SysConf.Unit == UNIT_km)
+            {
+               int dist  = pBoat->dist *100 /54;
+               sprintf(pStrBuf, "%0d.%2d km",dist /1000, (dist %1000) /10);
+            }
+            else
+            {
+               sprintf(pStrBuf, "%0d.%2d nm",pBoat->dist /1000, (pBoat->dist %1000) /10);
+            }
+            GUI_DispStringAt(pStrBuf, base_x+80, base_y+78);
+            
+           
+         }
+      }
    }
 }
 
 
+static void draw_dspBoatInfo(short base_x, short base_y, MNT_BERTH* pMntBerth)
+{
+   if(pMntBerth == NULL)
+      return; 
+   fixPos(&base_x, &base_y); 
+   GUI_SetTextMode(GUI_TM_NORMAL);
+   
+   GUI_SetColor(pSkin->map_tip_Text);
+   GUI_SetFont(&GUI_Font16_1);
+   GUI_DispStringAt(pMntBerth->mntBoat.name, base_x+10, base_y+1);
+   GUI_SetFont(&GUI_Font24_1);
+   lltostr(pMntBerth->snapLg, pStrBuf);
+   GUI_DispStringAt(pStrBuf, base_x+10, base_y+16);
+   lltostr(pMntBerth->snapLt, pStrBuf);
+   GUI_DispStringAt(pStrBuf, base_x+10, base_y+38);
+   GUI_SetFont(&GUI_Font16_1);
+   if(SysConf.Unit == UNIT_km)
+   {
+      int dist  = pMntBerth->snapDist *100 /54;
+      sprintf(pStrBuf, "%d.%2dkm", dist /1000, dist %1000 /100);
+   }
+   else
+   {
+      sprintf(pStrBuf, "%d.%2dnm",pMntBerth->snapDist /1000, pMntBerth->snapDist %1000 /100);
+   }
+   GUI_DispStringAt(pStrBuf, base_x+50, base_y+78);
+   GUI_SetFont(&GUI_Font16);
+   GUI_DispStringAt("距离本船",base_x+10, base_y+78);
+}
 
 /** @brief     draw_boat
  *  
@@ -355,7 +530,6 @@ static void disp_boat(const long lg, const long lt, const map_scale * pScale,sho
    short base_x = 0;
    short base_y = 0;
    
-   char isAdsorbed  = 0;
    int isCursorVisible  = GUI_CURSOR_GetState();
    
    GUI_SetPenSize(1);
@@ -374,17 +548,22 @@ static void disp_boat(const long lg, const long lt, const map_scale * pScale,sho
       {
          if((base_x >=MAP_LEFT)&&(base_x<= MAP_RIGHT)&&(base_y >=MAP_TOP)&&(base_y <= MAP_BOTTOM))
          {  
-            /// And its tip should to be drew.         
-            if( !isAdsorbed  &&  isCursorVisible  &&  ( MYABS(base_x-__cursor.x) <= 8)  &&  ( MYABS(base_y-__cursor.y) <= 8) )
+//            /// And its tip should to be drew.         
+//            if( !isAdsorbed  &&  isCursorVisible  &&  ( MYABS(base_x-__cursor.x) <= 8)  &&  ( MYABS(base_y-__cursor.y) <= 8) )
+            if(!AdsorbedMMSI &&  ( MYABS(base_x-__cursor.x) <= 8)  &&  ( MYABS(base_y-__cursor.y) <= 8))
+            {
+               AdsorbedMMSI  = SimpBerthes[i].pBerth->Boat.user_id;
+            }
+            if( AdsorbedMMSI == SimpBerthes[i].pBerth->Boat.user_id  &&  isCursorVisible )
             {
                GUI_SetColor(pSkin->ttl_Context);
                draw_boat(&SimpBerthes[i].pBerth->Boat, base_x, base_y, Points_boat, 3);
-               draw_boatInfo(base_x, base_y, &SimpBerthes[i].pBerth->Boat, SHOW_OPTION_NAME | SHOW_OPTION_MMSI | SHOW_OPTION_LL);
-               isAdsorbed  = 1;
+               draw_boatInfo(base_x, base_y, &SimpBerthes[i].pBerth->Boat, SHOW_OPTION_NAME | SHOW_OPTION_SCOG | SHOW_OPTION_LL | SHOW_OPTION_DST);
+//               isAdsorbed  = 1;
             }
             else
             {
-               GUI_SetColor(GUI_RED);
+               GUI_SetColor(pSkin->ttl_Label);
                draw_boat(&SimpBerthes[i].pBerth->Boat, base_x, base_y, Points_boat, 3);
             }
          }        
@@ -409,16 +588,12 @@ static void disp_mntBoat(const long center_lg,const long center_lt, const map_sc
    short base_cur_x = 0;
    short base_cur_y = 0;
    
-   char isAdsorbed   = 0;
    int  isCursorVisible  = GUI_CURSOR_GetState();
    
    MNT_BERTH * pIterator  = pMntHeader;
    
-   GUI_SetPenSize(1);
-   
-   
-   if(isMntEnable)
-   {
+//   if(isMntEnable)
+//   {
       while(pIterator)
       { 
          if(pIterator->cfgState != MNTState_Monitored)
@@ -427,7 +602,8 @@ static void disp_mntBoat(const long center_lg,const long center_lt, const map_sc
             continue;
          }
          /// Exist and ll valid
-         if(pIterator->pBerth  &&  pIterator->pBerth->Boat.user_id == pIterator->mntBoat.mmsi  && pIterator->pBerth->Boat.dist < 100000)
+//         if(pIterator->pBerth  &&  pIterator->pBerth->Boat.user_id == pIterator->mntBoat.mmsi  && pIterator->pBerth->Boat.dist < 100000)
+         if(pIterator->pBerth  &&  pIterator->pBerth->Boat.dist < 100000)
          {
             base_x  = pScale->pixel * (pIterator->pBerth->Boat.longitude - center_lg) / pScale->minute;
             base_y  = pScale->pixel * (pIterator->pBerth->Boat.latitude - center_lt) / pScale->minute;
@@ -439,8 +615,9 @@ static void disp_mntBoat(const long center_lg,const long center_lt, const map_sc
             base_cur_y = base_y;
        
      
-            GUI_SetLineStyle(GUI_LS_SOLID);
-            
+            GUI_SetPenSize(2);            
+            GUI_SetLineStyle(GUI_LS_SOLID);           
+
              ///DSP boat conf.      
             if(pIterator->mntBoat.mntSetting.DSP_Setting.isEnable == ENABLE) 
             {
@@ -448,12 +625,19 @@ static void disp_mntBoat(const long center_lg,const long center_lt, const map_sc
             }
             if((base_x >=MAP_LEFT)&&(base_x<= MAP_RIGHT)&&(base_y >=MAP_TOP)&&(base_y <= MAP_BOTTOM))
             {
-               if(!isAdsorbed  &&  isCursorVisible  && ( MYABS(base_x-__cursor.x) <= 8)  &&  ( MYABS(base_y-__cursor.y) <= 8) )
+//               if(!isAdsorbed  &&  isCursorVisible  && ( MYABS(base_x-__cursor.x) <= 8)  &&  ( MYABS(base_y-__cursor.y) <= 8) )
+               if(!AdsorbedMMSI &&  ( MYABS(base_x-__cursor.x) <= 8)  &&  ( MYABS(base_y-__cursor.y) <= 8))
                {
-                  GUI_SetColor(pSkin->ttl_Context);
-                     draw_boat(&(pIterator->pBerth->Boat), base_x, base_y,pPoints, PointNum);
-                  draw_boatInfo(base_x, base_y, &(pIterator->pBerth->Boat), SHOW_OPTION_NAME | SHOW_OPTION_LL | SHOW_OPTION_MMSI | SHOW_OPTION_BAT);
-                  isAdsorbed  = 1;
+                  AdsorbedMMSI  = pIterator->mntBoat.mmsi;
+               }
+               if(AdsorbedMMSI == pIterator->mntBoat.mmsi  &&  isCursorVisible )
+               {
+//                  GUI_SetColor(pSkin->ttl_Context);
+                  GUI_SetFont(&GUI_Font30);
+                  GUI_SetColor(mapSkins->ttl_Context);
+                  draw_boat(&(pIterator->pBerth->Boat), base_x, base_y,pPoints, PointNum);
+                  GUI_DispStringAt(pIterator->nickName, base_x-NICK_SHIFT_X, base_y-NICK_SHIFT_Y);
+                  draw_boatInfo(base_x, base_y, &(pIterator->pBerth->Boat), SHOW_OPTION_NAME | SHOW_OPTION_LL | SHOW_OPTION_SCOG | SHOW_OPTION_BAT | SHOW_OPTION_DST);
                }
                else
                {
@@ -461,13 +645,20 @@ static void disp_mntBoat(const long center_lg,const long center_lt, const map_sc
                   GUI_SetColor(pSkin->boat_Org);  
                   if( (pIterator->trgState&0x0f) == MNTState_Triggered)
                   {
+                     GUI_SetColor(GUI_RED);
                      if(pIterator->flsState&0x01)
+                     {
+                        GUI_SetFont(&GUI_Font30);
                         draw_boat(&(pIterator->pBerth->Boat), base_x, base_y,pPoints, PointNum);
+                        GUI_DispStringAt(pIterator->nickName, base_x-NICK_SHIFT_X, base_y-NICK_SHIFT_Y); 
+                     }
                      pIterator->flsState  = ~pIterator->flsState;
                   }   
                   else
                   {
+                     GUI_SetFont(&GUI_Font30);
                      draw_boat(&(pIterator->pBerth->Boat), base_x, base_y,pPoints, PointNum);
+                     GUI_DispStringAt(pIterator->nickName, base_x-NICK_SHIFT_X, base_y-NICK_SHIFT_Y);
                   }
                }
             }   
@@ -486,61 +677,106 @@ static void disp_mntBoat(const long center_lg,const long center_lt, const map_sc
                
                if(pIterator->trgState&(0x01<<6))
                {
+                  GUI_SetPenSize(1);
                   GUI_SetColor(GUI_GRAY);
                   GUI_SetLineStyle(GUI_LS_DOT);
                   GUI_DrawLine(base_cur_x, base_cur_y, base_x, base_y);
-                  GUI_SetLineStyle(GUI_LS_SOLID);
                }
             }        
             
             ///   BGL circle conf.
             if(pIterator->mntBoat.mntSetting.BGL_Setting.isEnable == ENABLE  &&  (pIterator->trgState&0xf0) < (0x01<<6) )
             {
-               GUI_SetColor(pSkin->boat_Bgl);
-               
+               GUI_SetColor(pSkin->boat_Bgl);    
+               GUI_SetLineStyle(GUI_LS_SOLID);               
                GUI_DrawCircle(base_cur_x, base_cur_y,pIterator->mntBoat.mntSetting.BGL_Setting.Dist*pScale->pixel/pScale->minute);            
             } 
        
 
          }
-         else if(pIterator->cfgState == MNTState_Monitored)
+//         else if(pIterator->cfgState == MNTState_Monitored)
+         else
          {
-            base_x  = pScale->pixel * (pIterator->mntBoat.lg - center_lg) / pScale->minute;
-            base_y  = pScale->pixel * (pIterator->mntBoat.lt - center_lt) / pScale->minute;
+            base_x  = pScale->pixel * (pIterator->snapLg - center_lg) / pScale->minute;
+            base_y  = pScale->pixel * (pIterator->snapLt - center_lt) / pScale->minute;
             
             base_x  = (MAP_LEFT/2 + MAP_RIGHT/2) + base_x;
             base_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - base_y; 
-         
-            GUI_SetColor(GUI_YELLOW); 
-            GUI_SetLineStyle(GUI_LS_DOT);  
-            GUI_DrawPolygon(pPoints,  PointNum, base_x, base_y);      
+            
+            if( (base_x >= MAP_LEFT)  &&  (base_x <= MAP_RIGHT)  &&  (base_y >= MAP_TOP)  &&  (base_y <= MAP_BOTTOM)  )
+            {
+               GUI_SetPenSize(1);
+               GUI_SetLineStyle(GUI_LS_DOT);
+               GUI_SetFont(&GUI_Font30);
+//               if(!isAdsorbed  &&  isCursorVisible  &&  (MYABS(base_x-__cursor.x) <= 12)  &&  (MYABS(base_y-__cursor.y) <= 12))
+               if(!AdsorbedMMSI  &&   (MYABS(base_x-__cursor.x) <= 12)  &&  (MYABS(base_y-__cursor.y) <= 12))
+               {
+                  AdsorbedMMSI  = pIterator->mntBoat.mmsi;
+               }
+               if(AdsorbedMMSI==pIterator->mntBoat.mmsi  &&  isCursorVisible)
+               {
+                  GUI_SetColor(pSkin->ttl_Context);
+                  GUI_DrawPolygon(pPoints, PointNum, base_x, base_y);
+                  GUI_DispStringAt(pIterator->nickName, base_x-NICK_SHIFT_X, base_y-NICK_SHIFT_Y);
+                  draw_dspBoatInfo( base_x, base_y, pIterator);
+               }
+               else
+               {
+                  GUI_SetColor(GUI_RED);
+                  GUI_DrawPolygon(pPoints, PointNum, base_x, base_y);
+                  GUI_DispStringAt(pIterator->nickName, base_x-NICK_SHIFT_X, base_y-NICK_SHIFT_Y);
+               }
+            }
          }
          
          
          pIterator  = pIterator->pNext;
       }
-   }
+//   }
    
    /// GUI_KEY_MNT_Cancel
-   else
-   {
-      GUI_SetColor(pSkin->boat_Org);
-      while(pIterator)
-      {
-         if(pIterator->pBerth  &&  pIterator->pBerth->Boat.user_id == pIterator->mntBoat.mmsi  && pIterator->pBerth->Boat.dist < 100000)
-         {
-            base_x  = pScale->pixel * (pIterator->pBerth->Boat.longitude - center_lg) / pScale->minute;
-            base_y  = pScale->pixel * (pIterator->pBerth->Boat.latitude - center_lt) / pScale->minute;
-            
-            base_x  = (MAP_LEFT/2 + MAP_RIGHT/2) + base_x;
-            base_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - base_y;
-
-            draw_boat(&(pIterator->pBerth->Boat), base_x, base_y,pPoints, PointNum);            
-         }
-         
-         pIterator  = pIterator->pNext;
-      }
-   }
+//   else
+//   {
+//      GUI_SetColor(pSkin->boat_Org);
+//      GUI_SetPenSize(2);
+//      GUI_SetLineStyle(GUI_LS_SOLID);
+//      while(pIterator)
+//      {
+//         if(pIterator->pBerth  &&  pIterator->pBerth->Boat.user_id == pIterator->mntBoat.mmsi  && pIterator->pBerth->Boat.dist < 100000)
+//         {
+//            base_x  = pScale->pixel * (pIterator->pBerth->Boat.longitude - center_lg) / pScale->minute;
+//            base_y  = pScale->pixel * (pIterator->pBerth->Boat.latitude - center_lt) / pScale->minute;
+//            
+//            base_x  = (MAP_LEFT/2 + MAP_RIGHT/2) + base_x;
+//            base_y  = (MAP_TOP/2 + MAP_BOTTOM/2) - base_y;
+//            
+//            GUI_SetFont(&GUI_Font30);
+//            
+//            if(!AdsorbedMMSI  && ( MYABS(base_x-__cursor.x) <= 12)  &&  ( MYABS(base_y-__cursor.y) <= 12) )
+//            {
+//               AdsorbedMMSI  = pIterator->mntBoat.mmsi;
+//            }
+//            
+//            if(AdsorbedMMSI == pIterator->mntBoat.mmsi  &&  isCursorVisible)
+//            {
+//               
+//               GUI_SetColor(pSkin->ttl_Context);
+//               draw_boat(&(pIterator->pBerth->Boat), base_x, base_y, pPoints, PointNum);
+//               GUI_DispStringAt(pIterator->nickName, base_x - NICK_SHIFT_X, base_y - NICK_SHIFT_Y);
+//               draw_boatInfo(base_x, base_y, &(pIterator->pBerth->Boat), SHOW_OPTION_NAME|SHOW_OPTION_SCOG|SHOW_OPTION_LL|SHOW_OPTION_BAT);
+//            }
+//            else
+//            {
+//               GUI_SetColor(pSkin->boat_Org);
+//               draw_boat(&(pIterator->pBerth->Boat), base_x, base_y, pPoints, PointNum);
+//               GUI_DispStringAt(pIterator->nickName, base_x - NICK_SHIFT_X, base_y - NICK_SHIFT_Y);
+//            }
+//            draw_boat(&(pIterator->pBerth->Boat), base_x, base_y,pPoints, PointNum);            
+//         }
+//         
+//         pIterator  = pIterator->pNext;
+//      }
+//   }
 }
 
 
@@ -789,7 +1025,7 @@ static void disp_map(const long longitude, const long latitude,const map_scale *
  *  @output
  *  @other    
  */
-static void getMntWrapPara(long *halfDiff_lg, long* halfDiff_lt, map_scale* pScale)
+void getMntWrapPara(long *halfDiff_lg, long* halfDiff_lt, map_scale* pScale)
 {  
    long min_lg  = mothership.longitude;
    long max_lg  = mothership.longitude;
@@ -804,37 +1040,58 @@ static void getMntWrapPara(long *halfDiff_lg, long* halfDiff_lt, map_scale* pSca
    
    MNT_BERTH * pIterator  = pMntHeader;
    
-   
    while(pIterator)
-   {         
-         if(pIterator->mntBoat.mntSetting.DRG_Setting.isEnable   &&  pIterator->cfgState == MNTState_Monitored)
-         {
-            drgDist  = pIterator->mntBoat.mntSetting.DRG_Setting.Dist;
-            
-            if(pIterator->mntBoat.lg - drgDist < min_lg )
-            {
-               min_lg  = pIterator->mntBoat.lg - drgDist;
-            }
-            else if(pIterator->mntBoat.lg + drgDist > max_lg)
-            {
-               max_lg  = pIterator->mntBoat.lg + drgDist;
-            }
-            
-            if(pIterator->mntBoat.lt - drgDist < min_lt)
-            {
-               min_lt  = pIterator->mntBoat.lt - drgDist;
-            }
-            else if(pIterator->mntBoat.lt + drgDist > max_lt)
-            {
-               max_lt  = pIterator->mntBoat.lt + drgDist;
-            }
-         }
-         
-              
-         if(pIterator->pBerth  &&  (pIterator->pBerth->Boat.user_id == pIterator->mntBoat.mmsi)  &&  (pIterator->pBerth->Boat.dist < 100000) )
-         {
-            bglDist  = pIterator->mntBoat.mntSetting.BGL_Setting.isEnable?pIterator->mntBoat.mntSetting.BGL_Setting.Dist:100;         
-            
+   {
+//      if(pIterator->cfgState == MNTState_Monitored  &&  pIterator->mntBoat.mntSetting.DRG_Setting.isEnable)
+//      {
+//         drgDist  = pIterator->mntBoat.mntSetting.DRG_Setting.Dist;
+//         if(pIterator->mntBoat.lg - drgDist  <  min_lg)
+//         {
+//            min_lg  = pIterator->mntBoat.lg - drgDist;
+//         }
+//         else if(pIterator->mntBoat.lg + drgDist  >  max_lg)
+//         {
+//            max_lg  = pIterator->mntBoat.lg + drgDist;
+//         }
+//         
+//         if(pIterator->mntBoat.lt -drgDist  <  min_lt)
+//         {
+//            min_lt  = pIterator->mntBoat.lt - drgDist;
+//         }
+//         else if(pIterator->mntBoat.lt + drgDist  >  max_lt)
+//         {
+//            max_lt  = pIterator->mntBoat.lt + drgDist;
+//         }
+//      }   
+      
+      if(pIterator->pBerth  &&  pIterator->pBerth->Boat.dist<99999)
+      {
+          if(pIterator->mntBoat.mntSetting.DRG_Setting.isEnable)
+          {
+             drgDist  = pIterator->mntBoat.mntSetting.DRG_Setting.Dist;
+             if(pIterator->mntBoat.lg - drgDist  <  min_lg)
+             {
+                min_lg  = pIterator->mntBoat.lg - drgDist;
+             }
+             else if(pIterator->mntBoat.lg + drgDist  >  max_lg)
+             {
+                max_lg  = pIterator->mntBoat.lg + drgDist;
+             }
+             
+             if(pIterator->mntBoat.lt -drgDist  <  min_lt)
+             {
+                min_lt  = pIterator->mntBoat.lt - drgDist;
+             }
+             else if(pIterator->mntBoat.lt + drgDist  >  max_lt)
+             {
+                max_lt  = pIterator->mntBoat.lt + drgDist;
+             }
+          }
+           
+//         if(pIterator->pBerth->Boat.dist < 99999)
+//         {   
+            bglDist  = pIterator->mntBoat.mntSetting.BGL_Setting.isEnable?pIterator->mntBoat.mntSetting.BGL_Setting.Dist:100;
+                         
             if(pIterator->pBerth->Boat.longitude - bglDist < min_lg)
             {
                min_lg  = pIterator->pBerth->Boat.longitude - bglDist;
@@ -852,13 +1109,97 @@ static void getMntWrapPara(long *halfDiff_lg, long* halfDiff_lt, map_scale* pSca
             {
                max_lt  = pIterator->pBerth->Boat.latitude + bglDist;
             }
-         }
+//         }
          
+
+      }
+      else if(pIterator->cfgState == MNTState_Monitored)
+      {
+         if(pIterator->snapLg  &&  pIterator->snapLt)
+         {
+            if(pIterator->snapLg < min_lg)
+            {
+               min_lg  = pIterator->snapLg;
+            }
+            else if(pIterator->snapLg > max_lg)
+            {
+               max_lg  = pIterator->snapLg;
+            } 
+            
+            if(pIterator->snapLt < min_lt )
+            {
+               min_lt  = pIterator->snapLt;
+            }
+            else if(pIterator->snapLt > max_lt)
+            {
+               max_lt  = pIterator->snapLt ;
+            }
+         }
+      }
+      
       pIterator  = pIterator->pNext;
    }
    
-   maxDiff_lg  = max_lg - min_lg ;
-   maxDiff_lt  = max_lt - min_lt ;
+//   while(pIterator)
+//   {         
+//         if(pIterator->mntBoat.mntSetting.DRG_Setting.isEnable   &&  pIterator->cfgState == MNTState_Monitored)
+//         {
+//            drgDist  = pIterator->mntBoat.mntSetting.DRG_Setting.Dist;
+//            
+//            if(pIterator->mntBoat.lg - drgDist < min_lg )
+//            {
+//               min_lg  = pIterator->mntBoat.lg - drgDist;
+//            }
+//            else if(pIterator->mntBoat.lg + drgDist > max_lg)
+//            {
+//               max_lg  = pIterator->mntBoat.lg + drgDist;
+//            }
+//            
+//            if(pIterator->mntBoat.lt - drgDist < min_lt)
+//            {
+//               min_lt  = pIterator->mntBoat.lt - drgDist;
+//            }
+//            else if(pIterator->mntBoat.lt + drgDist > max_lt)
+//            {
+//               max_lt  = pIterator->mntBoat.lt + drgDist;
+//            }
+//         }
+//         
+//              
+//         if(pIterator->pBerth  &&  (pIterator->pBerth->Boat.user_id == pIterator->mntBoat.mmsi)  &&  (pIterator->pBerth->Boat.dist < 100000) )
+//         {
+//            bglDist  = pIterator->mntBoat.mntSetting.BGL_Setting.isEnable?pIterator->mntBoat.mntSetting.BGL_Setting.Dist:100;         
+//            
+//            if(pIterator->pBerth->Boat.longitude - bglDist < min_lg)
+//            {
+//               min_lg  = pIterator->pBerth->Boat.longitude - bglDist;
+//            }
+//            else if(pIterator->pBerth->Boat.longitude + bglDist > max_lg)
+//            {
+//               max_lg  = pIterator->pBerth->Boat.longitude + bglDist;
+//            }
+//            
+//            if(pIterator->pBerth->Boat.latitude - bglDist < min_lt)
+//            {
+//               min_lt  = pIterator->pBerth->Boat.latitude - bglDist;
+//            }
+//            else if(pIterator->pBerth->Boat.latitude + bglDist > max_lt)
+//            {
+//               max_lt  = pIterator->pBerth->Boat.latitude + bglDist;
+//            }
+//         }
+//         
+//      pIterator  = pIterator->pNext;
+//   }
+   
+//   maxDiff_lg  = max_lg - min_lg + pScale->minute/pScale->pixel*50;
+//   maxDiff_lt  = max_lt - min_lt + pScale->minute/pScale->pixel*50;
+   
+   maxDiff_lg  = max_lg - min_lg;
+   maxDiff_lt  = max_lt - min_lt;
+   
+//   if(maxDiff_lt > 30000)
+//       return ;
    
    *halfDiff_lg  = max_lg/2 + min_lg/2;
    *halfDiff_lt  = max_lt/2 + min_lt/2;
@@ -868,13 +1209,16 @@ static void getMntWrapPara(long *halfDiff_lg, long* halfDiff_lt, map_scale* pSca
    
    ///若适配区域的宽度大于高度的两倍，则以map的宽来适配
     if(( maxDiff_lg/2) > maxDiff_lt)
+//    if( (maxDiff_lg*4)  >  (maxDiff_lt*7) )
     {
        pScale->minute  = ( maxDiff_lg/(8*100) + 1)*100;  ///这种写法保证所得到的scale.minute为100的整数倍
+       pScale->minute  = pScale->minute /100 *105;
     }
     ///否则以map的高来适配
     else
     {
        pScale->minute  = ( maxDiff_lt/(4*100) + 1)*100;
+       pScale->minute  = pScale->minute /100 *110;
     }
 }
 
@@ -888,13 +1232,16 @@ static void getMntWrapPara(long *halfDiff_lg, long* halfDiff_lt, map_scale* pSca
  *  @output
  *  @other    
  */
-void setView(const long lg, const long lt, const map_scale* pScale)
+void setManualView(long lg, long lt, map_scale* pScale)
 {  
    disp_map(lg, lt, pScale);
-   GUI_SetLineStyle(GUI_LS_SOLID);   
-   disp_mntBoat(lg,lt,pScale);
+
+//   isAdsorbed  = 0;
+   AdsorbedMMSI  = 0;
    if(isMntEnable)
       disp_boat(lg,lt,pScale, N_boat);  
+   disp_mntBoat(lg,lt,pScale);
+
    draw_mothership(lg,lt, pScale);
    draw_scale(pScale, 640, 440);
 }
@@ -909,23 +1256,25 @@ void setView(const long lg, const long lt, const map_scale* pScale)
  *  @output
  *  @other    
  */
-void setAutoView()
+void setAutoView(long lg, long lt, map_scale* pNull)
 {
-   long lg  = 0;
-   long lt  = 0;
-   map_scale autoScale;
-   
-   autoScale.pixel  = 100;
-   getMntWrapPara(&lg, &lt, &autoScale); 
-   
+   getMntWrapPara(&lg, &lt, &AutoScale); 
 
-   disp_map(lg, lt, &autoScale);
-   GUI_SetLineStyle(GUI_LS_SOLID);   
-   disp_mntBoat(lg, lt, &autoScale);  
-   if(isMntEnable)
-      disp_boat(lg, lt, &autoScale, N_boat);
-   draw_mothership(lg,lt,&autoScale);
-   draw_scale(&autoScale, 640,440);
+   SNAP_getPara(&__cursor.longitude, &__cursor.latitude);
+   AdsorbedMMSI  = SNAP_getSnapObjMMSI();
+   
+   __cursor.x  = (__cursor.longitude-lg)*AutoScale.pixel/AutoScale.minute + (MAP_LEFT+MAP_RIGHT)/2;
+   __cursor.y  = (lt -__cursor.latitude)*AutoScale.pixel/AutoScale.minute + (MAP_TOP+MAP_BOTTOM)/2;
+   GUI_CURSOR_SetPosition(__cursor.x, __cursor.y);
+   disp_map(lg, lt, &AutoScale);
+
+//   isAdsorbed  = 0;
+//   if(isMntEnable)
+      disp_boat(lg, lt, &AutoScale, N_boat);
+   disp_mntBoat(lg, lt, &AutoScale);  
+
+   draw_mothership(lg,lt,&AutoScale);
+   draw_scale(&AutoScale, 640,440);
 }
 
 

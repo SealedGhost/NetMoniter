@@ -36,29 +36,34 @@ static void _Paint(SLIDER_Obj* pObj, WM_HWIN hObj)
 {
    GUI_RECT r, rFocus, rSlider, rSlot;
    GUI_COLOR  SlotColor, SliderColor;
-   int x0, xSize,  Range, NumTicks;
+   int x0, xSize,  Range, NumTicks,hasFocus;
    WIDGET__GetClientRect(&pObj->Widget, &rFocus);
    GUI__ReduceRect(&r, &rFocus, 1);
    NumTicks  = pObj->NumTicks;
    xSize  = r.x1 - r.x0 + 1 - pObj->Width;
    x0     = r.x0 + pObj->Width / 2;
    Range  = pObj->Max - pObj->Min;
+   
    if(Range == 0)
    {
       Range  = 1;
    }
+   
    
    if(pObj->Widget.State & WIDGET_STATE_FOCUS)
    {
       LCD_SetColor(pObj->aBkColor[1]);
       SlotColor  = pObj->aColor[1];
       SliderColor  = pObj->aColor[3];
+      
+      hasFocus  = 1;
    }
    else
    {
       LCD_SetColor(pObj->aBkColor[0]);
       SlotColor  = pObj->aColor[0];
       SliderColor  = pObj->aColor[2];
+      hasFocus  = 0;
    }
    
    GUI_Clear();
@@ -67,29 +72,22 @@ static void _Paint(SLIDER_Obj* pObj, WM_HWIN hObj)
    rSlider     = r;
    rSlider.y0  = 5;
    rSlider.x0  = x0 + (U32)xSize * (U32)(pObj->v - pObj->Min) / Range - pObj->Width / 2;
-   rSlider.x1  = rSlider.x0 + pObj->Width;
+   rSlider.x1  = rSlider.x0 + pObj->Width;    
    
    LCD_SetColor(SlotColor);
    rSlot.x0  = x0;
    rSlot.x1  = x0 + xSize;
    rSlot.y0  = (rSlider.y0 + rSlider.y1) / 2 - 1;
-   rSlot.y1  = rSlot.y0 + 3;
+   rSlot.y1  = rSlot.y0 + 3; 
    GUI_FillRectEx(&rSlot);
    
-//   if(NumTicks > 0)
-//   {
-//      LCD_SetColor(GUI_BLACK);
-//      GUI_SetFont(GUI_FONT_16_1);     
-//      for(i=0; i< NumTicks; i++)
-//      {
-//         int x  = x0 + xSize * i / (NumTicks - 1) - 2;       
-//         GUI_SetTextMode(GUI_TM_TRANS);
-//         GUI_DispDecAt(pObj->Min+i, x, rFocus.y0,1);
-
-//      }
-//   }
-  
-   LCD_SetColor(SliderColor);
+   if(hasFocus)
+   {
+      LCD_SetColor(GUI_WHITE);
+      GUI_DrawRect(rSlot.x0-1, rSlot.y0-1, rSlot.x1+1,rSlot.y1+1);   
+   }
+    
+   LCD_SetColor(SliderColor);   
    GUI_FillCircle(rSlider.x0+pObj->Width/2,(rSlider.y0+rSlider.y1)/2 , pObj->Width/2);  
    
    

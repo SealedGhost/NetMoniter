@@ -28,53 +28,37 @@ extern int isKeyTrigged;
 
 
 /*-------------------- Local variables ------------------------*/
-static uint8_t Numbers[3]   = {0};
 //static FunctionalState isCheckEnable  = ENABLE;
 
 MNT_BERTH NULL_Berth  = {0};
 
 /*--------------------- Local functions -----------------------*/
 static void MNT_filter(void);
+static Bool CHECK_isStillDsp(MNT_BERTH* pMntBerth);
 static Bool CHECK_isDsp(MNT_BERTH * pMntBerth);
 static Bool CHECK_isDrg(MNT_BERTH * pMntBerth);
 static Bool CHECK_isBgl(MNT_BERTH * pMntBerth);
+static void CHECK_checkName(MNT_BERTH* pMntBerth);
 void CHECK_check(MNT_BERTH * pMntBerth);
 
 
 void check()
 {
    static int Cnt  = 0;
-   static int Num  = 0;   
+   static int CheckNum  = 0;   
    
    int i  = 0;
 
-   
-
    MNT_BERTH * pMntBerth  = NULL;
    MNT_BERTH * pIterator  = NULL;
-   
+    
    /// Delete all MNTState_Delete .
-
    MNT_filter();
-  
-   if(isMntEnable == DISABLE)
+
+   if(pMntHeader == NULL)
    {
-      for(i=N_boat-1; i>=0; i--)
-      {
-         if(SimpBerthes[i].pBerth->Boat.user_id == pMntBerth->mntBoat.mmsi)
-         {  
-            if(pMntBerth->pBerth != SimpBerthes[i].pBerth)
-            {
-               pMntBerth->pBerth  = SimpBerthes[i].pBerth;
-               SimpBerthes[i].pBerth->mntState  = MNTState_Monitored;
-            }           
-            break;
-         }
-      }
-      
-       return ;
-   }
-  
+      return;
+   }    
   
    if(isKeyTrigged)
    { 
@@ -99,16 +83,12 @@ void check()
   
   
 /// 找寻本次应该check哪条监控船舶 
-   if(pMntHeader == NULL)
-   {
-      return;
-   }
-   
+
    pMntBerth  = pMntHeader;
    
    if(Cnt==0)
    {   
-      for(i=Num;i>0;i--)
+      for(i=CheckNum;i>0;i--)
       {
          if(pMntBerth->pNext)
          {
@@ -117,16 +97,22 @@ void check()
          else
          {
             pMntBerth  = pMntHeader;
-            Num  = 0;
+            CheckNum  = 0;
          }
       }
-      
-      Num++;
+      CheckNum++;
     
 //INFO("Check %09ld",pMntBerth->mntBoat.mmsi);     
      CHECK_check(pMntBerth); 
-      
+     
+     if(pMntBerth->mntBoat.name[0] == 0)
+        CHECK_checkName(pMntBerth);
+       
+     if(pMntBerth->nickName[0] == 0)
+        CHECK_checkNickName(pMntBerth);
+   
    }
+      
    Cnt++;
    Cnt  = Cnt%2;
 }
@@ -138,15 +124,16 @@ void CHECK_check(MNT_BERTH * pMntBerth)
    unsigned char trgState  = 0;
    
 
-   if(CHECK_isDsp(pMntBerth))
+//   if(CHECK_isDsp(pMntBerth))
+//   {
+//      trgState  = 0x01<<7;
+//   }
+   if(CHECK_isStillDsp(pMntBerth))
    {
-//printf("dsp clear");   
-//      INVD_clear(pMntBerth - MNT_Berthes);
       trgState  = 0x01<<7;
    }
    else if(CHECK_isDrg(pMntBerth))
    {
-//printf("drg clear\n");   
       INVD_clear(pMntBerth - MNT_Berthes);
       trgState  = 0x01<<6;
    }
@@ -155,7 +142,6 @@ void CHECK_check(MNT_BERTH * pMntBerth)
       trgState  = 0x01<<5;
    }
    
-  
    
    if(trgState == 0)
    {
@@ -166,139 +152,55 @@ void CHECK_check(MNT_BERTH * pMntBerth)
    {
       pMntBerth->trgState  = (trgState & 0xf0) | MNTState_Triggered;
    }  
-  
-   
-   if( (pMntBerth->trgState & 0x0f)  ==  MNTState_Triggered)
-   {
-//      Numbers[0]  = (pMntBerth->mntBoat.mmsi%1000) / 100;
-//      Numbers[1]  = (pMntBerth->mntBoat.mmsi%100) / 10;
-//      Numbers[2]  = (pMntBerth->mntBoat.mmsi%10);
-
-      uint16_t i  = 0;
-      
-      switch(trgState)
-      {
-         case (0x01<<7):
-              if(pMntBerth->mntBoat.mntSetting.DSP_Setting.isEnable)
-              {
-                 SND_SelectID(SND_ID_DSP);
-                 OSTimeDlyHMSM(0, 0,  3,  0);
-              }
-              break;
-               
-         case (0x01<<6):
-              if(pMntBerth->mntBoat.mntSetting.DRG_Setting.isEnable && pMntBerth->mntBoat.mntSetting.DRG_Setting.isSndEnable)
-              {
-                 SND_SelectID(SND_ID_DRG);
-                 OSTimeDlyHMSM(0, 0, 3, 0);
-              }
-              break;
-              
-         case (0x01<<5):
-              if(pMntBerth->mntBoat.mntSetting.BGL_Setting.isEnable && pMntBerth->mntBoat.mntSetting.BGL_Setting.isSndEnable)
-              {
-                 SND_SelectID(SND_ID_BGL);
-                 OSTimeDlyHMSM(0, 0, 3, 0);                
-              }
-              break; 
-
-         default:
-              printf("trgState Err\n");          
-              break;              
-      }
-//INFO("%09ld name:%s",pMntBerth->mntBoat.mmsi,pMntBerth->mntBoat.name);      
-      for(i=0; i<20; )
-      {
-         if(pMntBerth->mntBoat.name[i] == '\0')
-         {
-            break;
-         }
-         else
-         {
-//printf("%d ",pMntBerth->mntBoat.name[i]);         
-            i++;
-         }
-      }
-//printf("---\n\r");      
-    
-      /// 
-      if(i<2 || i>19)
-      {
-         return;
-      }
-      i--;
-//printf("i:%d  Num:%d %d\n\r",i,pMntBerth->mntBoat.name[i-1]-'0', pMntBerth->mntBoat.name[i]-'0');     
-
-      if(pMntBerth->mntBoat.name[i] >= '0'  &&  pMntBerth->mntBoat.name[i] <= '9')
-      {
-         Numbers[1]  = pMntBerth->mntBoat.name[i] - '0';      
-         
-         i--;
-         if(pMntBerth->mntBoat.name[i] >= '0'  &&  pMntBerth->mntBoat.name[i] <= '9')
-         {
-            Numbers[0]  = pMntBerth->mntBoat.name[i] - '0';         
-            SND_SelectID(SND_ID_NUM_BASE + Numbers[0]);
-            OSTimeDlyHMSM(0, 0, 0, 800);
-         }
-         
-         SND_SelectID(SND_ID_NUM_BASE + Numbers[1]);
-      }
-/*      
-      switch(trgState)
-      {
-        case (0x01<<7):
-             if(pMntBerth->mntBoat.mntSetting.DSP_Setting.isEnable)
-             {
-                SND_SelectID(SND_ID_DSP);
-
-                OSTimeDlyHMSM(0, 0, 3, 0);
-                SND_SelectID(SND_ID_NUM_BASE+Numbers[0]);
-                OSTimeDlyHMSM(0, 0, 0, 800);
-                SND_SelectID(SND_ID_NUM_BASE+Numbers[1]);
-                OSTimeDlyHMSM(0, 0, 0, 800);
-                SND_SelectID(SND_ID_NUM_BASE+Numbers[2]);                 
-             }
-             break;
-        case (0x01<<6):
-             if(pMntBerth->mntBoat.mntSetting.DRG_Setting.isEnable && pMntBerth->mntBoat.mntSetting.DRG_Setting.isSndEnable) 
-             {
-                SND_SelectID(SND_ID_DRG);
-                
-                OSTimeDlyHMSM(0, 0, 3, 0);
-                SND_SelectID(SND_ID_NUM_BASE+Numbers[0]);
-                OSTimeDlyHMSM(0, 0, 0, 800);
-                SND_SelectID(SND_ID_NUM_BASE+Numbers[1]);
-                OSTimeDlyHMSM(0, 0, 0, 800);
-                SND_SelectID(SND_ID_NUM_BASE+Numbers[2]);                
-             }
-             break;
-        case (0x01<<5):
-             if(pMntBerth->mntBoat.mntSetting.BGL_Setting.isEnable && pMntBerth->mntBoat.mntSetting.BGL_Setting.isSndEnable)
-             {
-                SND_SelectID(SND_ID_BGL);
-                
-                OSTimeDlyHMSM(0, 0, 3, 0);
-                SND_SelectID(SND_ID_NUM_BASE+Numbers[0]);
-                OSTimeDlyHMSM(0, 0, 0, 800);
-                SND_SelectID(SND_ID_NUM_BASE+Numbers[1]);
-                OSTimeDlyHMSM(0, 0, 0, 800);
-                SND_SelectID(SND_ID_NUM_BASE+Numbers[2]);                                
-             }
-             break;
-        default:
-   printf("trgState Err\n");          
-             break;
-      }
-      */
-   }
 }
 
+
+static Bool CHECK_isStillDsp(MNT_BERTH* pMntBerth)
+{
+   if(pMntBerth->pBerth == NULL)
+   {
+      int i;
+      for(i=N_boat-1; i>=0; i--)
+      {
+         if(SimpBerthes[i].pBerth->Boat.user_id == pMntBerth->mntBoat.mmsi)
+         {
+            pMntBerth->pBerth  = SimpBerthes[i].pBerth;
+            SimpBerthes[i].pBerth->mntState  = MNTState_Monitored;
+         }
+      }
+   }
+   
+   if(pMntBerth->pBerth != NULL)
+   {
+      if(pMntBerth->pBerth->Boat.dist > 99999)
+         pMntBerth->cfgState  = MNTState_Pending;
+      else
+      {
+         if(pMntBerth->cfgState != MNTState_Monitored)
+         {
+            pMntBerth->mntBoat.lg  = pMntBerth->pBerth->Boat.longitude;
+            pMntBerth->mntBoat.lt  = pMntBerth->pBerth->Boat.latitude;
+         }
+         pMntBerth->cfgState  = MNTState_Monitored;
+         
+      }
+   }
+   else if(pMntBerth->cfgState != MNTState_Init)
+   {
+      return TRUE;
+   }
+   
+   return FALSE;
+}
 
 static Bool CHECK_isDsp(MNT_BERTH * pMntBerth)
 {
    int i;
    MNT_States xxxState  = MNTState_Init;
 //INFO("DSP check");   
+   
+   if(pMntBerth->pBerth != NULL)
+      return FALSE;
 
    for(i=N_boat-1; i>=0; i--)
    {
@@ -313,11 +215,11 @@ static Bool CHECK_isDsp(MNT_BERTH * pMntBerth)
             xxxState  = MNTState_Pending;
          }
          
-         if(pMntBerth->pBerth != SimpBerthes[i].pBerth)
-         {
+//         if(pMntBerth->pBerth != SimpBerthes[i].pBerth)
+//         {
             pMntBerth->pBerth  = SimpBerthes[i].pBerth;
             SimpBerthes[i].pBerth->mntState  = MNTState_Monitored;
-         }
+//         }
          
          break;
       }
@@ -335,7 +237,7 @@ static Bool CHECK_isDsp(MNT_BERTH * pMntBerth)
               pMntBerth->cfgState    = MNTState_Monitored;
               
               pMntBerth->mntBoat.lg  = pMntBerth->pBerth->Boat.longitude;
-              pMntBerth->mntBoat.lt  = pMntBerth->pBerth->Boat.latitude;            
+              pMntBerth->mntBoat.lt  = pMntBerth->pBerth->Boat.latitude;             
            }
            /*
            else {}
@@ -448,11 +350,12 @@ static Bool CHECK_isBgl(MNT_BERTH * pMntBerth)
          }
          
          /// Is not invader but has been.So remove it from black list.
-         else if(SimpBerthes[i].pBerth->isInvader == pMntBerth->mntBoat.mmsi)
+         else 
          {   
 //printf("black->white\n");         
             INVD_delete(pMntBerth-MNT_Berthes, SimpBerthes[i].pBerth);  
-            SimpBerthes[i].pBerth->isInvader  = 0;            
+//            if(SimpBerthes[i].pBerth->isInvader == pMntBerth->mntBoat.mmsi)
+//               SimpBerthes[i].pBerth->isInvader  = 0;            
          }
       }
    }
@@ -467,9 +370,6 @@ static Bool CHECK_isBgl(MNT_BERTH * pMntBerth)
       return FALSE;
    }
 }
-
-   
-
 
 
 
@@ -490,7 +390,7 @@ static void MNT_filter()
    {   
       pBC  = pMntHeader;
       pMntHeader  = pMntHeader->pNext;
-//printf("mnt delete claer\n");
+      
       INVD_clear(pBC-MNT_Berthes);     
     
       EEPROM_Write(0 , MNT_PAGE_ID+pBC-MNT_Berthes,
@@ -508,16 +408,16 @@ static void MNT_filter()
       return;
    }
    
-   /// Find all disappear mntBoat   
-   if(pMntHeader->cfgState > MNTState_Init)
-   {
-      if(pMntHeader->pBerth && pMntHeader->pBerth->Boat.user_id != pMntHeader->mntBoat.mmsi)
-      {  
-         pMntHeader->pBerth  = NULL;   
-         pMntHeader->trgState  = (pMntHeader->trgState & 0x0f) | 0x10;        
-         INVD_clear(pMntHeader-MNT_Berthes);  
-      }
-   }   
+//   /// Find all disappear mntBoat   
+//   if(pMntHeader->cfgState > MNTState_Init )
+//   {
+//      if(pMntHeader->pBerth && pMntHeader->pBerth->Boat.user_id != pMntHeader->mntBoat.mmsi)
+//      {  
+//         pMntHeader->pBerth  = NULL;   
+//         pMntHeader->trgState  = (pMntHeader->trgState & 0x0f) | 0x10;        
+//         INVD_clear(pMntHeader-MNT_Berthes);  
+//      }
+//   }   
 
    
    pBC        = pMntHeader;
@@ -538,17 +438,17 @@ static void MNT_filter()
       }
       else
       {   
-         /// Find all disappear mntBoat      
-         if(pIterator->cfgState > MNTState_Init)
-         {
-            if(pIterator->pBerth && pIterator->pBerth->Boat.user_id != pIterator->mntBoat.mmsi)
-            {  
-               pIterator->pBerth  = NULL;   
-               pIterator->trgState  = (pIterator->trgState & 0x0f)|0x10;               
-               INVD_clear(pIterator-MNT_Berthes);  
-            }
-         } 
-             
+//         /// Find all disappear mntBoat      
+//         if(pIterator->cfgState > MNTState_Init)
+//         {
+//            if(pIterator->pBerth && pIterator->pBerth->Boat.user_id != pIterator->mntBoat.mmsi)
+//            {  
+//               pIterator->pBerth  = NULL;   
+//               pIterator->trgState  = (pIterator->trgState & 0x0f)|0x10;               
+//               INVD_clear(pIterator-MNT_Berthes);  
+//            }
+//         } 
+//             
          pBC  = pIterator;        
       }
       
@@ -558,3 +458,67 @@ static void MNT_filter()
 }
 
 
+
+static void CHECK_checkName(MNT_BERTH* pMntBerth)
+{
+   if(pMntBerth && pMntBerth->mntBoat.name[0] == 0)
+   {
+      if(pMntBerth->pBerth  &&  pMntBerth->pBerth->Boat.name[0] != 0)
+      {
+         int i  = 0;
+         for(; i<19; i++)
+         {
+            pMntBerth->mntBoat.name[i]  = pMntBerth->pBerth->Boat.name[i];
+            if(pMntBerth->mntBoat.name[i] == '\0')
+               return ;
+         }
+         pMntBerth->mntBoat.name[19]  = 0;
+         MNT_storeBoatInfo(pMntBerth);
+      }
+   }
+}
+
+
+void CHECK_checkNickName(MNT_BERTH * pMntBerth)
+{
+   int i  = 0;
+   
+   if(pMntBerth && pMntBerth->mntBoat.name[0])
+   {
+      for(; i<20; i++)
+      {
+         if(pMntBerth->mntBoat.name[i] == '\0')
+         {
+            break;
+         }
+      }
+      
+      i--;
+      if(   (pMntBerth->mntBoat.name[i] >= '0' && pMntBerth->mntBoat.name[i] <= '9')
+         || (pMntBerth->mntBoat.name[i] >= 'A' && pMntBerth->mntBoat.name[i] <= 'Z')  )
+      {
+         pMntBerth->nickName[1]  = pMntBerth->mntBoat.name[i] ;
+         if(i)
+         {
+            i--;
+            if(   (pMntBerth->mntBoat.name[i] >= '0' && pMntBerth->mntBoat.name[i] <= '9')
+               || (pMntBerth->mntBoat.name[i] >= 'A' && pMntBerth->mntBoat.name[i] <= 'Z')  )
+            {
+               pMntBerth->nickName[0]  = pMntBerth->mntBoat.name[i];   
+            }
+            else
+            {
+               pMntBerth->nickName[0]  = ' ';
+            }
+         }
+         else
+         {
+            pMntBerth->nickName[0]  = ' ';
+         }
+      }
+      else
+      {
+         pMntBerth->nickName[1]  = ' ';
+      }
+   }
+}

@@ -53,7 +53,7 @@ int insert_24B(type_of_ship * p_msg);
 int update_24B(BERTH * pBerth, type_of_ship * p_msg);
 int add_24B(type_of_ship * p_msg);
 
-static int getSphereDist(long lg_1,long lt_1, long lg_2, long lt_2);
+int getSphereDist(long lg_1,long lt_1, long lg_2, long lt_2);
 void updateTimeStamp(void);
 static BERTH * allocOneBerth(void);
 
@@ -90,6 +90,7 @@ int insert_18(struct message_18 * p_msg)
           }
           else
           {
+             Berthes[i].Boat.time_cnt  = TIMESTAMP;
              return 0;
           }
       }
@@ -435,7 +436,7 @@ int update_24A(BERTH * pBerth, struct message_24_partA * p_msg)
    if(pBerth->Boat.name[0] == 0)
    {
       for(i=0;i<20;i++)
-      {
+      {  
          pBerth->Boat.name[i]  = p_msg->name[i];
          if(p_msg->name[i] == '\0')
          {
@@ -614,6 +615,10 @@ void updateTimeStamp()
          {        
             INVD_deleteByAddr(pCur);    
          }
+         else if(pCur->mntState == MNTState_Monitored)
+         {
+            MNT_snapOnMiss(pCur);
+         }
          /// Delete at header
          if(pCur == pHeader)
          {
@@ -661,14 +666,13 @@ void updateTimeStamp()
 }
 
 
-static int getSphereDist(long lt_1,long lg_1, long lt_2, long lg_2)
+int getSphereDist(long lt_1,long lg_1, long lt_2, long lg_2)
 {
 	float dist = 0.0;
 	float f_1 = 1.0*lt_1 / 60000;
 	float f_2 = 1.0*lt_2 / 60000;
 
 	float diff = 1.0*(lg_1 - lg_2) / 60000;
- float cosTheta  = 0.0;
 // f_1  = lt_1/60000 + ( (lt_1%60000)/10000 )*0.01667;
 
 // printf("\r\nf_1:%lf\r\n",f_1);
@@ -731,26 +735,26 @@ static BERTH * allocOneBerth()
 
 
 
-void myPrint()
-{
-   int i  = 0;
-   BERTH * tmp  = NULL;
-   
-   tmp  = pHeader;
-   
-   printf("\r\n");
-   while(tmp)
-   {
-      i++;
-      printf("[%09ld,%d]->",tmp->Boat.user_id,tmp->Boat.dist);
-      if(i>20)
-      {
-         printf("\r\n");  
-         return ;         
-      }
-      tmp  = tmp->pNext;
-   }
-   
-   printf("\r\n");
-}
+//void myPrint()
+//{
+//   int i  = 0;
+//   BERTH * tmp  = NULL;
+//   
+//   tmp  = pHeader;
+//   
+//   printf("\r\n");
+//   while(tmp)
+//   {
+//      i++;
+//      printf("[%09ld,%d]->",tmp->Boat.user_id,tmp->Boat.dist);
+//      if(i>20)
+//      {
+//         printf("\r\n");  
+//         return ;         
+//      }
+//      tmp  = tmp->pNext;
+//   }
+//   
+//   printf("\r\n");
+//}
 

@@ -165,12 +165,12 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        }
        
        GUI_SetFont(&GUI_Font24);
-       GUI_DispStringAt("使用空空切换设置:",43,350);
-       GUI_SetFont(&GUI_Font24);
+       GUI_DispStringAt("使用",40,350);
+//       GUI_SetFont(&GUI_Font24);
        GUI_SetColor(pSkin->bt_txColor);
        GUI_DispStringAt("左右",80,350);
        GUI_SetColor(GUI_WHITE);
-
+       GUI_DispStringAt("切换设置",120, 350);
 //       GUI_DrawPolygon(Points_fish, 11,43, 130);
        GUI_DrawPolygon(Points_fish, 11, 43, 280);
 //       GUI_DrawBitmap(&bmmao,23,260);
@@ -217,7 +217,6 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
        break;       
        
   case USER_MSG_FOCUS:
-INFO("case USER_MSG_FOCUS");  
        WM_SetFocus(hBts[0]);
        
        if(pMsg->Data.p)
@@ -225,31 +224,26 @@ INFO("case USER_MSG_FOCUS");
           pCurMntBerth  = (MNT_BERTH*)(pMsg->Data.p);
           memcpy((void*)&mntSetting, (void*)(&pCurMntBerth->mntBoat.mntSetting), sizeof(MNT_SETTING));           
        }
-             
-       printSetting(&mntSetting);
-      
        break;
        
   case USER_MSG_LV_MOVE:
-INFO("case USER_MSG_LV_MOVE");  
+       if(pMsg->Data.p) 
        {
           MNT_SETTING *  pMntSetting  = NULL;
           
           pMntSetting    = (MNT_SETTING*)&(  ( (MNT_BERTH*)pMsg->Data.p)->mntBoat.mntSetting);
-          
-          printSetting(pMntSetting);
    
           if(pMntSetting)  
           {          
              BUTTON_SetText(hBts[0], pMntSetting->DSP_Setting.isEnable?"开启":"关闭");
              
-             BUTTON_SetText(hBts[1], pMntSetting->BGL_Setting.isEnable?"开启":"关闭");
+             BUTTON_SetText(hBts[1], pMntSetting->DRG_Setting.isEnable?"开启":"关闭");
 
-             BUTTON_SetText(hBts[3], pMntSetting->BGL_Setting.isSndEnable?"开启":"关闭");
+             BUTTON_SetText(hBts[3], pMntSetting->DRG_Setting.isSndEnable?"开启":"关闭");
              
-             BUTTON_SetText(hBts[4], pMntSetting->DRG_Setting.isEnable?"开启":"关闭");
+             BUTTON_SetText(hBts[4], pMntSetting->BGL_Setting.isEnable?"开启":"关闭");
 
-             BUTTON_SetText(hBts[6], pMntSetting->DRG_Setting.isSndEnable?"开启":"关闭");          
+             BUTTON_SetText(hBts[6], pMntSetting->BGL_Setting.isSndEnable?"开启":"关闭");          
              
              if(SysConf.Unit == UNIT_nm)
              {
@@ -271,7 +265,10 @@ INFO("case USER_MSG_LV_MOVE");
                 BUTTON_SetText(hBts[5], pStrBuf);
              }
           }
-          
+       }
+       else
+       {
+          btReset();
        }
        break;
   
@@ -515,7 +512,7 @@ static void myButtonListener(WM_MESSAGE* pMsg)
             case 2:
                  mntSetting.DRG_Setting.Dist  += Step;
                  mntSetting.DRG_Setting.Dist  = (mntSetting.DRG_Setting.Dist+1050) %1050;
-INFO("DRG dist:%d",mntSetting.DRG_Setting.Dist);
+//INFO("DRG dist:%d",mntSetting.DRG_Setting.Dist);
                  
                  if(SysConf.Unit == UNIT_nm)
                  {
@@ -558,7 +555,7 @@ INFO("DRG dist:%d",mntSetting.DRG_Setting.Dist);
             case 5:
                  mntSetting.BGL_Setting.Dist  += Step;
                  mntSetting.BGL_Setting.Dist  = (mntSetting.BGL_Setting.Dist+1050) %1050;
-INFO("DRG dist:%d",mntSetting.BGL_Setting.Dist);                
+//INFO("DRG dist:%d",mntSetting.BGL_Setting.Dist);                
                  if(SysConf.Unit == UNIT_nm)
                  {
                     sprintf(pStrBuf, "%d.%02d", mntSetting.BGL_Setting.Dist /1000, mntSetting.BGL_Setting.Dist %1000 /10);
@@ -619,33 +616,7 @@ INFO("DRG dist:%d",mntSetting.BGL_Setting.Dist);
 				     break;
 			}
    break;
-			
-//   case USER_MSG_REPLY:
-//       switch(pMsg->Data.v)
-//       {
-//          case REPLY_OK:
-//               WM_SetFocus(WM_GetDialogItem(pMsg->hWin, ID_BUTTON_0));
-//               i  = MNT_makeSettingUp(&mntSetting);  
-////               MNT_initSetting();
-//               btReset(mntSettingWin);  
-//               myMsg.hWin  = WM_GetClientWindow(menuWin);               
-//               myMsg.MsgId  = USER_MSG_DFULT_CNT;
-//               myMsg.Data.v  = i;
-//               WM_SendMessage(myMsg.hWin, &myMsg);
-//               WM_SetFocus(menuWin);
-//               break;
-//          case REPLY_CANCEL:   
-////               MNT_initSetting();
-//               btReset(mntSettingWin);               
-//               WM_SetFocus(subWins[1]);
-//               break;
-//               
-//           default:
-//INFO("Something err!");           
-//           break;
-//       }
-//   break;
-       
+			       
 				default:
 					   BUTTON_Callback(pMsg);
 				break;

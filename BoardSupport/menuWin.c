@@ -161,7 +161,7 @@ INFO("case msg skin");
 /**
  *  emWin Bug
  */  
-  WM_SetFocus(hButtons[1]);
+//  WM_SetFocus(hButtons[1]);
   
     WINDOW_SetBkColor(pMsg->hWin,pSkin->bkColor);  
 //    TEXT_SetTextColor(WM_GetDialogItem(pMsg->hWin, ID_TEXT_0), pSkin->Menu_Label);
@@ -218,95 +218,89 @@ static void myButtonListener(WM_MESSAGE * pMsg)
 	switch(pMsg->MsgId)
 	{
  
- case WM_SET_FOCUS:
-      btIndex  = WM_GetId(pMsg->hWin) - ID_BUTTON_0;
-      if(btIndex < 4  &&  btIndex >= 0)
-      {
-         if(pMsg->Data.v)
-         {      
-            selIndex  = btIndex;   
-            
-            /**Background color can't change with focus in HSD_BUTTON_Callbak  */
-            HSD_BUTTON_SetBkColor(thisButton, pSkin->btBkFocus);    
-            WM_BringToTop(subWins[btIndex]);
-//            if(btIndex < 2)
-//            {
-//               if(btIndex)
-//               {
-//                  WM_BringToTop(mntSettingWin);
-//               }
-//               WM_SendMessageNoPara(subWins[btIndex], USER_MSG_BRING);
-//            }
-            if(btIndex == 1)
-            {
-               WM_BringToTop(mntSettingWin);
-               WM_SendMessageNoPara(subWins[btIndex], USER_MSG_LV_UPDATE);
-            }
-         }
-         else
-         {      
-            if(selIndex == btIndex)
-            {
-               HSD_BUTTON_SetBkColor(thisButton, pSkin->btBkSel);
-            }
-            else
-            {
-               HSD_BUTTON_SetBkColor(thisButton, pSkin->btBkColor);
-            }
-         }
+    case WM_SET_FOCUS:
+         btIndex  = WM_GetId(pMsg->hWin) - ID_BUTTON_0;
+         if(btIndex < 4  &&  btIndex >= 0)
+         {
+            if(pMsg->Data.v)
+            {      
+               selIndex  = btIndex;   
+               
+               /**Background color can't change with focus in HSD_BUTTON_Callbak  */
+               HSD_BUTTON_SetBkColor(thisButton, pSkin->btBkFocus);    
+               WM_BringToTop(subWins[btIndex]);
+               if(btIndex == 1)
+               {
+                  WM_BringToTop(mntSettingWin);
+                  WM_SendMessageNoPara(subWins[btIndex], USER_MSG_LV_UPDATE);
+               }
+             }
+             else
+             {      
+                if(selIndex == btIndex)
+                {
+                   HSD_BUTTON_SetBkColor(thisButton, pSkin->btBkSel);
+                }
+                else
+                {
+                   HSD_BUTTON_SetBkColor(thisButton, pSkin->btBkColor);
+                }
+             }
          
-         HSD_BUTTON_Callback(pMsg);
-      }
-      else
-      {
-INFO("focus err!");      
-      }
-      break;
+             HSD_BUTTON_Callback(pMsg);
+          }
+          else
+          {
+             INFO("focus err!");      
+          }
+           break;
 
-		case WM_KEY:
-			pInfo  = (WM_KEY_INFO*)pMsg->Data.p;
-		  switch(pInfo->Key)
-			{
-    case GUI_KEY_PWM_INC:       
-      WM_SendMessageNoPara(subWins[3], USER_MSG_DIM);
-      break;
-				case GUI_KEY_DOWN:  
-         selIndex = -1;  
-         HSD_BUTTON_Callback(pMsg);
-					    break;
-				
-				case GUI_KEY_UP:
-         selIndex  = -1;
-         HSD_BUTTON_Callback(pMsg);
-		     		break;
-				
-				case GUI_KEY_RIGHT: 
-         HSD_BUTTON_SetBkColor(thisButton, pSkin->btBkSel);
-         WM_SetFocus(subWins[btIndex]); 
-				     break;
-         
-				case GUI_KEY_MENU:       
-    case GUI_KEY_BACKSPACE:
-         WM_BringToBottom(menuWin);
-         WM_HideWindow(subWins[0]);
-         WM_HideWindow(subWins[1]);
-         WM_HideWindow(subWins[2]);
-         WM_HideWindow(subWins[3]);
-         WM_HideWindow(mntSettingWin);     
-         HSD_BUTTON_SetBkColor(thisButton, pSkin->btBkColor);    
-         WM_SetFocus(mapWin);
-         GUI_CURSOR_Show();   
-		    			break;
-				
-     default:
-         HSD_BUTTON_Callback(pMsg);
-         break;
-			}
-			break;
+	   	case WM_KEY:
+          pInfo  = (WM_KEY_INFO*)pMsg->Data.p;
+          switch(pInfo->Key)
+          {
+             case GUI_KEY_PWM_INC:       
+               WM_SendMessageNoPara(subWins[3], USER_MSG_DIM);
+               break;
+             case GUI_KEY_DOWN:  
+                  selIndex = -1;  
+                  HSD_BUTTON_Callback(pMsg);
+                  break;
+             
+             case GUI_KEY_UP:
+                  selIndex  = -1;
+                  HSD_BUTTON_Callback(pMsg);
+                  break;
+             
+             case GUI_KEY_RIGHT: 
+                  HSD_BUTTON_SetBkColor(thisButton, pSkin->btBkSel);
+                  WM_SetFocus(subWins[btIndex]); 
+                  break;
+                  
+             case GUI_KEY_MENU:       
+             case GUI_KEY_BACKSPACE:
+                  selIndex  = -1;
+                  WM_BringToBottom(menuWin);
+                  WM_HideWindow(subWins[0]);
+                  WM_HideWindow(subWins[1]);
+                  WM_HideWindow(subWins[2]);
+                  WM_HideWindow(subWins[3]);
+                  WM_HideWindow(mntSettingWin);     
+                  HSD_BUTTON_SetBkColor(thisButton, pSkin->btBkColor);   
+                  WM_SetFocus(hButtons[0]);         
+                  WM_SetFocus(mapWin);
+                  GUI_CURSOR_Show();   
+                  break;
+             
+              default:
+                  HSD_BUTTON_Callback(pMsg);
+                  break;
+          }
+		       	break;
    
-				default:
-				  	HSD_BUTTON_Callback(pMsg);
-			   	break;
+				 default:
+				     	HSD_BUTTON_Callback(pMsg);
+			      	break;
 	}
 }
 

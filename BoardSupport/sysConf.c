@@ -5,6 +5,7 @@
 #include "lpc177x_8x_eeprom.h"
 #include "pwm.h"
 #include "sound.h"
+#include "Check.h"
 
 
 /*--------------------- External variables ------------------------*/
@@ -40,32 +41,32 @@ static Bool checkSysConf()
    {
       flag  = FALSE;
       printf("Skin load error! load %d as skin\n\r",SysConf.Skin);
-      SysConf.Skin  = SKIN_Night;
+      SysConf.Skin  = DEFAULT_SKIN;
    }
-   if(SysConf.Brt < 1  ||  SysConf.Brt > 5)                     
+   if(SysConf.Brt < 1  ||  SysConf.Brt > 6)                     
    {
       flag  = FALSE;   
       printf("Brt  load error! load %d as brg\n\r",SysConf.Brt);
-      SysConf.Brt  = 3;
+      SysConf.Brt  = DEFAULT_BRT;
    }
    if( SysConf.Vol > 6)            
    {
       flag  = FALSE;   
       printf("Vol  load error! load %d as vol\n\r",SysConf.Vol);
-      SysConf.Vol  = 3;
+      SysConf.Vol  = DEFAULT_VOL;
    }
 
    if(SysConf.Unit != UNIT_km  &&  SysConf.Unit != UNIT_nm)     
    {
       flag  = FALSE;   
       printf("Unit load error! load %d as unit\n\r",SysConf.Unit);
-      SysConf.Unit  = UNIT_nm;
+      SysConf.Unit  = DEFAULT_UNIT;
    }
    if(SysConf.Shape != SHAPE_Boat  &&  SysConf.Shape != SHAPE_Fish) 
    {
       flag  = FALSE;   
       printf("Shape load error! load %d as shape\n\r",SysConf.Shape);
-      SysConf.Shape  = SHAPE_Fish;
+      SysConf.Shape  = DEFAULT_SHAPE;
    }
    return flag;
 }
@@ -100,6 +101,9 @@ printf("after fix:\n\r");
       EEPROM_Read(0, MNT_PAGE_ID+i, &MNT_Berthes[i], MODE_8_BIT, sizeof(MNT_BOAT));
       if(MNT_Berthes[i].mntBoat.mmsi)
       {
+         if(MNT_Berthes[i].mntBoat.name[0] != 0)
+            CHECK_checkNickName(&MNT_Berthes[i]);
+            
          MNT_Berthes[i].mntBoat.lg  = 0;
          MNT_Berthes[i].mntBoat.lt  = 0;
          MNT_Berthes[i].chsState  = MNTState_Monitored;
@@ -138,22 +142,13 @@ printf("%d--MMSI:%09ld\n\r",i,MNT_Berthes[i].mntBoat.mmsi);
 
 void sysStore()
 {
-//   uint16_t i  = 0;
-//   for(i=0; i<MNT_NUM_MAX; i++)
-//   {
-//      EEPROM_Erase(MNT_PAGE_ID+i);
-//   }
    EEPROM_Write(SYSCONF_ADDR%EEPROM_PAGE_SIZE, SYSCONF_ADDR/EEPROM_PAGE_SIZE,
                &SysConf, MODE_8_BIT, sizeof(CONF_SYS));        
 }
 
 
 void sysInit()
-{    
-   MNT_BERTH * pIterator  = NULL;
-   uint16_t  i  = 0; 
-    
-//   EEPROM_Erase(MNT_PAGE_ID);
+{        
    if(sysLoad())
    {
 INFO("System load successfully!");   
@@ -161,19 +156,30 @@ INFO("System load successfully!");
    else
    {
 INFO("Error happened when system load.System will be configed with default value");   
+   }
 
-   }
-   
-   pIterator  = pMntHeader;
-   while(pIterator)
-   {
-      if(i == 5)      
-      i++;
-      i  = i%5;
-      pIterator  = pIterator->pNext;
-   }
-  
-   PWM_SET(SysConf.Brt * 2); 
+   PWM_SET(SysConf.Brt); 
    SND_SetVol(SysConf.Vol);
 }
+
+
+void sysRevive(void)
+{
+   int i  = 0;
+   
+   SysConf.Skin  = DEFAULT_SKIN;
+   SysConf.Brt   = DEFAULT_BRT;
+   SysConf.Vol   = DEFAULT_VOL;
+   SysConf.Unit  = DEFAULT_UNIT;
+   SysConf.Shape = DEFAULT_SHAPE;
+   
+   sysStore();
+   for(i=0; i<MNT_NUM_MAX; i++)
+   {
+      EEPROM_Erase(MNT_PAGE_ID+i);
+   }
+INFO("after revive:");   
+   printSysConf(&SysConf);
+}
+
 

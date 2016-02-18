@@ -60,6 +60,7 @@ static WM_HWIN dlgTextContent;
 static int Option  = 0;
 static WM_MESSAGE myMsg;
 static WM_HWIN Confim_BUTTON[2];
+
 static void myButton(WM_MESSAGE * pMsg);
 
 
@@ -129,21 +130,13 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
 	
 	case USER_MSG_SKIN:
       pSkin = &(cnfmWinSkins[pMsg->Data.v]);
-      
+    
       BUTTON_SetBkColor(Confim_BUTTON[0], BUTTON_BI_UNPRESSED, pSkin->bt_bkColor);
       BUTTON_SetBkColor(Confim_BUTTON[1], BUTTON_BI_UNPRESSED, pSkin->bt_bkColor);
+      
+      TEXT_SetTextColor(dlgTextContent, pSkin->text);
       break;
-		//BUTTON_SetBkColor(Confim_BUTTON[0],BUTTON_BI_UNPRESSED,pSkin->Bt_NOFOCUS);
-		//BUTTON_SetBkColor(Confim_BUTTON[1],BUTTON_BI_UNPRESSED,pSkin->Bt_NOFOCUS);
-		//BUTTON_SetBkColor (WM_GetDialogItem(pMsg->hWin,GUI_ID_BUTTON0),BUTTON_CI_UNPRESSED,pSkin->Bt_NOFOCUS);
-		//BUTTON_SetText(WM_GetDialogItem(pMsg->hWin, GUI_ID_BUTTON0), "确定");
-		
-		//TEXT_SetTextColor (WM_GetDialogItem(pMsg->hWin, ID_TEXT_CONTENT),pSkin->Text);
-//        if(pMsg->Data.v == SKIN_Night)    
-//           WINDOW_SetBkColor(pMsg->hWin, GUI_DARKGRAY); 
-//        else
-//           WINDOW_SetBkColor(pMsg->hWin, GUI_WHITE);
-//       break;  
+ 
 	//WM_INIT_DIALOG:
   case WM_CREATE:
     //
@@ -257,27 +250,25 @@ static void _cbDialog(WM_MESSAGE * pMsg) {
       {
          case CANCEL_MONITED:         
               TEXT_SetText(dlgTextContent, "确认取消监控该船舶？");
-					
               break;
           
          case STORE_SETTING:       
               TEXT_SetText(dlgTextContent, "确认保存监控设置项？");    
-					
               break;
          case ADD_MONITED:             
               TEXT_SetText(dlgTextContent, "确认添加网位仪监控列表？");
-						
               break;
          case SYS_SETTING:
               TEXT_SetText(dlgTextContent, "确认保存设置内容？");
-							
-         break;
+							       break;
+         case SYS_REVIVE:
+              TEXT_SetText(dlgTextContent, "确认恢复出厂设置？");
+              break;
          
          default:       
               break;
       }
       break;
-   break;
 //   case USER_MSG_CHOOSE:
 //        
 //        break;

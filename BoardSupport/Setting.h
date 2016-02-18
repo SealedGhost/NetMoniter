@@ -42,7 +42,6 @@ struct _MNT_BOAT
    long mmsi;
    long lg;
    long lt;
- 
    char name[20]; 
   MNT_SETTING mntSetting;   
 };
@@ -51,11 +50,14 @@ typedef struct _MNT_BERTH MNT_BERTH;
 struct _MNT_BERTH
 {
   MNT_BOAT mntBoat;
-
+  long          snapLg;
+  long          snapLt;
+  int           snapDist;
   unsigned char chsState;
   unsigned char trgState;
   unsigned char cfgState;
   unsigned char flsState;
+           char nickName[3];
   BERTH * pBerth;  
   MNT_BERTH * pNext;
 };
@@ -67,6 +69,7 @@ extern MNT_SETTING mntSetting;
 int  MNT_getAddrOffset(uint8_t * addr);
 Bool MNT_add(BERTH * pBerth);
 void MNT_load(void);
+void MNT_storeBoatInfo(MNT_BERTH* pMntBerth);
 int  MNT_makeSettingUp(MNT_SETTING * pMNT_Setting);
 void printSetting(MNT_SETTING * p_setting);
 void MNT_printSetting(void);void MNT_DumpSetting(MNT_BERTH * pBerth);
@@ -74,6 +77,9 @@ Bool MNT_removeById(long Id);
 int  MNT_getDefaultNum(void);
 void MNT_Disable(void);
 void MNT_Enable(void);
+MNT_BERTH* MNT_fetchNextPlayBerth(void);
+MNT_BERTH* MNT_fetchPlayBerth(void);
+void MNT_snapOnMiss(BERTH* pBerth);
 
 
 //__inline void MNT_resetIterator()

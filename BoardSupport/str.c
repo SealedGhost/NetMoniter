@@ -76,7 +76,7 @@ void lltostr(long l_o_l,char *str)
     minute_dec = (l_o_l%(60000))-minute_int*1000;
     
    //	ttoi(degree,tmp);
-    sprintf(str,"%03d",degree);
+    sprintf(str,"%3d",degree);
     str[3]  = 194;
     str[4]  = 176;
     sprintf(str+5,"%02d",minute_int);

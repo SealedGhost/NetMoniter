@@ -54,9 +54,30 @@ void SetBackLight(uint32_t level)//设置PWM占空比，调节LCD背光亮度
 void PWM_SET(uint8_t PWM)//PWM_test
 {
 	  uint32_t BACK_LIGHT;
-	  BACK_LIGHT=pclk/_BACK_LIGHT_BASE_CLK/10;
+	  BACK_LIGHT=pclk/_BACK_LIGHT_BASE_CLK/100;
 //    printf("\r\nBACK_LIGHT:%d\n\r",PWM);
 		SetBackLight(BACK_LIGHT*PWM);
+  switch(PWM)
+  {
+     case 1:
+          SetBackLight(BACK_LIGHT*2);
+          break;
+     case 2:
+          SetBackLight(BACK_LIGHT*20);
+          break;
+     case 3:
+          SetBackLight(BACK_LIGHT*30);
+          break;
+     case 4:
+          SetBackLight(BACK_LIGHT*50);
+          break;
+     case 5:
+          SetBackLight(BACK_LIGHT*70);
+          break;
+     case 6:
+          SetBackLight(BACK_LIGHT*90);
+          break;
+  }
 }
 
 

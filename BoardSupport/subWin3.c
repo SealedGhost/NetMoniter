@@ -12,29 +12,21 @@
 #include "drawThings.h"
 #include "sound.h"
 #include "string.h"
+#include "lpc177x_8x_nvic.h"
 
 #define ID_WINDOW_0         (GUI_ID_USER + 0x00)
 
-#define ID_TEXT_TITLE       (GUI_ID_USER + 0x10)
-#define ID_TEXT_NIGHT       (GUI_ID_USER + 0x11)
-#define ID_TEXT_VOL         (GUI_ID_USER + 0x12)
-#define ID_TEXT_BRIGHT      (GUI_ID_USER + 0x13)
-
-#define ID_TEXT_UNIT        (GUI_ID_USER + 0x16)
-#define ID_TEXT_SHAPE       (GUI_ID_USER + 0x17)
-#define ID_TEXT_UPDATE      (GUI_ID_USER + 0x18)
-#define ID_TEXT_VERSION     (GUI_ID_USER + 0x19)
-#define ID_TEXT_VER         (GUI_ID_USER + 0x1a)
 
 #define ID_SLIDER_SKIN      (GUI_ID_USER + 0x20)
 #define ID_SLIDER_BRT       (GUI_ID_USER + 0x21)
 #define ID_SLIDER_VOL       (GUI_ID_USER + 0x22)
 #define ID_SLIDER_UNIT      (GUI_ID_USER + 0x23)
 #define ID_SLIDER_SHAPE     (GUI_ID_USER + 0x24)
+#define ID_SLIDER_REVIVE    (GUI_ID_USER + 0x25)
 
+#define ID_BUTTON_REVIVE    (GUI_ID_USER + 0x30)
 
-
-#define SLD_NUM  5
+#define SLD_NUM  6
 
 extern boat mothership;
 extern mapping center;
@@ -51,6 +43,7 @@ GUI_POINT pPoint[] = {
 
 
 static void sldListener(WM_MESSAGE * pMsg);
+static void sldReviveCallback(WM_MESSAGE* pMsg);
 
 static const SysWin_COLOR * pSkin  = &SysWinSkins[0];
 static void _OnSkinChanged(WM_MESSAGE * pMsg,int val);
@@ -63,7 +56,7 @@ static void _OnShapeChanged(WM_MESSAGE * pMsg,int val);
 static CONF_SYS agentConf;
 
 
-static  void (* const ProcChanging[SLD_NUM])(WM_MESSAGE *, int)  = {
+static  void (* const ProcChanging[SLD_NUM-1])(WM_MESSAGE *, int)  = {
    _OnSkinChanged, 
    _OnBrtChanged,
    _OnVolChanged,
@@ -76,26 +69,24 @@ static const GUI_WIDGET_CREATE_INFO _aDialogCreate[]  =
 {
  { WINDOW_CreateIndirect,  "Window",  ID_WINDOW_0,  SubWin_X,  SubWin_Y, SubWin_WIDTH, SubWin_HEIGHT,  0, 0, 0},
 
- { TEXT_CreateIndirect, "左右",       ID_TEXT_VER,    75, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*7+10, 120,  30, 0,  0, 0},
-// 
- { HSD_SLIDER_CreateIndirect, " " ,ID_SLIDER_SKIN,   180,   Win_SysSet_txOrg,                                              120,  30,  0, 0, 0},
- { HSD_SLIDER_CreateIndirect, " ", ID_SLIDER_BRT  ,  180,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap),   120,  30,  0, 0, 0},
- { HSD_SLIDER_CreateIndirect, " ", ID_SLIDER_VOL,    180,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*2, 120,  30,  0, 0, 0},
- { HSD_SLIDER_CreateIndirect, " ", ID_SLIDER_UNIT, 180,     Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3, 120,  30,  0, 0, 0},
- { HSD_SLIDER_CreateIndirect, " ", ID_SLIDER_SHAPE, 180,    Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4, 120,  30,  0, 0, 0}
-
+ { HSD_SLIDER_CreateIndirect, "sld0" ,ID_SLIDER_SKIN,   180,   Win_SysSet_txOrg,                                              120,  30,  0, 0, 0},
+ { HSD_SLIDER_CreateIndirect, "sld1", ID_SLIDER_BRT  ,  180,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap),   120,  30,  0, 0, 0},
+ { HSD_SLIDER_CreateIndirect, "sld2", ID_SLIDER_VOL,    180,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*2, 120,  30,  0, 0, 0},
+ { HSD_SLIDER_CreateIndirect, "sld3", ID_SLIDER_UNIT,   180,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3, 120,  30,  0, 0, 0},
+ { HSD_SLIDER_CreateIndirect, "sld4", ID_SLIDER_SHAPE,  180,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4, 120,  30,  0, 0, 0},
+ { HSD_SLIDER_CreateIndirect, "sld5", ID_SLIDER_REVIVE, 180,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5, 120,  30,  0, 0, 0}
+// { BUTTON_CreateIndirect,     "btn1", ID_BUTTON_REVIVE, 180,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5, 120,  30,  0, 0, 0}
 };
 
 
-static WM_HWIN Slideres[7];
+static WM_HWIN Slideres[SLD_NUM];
 
 
 static void  _cbDialog(WM_MESSAGE * pMsg)
 {
-   const WM_KEY_INFO * pInfo;
    WM_MESSAGE myMsg;
    
-   WM_HWIN hItem;
+
    int val;
    int sldId;
    int i;
@@ -127,14 +118,15 @@ static void  _cbDialog(WM_MESSAGE * pMsg)
            
            break;
            
-      case WM_INIT_DIALOG:       
+      case WM_INIT_DIALOG:  
+           agentConf.Brt    = SysConf.Brt;
+           agentConf.Shape  = SysConf.Shape;
+           agentConf.Skin   = SysConf.Skin;
+           agentConf.Unit   = SysConf.Unit;
+           agentConf.Vol    = SysConf.Vol;
+                 
            pSkin  = &(SysWinSkins[SysConf.Skin]);
-                //text
-           hItem = WM_GetDialogItem(pMsg->hWin, ID_TEXT_VER);
-           TEXT_SetFont(hItem,&GUI_Font24);
-           TEXT_SetTextColor(hItem, pSkin->sldSlider);
-           
-			
+		
            Slideres[0]  = WM_GetDialogItem(pMsg->hWin, ID_SLIDER_SKIN);
            WM_SetCallback(Slideres[0], &sldListener);
            HSD_SLIDER_SetRange(Slideres[0], SKIN_Day, SKIN_Night); 
@@ -142,14 +134,14 @@ static void  _cbDialog(WM_MESSAGE * pMsg)
            
            Slideres[1]  = WM_GetDialogItem(pMsg->hWin, ID_SLIDER_BRT);
            WM_SetCallback(Slideres[1], &sldListener);
-           HSD_SLIDER_SetNumTicks(Slideres[1], 5);
-           HSD_SLIDER_SetRange(Slideres[1], 1, 5);
+           HSD_SLIDER_SetNumTicks(Slideres[1], 6);
+           HSD_SLIDER_SetRange(Slideres[1], 1, 6);
            HSD_SLIDER_SetValue(Slideres[1], SysConf.Brt);
            
            Slideres[2]  = WM_GetDialogItem(pMsg->hWin, ID_SLIDER_VOL);
            WM_SetCallback(Slideres[2], &sldListener);
-           HSD_SLIDER_SetNumTicks(Slideres[2], 5);
-           HSD_SLIDER_SetRange(Slideres[2], 0, 4);
+           HSD_SLIDER_SetNumTicks(Slideres[2], 6);
+           HSD_SLIDER_SetRange(Slideres[2], 1, 6);
            HSD_SLIDER_SetValue(Slideres[2], SysConf.Vol);
            
            Slideres[3]  = WM_GetDialogItem(pMsg->hWin, ID_SLIDER_UNIT);
@@ -162,8 +154,16 @@ static void  _cbDialog(WM_MESSAGE * pMsg)
            HSD_SLIDER_SetRange(Slideres[4], SHAPE_Boat,  SHAPE_Fish);
            HSD_SLIDER_SetValue(Slideres[4], SysConf.Shape);
            
-
-           
+           Slideres[5]  = WM_GetDialogItem(pMsg->hWin, ID_SLIDER_REVIVE);
+           WM_SetCallback(Slideres[5], &sldReviveCallback);
+           HSD_SLIDER_SetRange(Slideres[5], 0, 4);
+           HSD_SLIDER_SetValue(Slideres[5], 0);
+//           
+//           hBtRevive  = WM_GetDialogItem(pMsg->hWin, ID_BUTTON_REVIVE);
+//           BUTTON_SetText(hBtRevive, "确定");
+//           BUTTON_SetTextColor(hBtRevive, BUTTON_CI_PRESSED, GUI_BLACK);
+//           BUTTON_SetBkColor(hBtRevive, BUTTON_BI_UNPRESSED, pSkin->sldSlider);
+//           WM_SetCallback(hBtRevive, &myButtonListener);
            
            WINDOW_SetBkColor(pMsg->hWin, pSkin->bkColor);
            
@@ -178,10 +178,7 @@ static void  _cbDialog(WM_MESSAGE * pMsg)
 						 
               HSD_SLIDER_SetSliderColor(Slideres[i], pSkin->sldSlider);
               HSD_SLIDER_SetFocusSliderColor(Slideres[i], pSkin->sldFocusSlider);
-           }           
-           
-
-                 
+           }                           
            break;
            
            
@@ -214,6 +211,8 @@ static void  _cbDialog(WM_MESSAGE * pMsg)
                HSD_SLIDER_SetValue(Slideres[3], SysConf.Unit);
                HSD_SLIDER_SetValue(Slideres[4], SysConf.Shape);
             }
+            
+            WM_SetFocus(Slideres[0]);
             WM_SetFocus(menuWin);
             break;
        
@@ -222,14 +221,10 @@ static void  _cbDialog(WM_MESSAGE * pMsg)
             {
                case WM_NOTIFICATION_VALUE_CHANGED:
                     sldId  = WM_GetId(pMsg->hWinSrc) - ID_SLIDER_SKIN;
-                    if(sldId >=0  &&  sldId < SLD_NUM)
+                    if(sldId >=0  &&  sldId < SLD_NUM-1)
                     {                  
                        val  = HSD_SLIDER_GetValue(Slideres[sldId]);                     
                        ProcChanging[sldId](pMsg, val);
-                    }
-                    else
-                    {
-INFO("SLIDER ID Err!");                    
                     }
                     break;
             }
@@ -254,38 +249,34 @@ INFO("SLIDER ID Err!");
             GUI_DispStringAt("夜间模式:", 30,   Win_SysSet_txOrg );
             GUI_DispStringAt("亮度设置:", 30,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap));
             GUI_DispStringAt("音量设置:", 30,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*2);
-//            GUI_DispStringAt("报警音:"  , 30,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3);
-//            GUI_DispStringAt("按键音:"  , 30,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4);
             GUI_DispStringAt("单位设置:", 30,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3);
             GUI_DispStringAt("船位设置:", 30,   Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4);
             
-            GUI_SetFont(&GUI_Font30);
-            
             GUI_DispStringAt("关闭", 130,Win_SysSet_txOrg);
-            GUI_DispStringAt("开启",  310,Win_SysSet_txOrg);
+            GUI_DispStringAt("开启",  310,Win_SysSet_txOrg);      
+            GUI_DispStringAt("恢复出厂设置", 30, Win_SysSet_txOrg + (Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5);                       
+            GUI_DispStringAt("系统版本:",30, Win_SysSet_txOrg + (Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6);
+            GUI_DispStringAt(VERSION, 180,Win_SysSet_txOrg + (Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6);
+            
+//            sprintf(pStrBuf, "%s", __TIME__);
+//            GUI_DispStringAt(pStrBuf,400,Win_SysSet_txOrg + (Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5);
+//            sprintf(pStrBuf, "%s", __DATE__);
+//            GUI_DispStringAt(pStrBuf,400,Win_SysSet_txOrg + (Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6);  
+            
+            GUI_SetFont (&GUI_Font32_1);
+            GUI_DispStringAt("nm", 140,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3);           
+            GUI_DispStringAt("km", 310,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3);
+            GUI_RotatePolygon(aEnlargePoints, Points_fish, 11, -1.57);
+            GUI_DrawPolygon(aEnlargePoints, 11, 330, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4+18 );				
+            GUI_DrawPolygon(Points_boat, 3, 160, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4+18);             
+
 						      GUI_SetFont(&GUI_Font24);
             GUI_DispStringAt("使用",30, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*7+10);
 	      					GUI_DispStringAt("选择选项及调整音量亮度数字",118, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*7+10);
-         
-            GUI_SetFont (&GUI_Font32_1);
-            GUI_SetColor(pSkin->txColor);
-//            GUI_DrawPolygon(&pPoint[0],5,310,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+8);
-            GUI_DispStringAt("nm", 140,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3);           
-            GUI_DispStringAt("km", 310,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*3);
-//            GUI_DrawBitmap(&bmfish,130,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+7);
-            GUI_RotatePolygon(aEnlargePoints, Points_fish, 11, -1.57);
-//            GUI_DrawPolygon(aEnlargePoints, 11, 160, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+18);
-
+            GUI_SetColor(pSkin->sldSlider);
+            GUI_DispStringAt("左右", 78, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*7+10);
             
-//						      GUI_DrawPolygon(Points_boat, 3, 320, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+18);
-            GUI_DrawPolygon(aEnlargePoints, 11, 320, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4+18 );				
-            GUI_DrawPolygon(Points_boat, 3, 160, Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*4+18);            
-//             GUI_DispStringAt("Boat",140,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+8);
-//             GUI_DispStringAt("Fish",310,Win_SysSet_txOrg+(Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6+8);
-            sprintf(pStrBuf, "%s", __TIME__);
-            GUI_DispStringAt(pStrBuf,400,Win_SysSet_txOrg + (Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*5);
-            sprintf(pStrBuf, "%s", __DATE__);
-            GUI_DispStringAt(pStrBuf,400,Win_SysSet_txOrg + (Win_SysSet_Text_HEIGHT+Win_SysSet_txGrap)*6);            
+                        
             }break;
        default:
            WM_DefaultProc(pMsg);
@@ -320,6 +311,7 @@ static void sldListener(WM_MESSAGE * pMsg)
               case GUI_KEY_BACKSPACE:
                    if(Mem_isEqual(&SysConf, &agentConf, sizeof(SysConf)) )
                    {
+                      WM_SetFocus(Slideres[0]);
                       WM_SetFocus(menuWin);                      
                    }
                    else
@@ -359,7 +351,7 @@ static void _OnSkinChanged(WM_MESSAGE * pMsg,int val)
       pSkin  = &(SysWinSkins[val]);
       
       WINDOW_SetBkColor(pMsg->hWin, pSkin->bkColor);
-      for(i=0; i<5; i++)
+      for(i=0; i<SLD_NUM; i++)
       {
          HSD_SLIDER_SetBkColor(Slideres[i], pSkin->sldBk);
 				     HSD_SLIDER_SetFocusBkColor(Slideres[i], pSkin->sldBk);
@@ -367,6 +359,8 @@ static void _OnSkinChanged(WM_MESSAGE * pMsg,int val)
          HSD_SLIDER_SetFocusSliderColor(Slideres[i], pSkin->sldFocusSlider);
          HSD_SLIDER_SetFocusSlotColor(Slideres[i], pSkin->sldSlot);
       }
+      
+      
       
 	     myMsg.hWin = WM_GetClientWindow(menuWin);		
       myMsg.Data.v = val;
@@ -384,8 +378,8 @@ static void _OnBrtChanged(WM_MESSAGE * pMsg,int val)
 {
    if(agentConf.Brt != val)
    {
-      agentConf.Brt  = val;     
-      PWM_SET(val * 2);
+      agentConf.Brt  = val;      
+      PWM_SET(val);
    }
 }
 
@@ -395,6 +389,8 @@ static void _OnVolChanged(WM_MESSAGE * pMsg,int val)
    {
       agentConf.Vol  = val;
       SND_SetVol(val);
+      GUI_Delay(100);
+      SND_Play(val);
    }
 }
 
@@ -411,6 +407,218 @@ static void _OnShapeChanged(WM_MESSAGE * pMsg,int val)
 
 
 
+static void sldReviveCallback(WM_MESSAGE* pMsg)
+{
+   const WM_KEY_INFO* pKeyInfo;
+   
+   WM_MESSAGE  myMsg;
+   
+   switch(pMsg->MsgId)
+   {
+      case WM_KEY:
+           pKeyInfo  = (WM_KEY_INFO*)pMsg->Data.p;
+           switch(pKeyInfo->Key)
+           {
+              case GUI_KEY_RIGHT:
+              case GUI_KEY_ENTER:
+                   myMsg.hWin      = WM_GetClientWindow(confirmWin);            
+                   myMsg.hWinSrc   = pMsg->hWin;
+                   myMsg.MsgId     = USER_MSG_CHOOSE;
+                   myMsg.Data.v    = SYS_REVIVE;
+                   WM_SendMessage(myMsg.hWin, &myMsg);
+ 
+                   WM_BringToTop(confirmWin);
+                   WM_SetFocus(WM_GetDialogItem(confirmWin, GUI_ID_BUTTON0));
+                   break;
+              
+              case GUI_KEY_BACKSPACE:
+                   if(Mem_isEqual(&SysConf, &agentConf, sizeof(SysConf)) )
+                   {
+                      WM_SetFocus(Slideres[0]);
+                      WM_SetFocus(menuWin);                      
+                   }
+                   else
+                   {
+                      myMsg.hWin  = WM_GetClientWindow(confirmWin);
+                      myMsg.hWinSrc  = subWins[3];
+                      myMsg.MsgId  = USER_MSG_CHOOSE;
+                      myMsg.Data.v  = SYS_SETTING;
+                      WM_SendMessage(myMsg.hWin, &myMsg);
+                      
+                      WM_BringToTop(confirmWin);
+                      WM_SetFocus(WM_GetDialogItem (confirmWin,GUI_ID_BUTTON0));                    
+                   }
+                   break;
+                   
+             default:
+                   HSD_SLIDER_Callback(pMsg);
+                   break;
+           }
+           break;
+           
+      case USER_MSG_REPLY:
+           WM_SetFocus(Slideres[0]);
+           WM_BringToTop(subWins[3]);
+           if(pMsg->Data.v == REPLY_OK )
+           {
+              if(SysConf.Skin != DEFAULT_SKIN) 
+              {
+                 myMsg.MsgId  = USER_MSG_SKIN;
+                 myMsg.Data.v  = DEFAULT_SKIN;
+                 WM_BroadcastMessage(&myMsg);
+                 agentConf.Skin  = SysConf.Skin;
+              }
+              
+              if(SysConf.Shape != DEFAULT_SHAPE)
+              {
+                 myMsg.hWin  = mapWin;
+                 myMsg.MsgId  = USER_MSG_SHAPE;
+                 myMsg.Data.v  = DEFAULT_SHAPE;
+                 WM_SendMessage(myMsg.hWin, &myMsg);
+                 agentConf.Shape  = SysConf.Shape;
+              } 
+              sysRevive();
+              
+              HSD_SLIDER_SetValue(Slideres[0], SysConf.Skin);
+              HSD_SLIDER_SetValue(Slideres[5], 0);
+              GUI_Delay(1000);
+              HSD_SLIDER_SetValue(Slideres[1], SysConf.Brt);
+              HSD_SLIDER_SetValue(Slideres[5], 1);
+              GUI_Delay(1000);
+              
+              HSD_SLIDER_SetValue(Slideres[2], SysConf.Vol);
+              HSD_SLIDER_SetValue(Slideres[5], 2);
+              GUI_Delay(1000);
+              
+              HSD_SLIDER_SetValue(Slideres[3], SysConf.Unit);
+              HSD_SLIDER_SetValue(Slideres[5], 3);
+              GUI_Delay(1000);
+              
+              HSD_SLIDER_SetValue(Slideres[4], SysConf.Shape);
+              HSD_SLIDER_SetValue(Slideres[5], 4);
+              GUI_Delay(1000);
+              
+              HSD_SLIDER_SetValue(Slideres[5], 0);
+              
+              NVIC_SystemReset();
+              
+           } 
+
+           break;
+           
+    default:
+           HSD_SLIDER_Callback(pMsg);
+           break;
+   }
+}
+
+//static void myButtonListener(WM_MESSAGE* pMsg)
+//{
+//   const WM_KEY_INFO* pKeyInfo;
+//   WM_MESSAGE myMsg;   
+//   switch(pMsg->MsgId)
+//   {
+//      case WM_SET_FOCUS:
+//           if(pMsg->Data.v)
+//           {
+//              BUTTON_SetBkColor(pMsg->hWin, BUTTON_BI_UNPRESSED, pSkin->sldFocusSlider);
+//           }
+//           else
+//           {
+//              BUTTON_SetBkColor(pMsg->hWin, BUTTON_BI_UNPRESSED, pSkin->sldSlider);
+//           }
+//           BUTTON_Callback(pMsg);
+//           break;
+//      
+//      case WM_KEY:        
+//           pKeyInfo  = (WM_KEY_INFO*)pMsg->Data.p;
+//           switch(pKeyInfo->Key)
+//           {
+//              case GUI_KEY_UP:             
+//                   WM_SetFocusOnPrevChild(WM_GetParent(pMsg->hWin));
+//                   break;                   
+//              
+//              case GUI_KEY_DOWN:
+//                   WM_SetFocusOnNextChild(WM_GetParent(pMsg->hWin));
+//                   break;                   
+// 
+//              case GUI_KEY_RIGHT:
+//              case GUI_KEY_LEFT:                
+//                   myMsg.hWin     = WM_GetClientWindow(confirmWin);
+//                   myMsg.hWinSrc  = pMsg->hWin;
+//                   myMsg.MsgId    = USER_MSG_CHOOSE;
+//                   myMsg.Data.v   = SYS_REVIVE;
+//                   WM_SendMessage(myMsg.hWin, &myMsg);
+//                   
+//                   WM_BringToTop(confirmWin);
+//                   WM_SetFocus(WM_GetDialogItem (confirmWin,GUI_ID_BUTTON1));     
+//                   break;
+//              
+//              case GUI_KEY_BACKSPACE:             
+//                   if(Mem_isEqual(&SysConf, &agentConf, sizeof(SysConf)) )
+//                   {
+//                      WM_SetFocus(Slideres[0]);
+//                      WM_SetFocus(menuWin);                      
+//                   }
+//                   else
+//                   {
+//                      myMsg.hWin  = WM_GetClientWindow(confirmWin);
+//                      myMsg.hWinSrc  = subWins[3];
+//                      myMsg.MsgId  = USER_MSG_CHOOSE;
+//                      myMsg.Data.v  = SYS_SETTING;
+//                      WM_SendMessage(myMsg.hWin, &myMsg);
+//                      
+//                      WM_BringToTop(confirmWin);
+//                      WM_SetFocus(WM_GetDialogItem (confirmWin,GUI_ID_BUTTON0));                    
+//                   }
+//                   break;                                     
+//                          
+//              default:
+//                   BUTTON_Callback(pMsg);
+//                   break;
+//           }
+//           break;
+//           
+//           
+//      case USER_MSG_REPLY:
+//           if(pMsg->Data.v == REPLY_OK) 
+//           {  
+//              if(SysConf.Skin != DEFAULT_SKIN) 
+//              {
+//                 myMsg.MsgId  = USER_MSG_SKIN;
+//                 myMsg.Data.v  = DEFAULT_SKIN;
+//                 WM_BroadcastMessage(&myMsg);
+//              }
+//              
+//              if(SysConf.Shape != DEFAULT_SHAPE)
+//              {
+//                 myMsg.hWin  = mapWin;
+//                 myMsg.MsgId  = USER_MSG_SHAPE;
+//                 myMsg.Data.v  = DEFAULT_SHAPE;
+//                 WM_SendMessage(myMsg.hWin, &myMsg);
+//              }
+//               
+//              sysRevive();
+//              
+//              HSD_SLIDER_SetValue(Slideres[0], SysConf.Skin);
+//              HSD_SLIDER_SetValue(Slideres[1], SysConf.Brt);
+//              HSD_SLIDER_SetValue(Slideres[2], SysConf.Vol);
+//              HSD_SLIDER_SetValue(Slideres[3], SysConf.Unit);
+//              HSD_SLIDER_SetValue(Slideres[4], SysConf.Shape);
+//           }
+//           else
+//           {
+//              ;  
+//           }
+//           WM_SetFocus(Slideres[0]);
+//           WM_SetFocus(menuWin);
+//           break;     
+//           
+//     default:
+//           BUTTON_Callback(pMsg);
+//           break;
+//   }
+//}
 
 
 

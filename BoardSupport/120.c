@@ -1,4 +1,4 @@
-/*********************************************************************
+ï»¿/*********************************************************************
 *                SEGGER Microcontroller GmbH & Co. KG                *
 *        Solutions for real time microcontroller applications        *
 *                           www.segger.com                           *
@@ -12,20 +12,20 @@
 *                                                                    *
 **********************************************************************
 *                                                                    *
-* Source file: Î¢ÈíÑÅºÚ120.c                                         *
-* Font:        Î¢ÈíÑÅºÚ                                              *
+* Source file: 120.c                                                 *
+* Font:        å¾®è½¯é›…é»‘                                              *
 * Height:      120                                                   *
 *                                                                    *
 **********************************************************************
 *                                                                    *
 * Initial font height: 120                                           *
 * Range disabled: 0000 - FFFF                                        *
-* Read pattern file: G:\Users\Administrator\Desktop\ÐÂ½¨ÎÄ±¾ÎÄµµ.txt *
+* Read pattern file: G:\Users\Administrator\Desktop\AM-128B.txt      *
 *                                                                    *
 **********************************************************************
 */
 
-#include  "120.h"
+#include "GUI.h"
 
 #ifndef GUI_CONST_STORAGE
   #define GUI_CONST_STORAGE const
@@ -34,7 +34,7 @@
 /* The following line needs to be included in any file selecting the
    font.
 */
-
+extern GUI_CONST_STORAGE GUI_FONT GUI_Font120;
 
 /* Start of unicode area <Basic Latin> */
 GUI_CONST_STORAGE unsigned char acGUI_Font120_002D[ 40] = { /* code 002D, HYPHEN-MINUS */
@@ -333,6 +333,76 @@ GUI_CONST_STORAGE unsigned char acGUI_Font120_0041[612] = { /* code 0041, LATIN 
   _XXXXXXX,XXXXXXXX,________,________,________,________,___XXXXX,XXXXXXXX,XX______,
   XXXXXXXX,XXXXXXXX,________,________,________,________,___XXXXX,XXXXXXXX,XXX_____};
 
+GUI_CONST_STORAGE unsigned char acGUI_Font120_0042[476] = { /* code 0042, LATIN CAPITAL LETTER B */
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXX_,________,________,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXX_____,________,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXX__,________,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,________,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,X_______,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXX_____,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXX____,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXX____,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXX___,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXX__,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXX__,________,
+  XXXXXXXX,XXXXXX__,________,_XXXXXXX,XXXXXXXX,XXXXXX__,________,
+  XXXXXXXX,XXXXXX__,________,____XXXX,XXXXXXXX,XXXXXXX_,________,
+  XXXXXXXX,XXXXXX__,________,______XX,XXXXXXXX,XXXXXXX_,________,
+  XXXXXXXX,XXXXXX__,________,_______X,XXXXXXXX,XXXXXXX_,________,
+  XXXXXXXX,XXXXXX__,________,_______X,XXXXXXXX,XXXXXXX_,________,
+  XXXXXXXX,XXXXXX__,________,________,XXXXXXXX,XXXXXXX_,________,
+  XXXXXXXX,XXXXXX__,________,________,XXXXXXXX,XXXXXXX_,________,
+  XXXXXXXX,XXXXXX__,________,________,XXXXXXXX,XXXXXXX_,________,
+  XXXXXXXX,XXXXXX__,________,________,XXXXXXXX,XXXXXXX_,________,
+  XXXXXXXX,XXXXXX__,________,________,XXXXXXXX,XXXXXX__,________,
+  XXXXXXXX,XXXXXX__,________,________,XXXXXXXX,XXXXXX__,________,
+  XXXXXXXX,XXXXXX__,________,_______X,XXXXXXXX,XXXXXX__,________,
+  XXXXXXXX,XXXXXX__,________,_______X,XXXXXXXX,XXXXX___,________,
+  XXXXXXXX,XXXXXX__,________,______XX,XXXXXXXX,XXXX____,________,
+  XXXXXXXX,XXXXXX__,________,_____XXX,XXXXXXXX,XXXX____,________,
+  XXXXXXXX,XXXXXX__,________,____XXXX,XXXXXXXX,XXX_____,________,
+  XXXXXXXX,XXXXXX__,________,_XXXXXXX,XXXXXXXX,XX______,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,X_______,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXX_,________,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXX___,________,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXX_____,________,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXX___,________,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,________,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XX______,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXX____,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXX___,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXX__,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXX_,________,
+  XXXXXXXX,XXXXXX__,________,____XXXX,XXXXXXXX,XXXXXXXX,________,
+  XXXXXXXX,XXXXXX__,________,_______X,XXXXXXXX,XXXXXXXX,________,
+  XXXXXXXX,XXXXXX__,________,________,XXXXXXXX,XXXXXXXX,X_______,
+  XXXXXXXX,XXXXXX__,________,________,_XXXXXXX,XXXXXXXX,X_______,
+  XXXXXXXX,XXXXXX__,________,________,__XXXXXX,XXXXXXXX,X_______,
+  XXXXXXXX,XXXXXX__,________,________,__XXXXXX,XXXXXXXX,XX______,
+  XXXXXXXX,XXXXXX__,________,________,___XXXXX,XXXXXXXX,XX______,
+  XXXXXXXX,XXXXXX__,________,________,___XXXXX,XXXXXXXX,XX______,
+  XXXXXXXX,XXXXXX__,________,________,___XXXXX,XXXXXXXX,XX______,
+  XXXXXXXX,XXXXXX__,________,________,___XXXXX,XXXXXXXX,XX______,
+  XXXXXXXX,XXXXXX__,________,________,___XXXXX,XXXXXXXX,XX______,
+  XXXXXXXX,XXXXXX__,________,________,___XXXXX,XXXXXXXX,XX______,
+  XXXXXXXX,XXXXXX__,________,________,__XXXXXX,XXXXXXXX,XX______,
+  XXXXXXXX,XXXXXX__,________,________,__XXXXXX,XXXXXXXX,XX______,
+  XXXXXXXX,XXXXXX__,________,________,_XXXXXXX,XXXXXXXX,X_______,
+  XXXXXXXX,XXXXXX__,________,________,XXXXXXXX,XXXXXXXX,X_______,
+  XXXXXXXX,XXXXXX__,________,______XX,XXXXXXXX,XXXXXXXX,X_______,
+  XXXXXXXX,XXXXXX__,________,____XXXX,XXXXXXXX,XXXXXXXX,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXX_,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXX__,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXX__,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXX___,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXX____,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XX______,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,X_______,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXX_,________,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXX____,________,________,
+  XXXXXXXX,XXXXXXXX,XXXXXXXX,XXXXXXXX,________,________,________};
+
 GUI_CONST_STORAGE unsigned char acGUI_Font120_004D[680] = { /* code 004D, LATIN CAPITAL LETTER M */
   XXXXXXXX,XXXXXXXX,XXXXX___,________,________,________,________,_XXXXXXX,XXXXXXXX,XXXXXX__,
   XXXXXXXX,XXXXXXXX,XXXXXX__,________,________,________,________,XXXXXXXX,XXXXXXXX,XXXXXX__,
@@ -403,25 +473,26 @@ GUI_CONST_STORAGE unsigned char acGUI_Font120_004D[680] = { /* code 004D, LATIN 
   XXXXXXXX,XXXXX___,________,_______X,XXXXXXXX,XXXXX___,________,_______X,XXXXXXXX,XXXXXX__,
   XXXXXXXX,XXXXX___,________,________,XXXXXXXX,XXXX____,________,_______X,XXXXXXXX,XXXXXX__};
 
-GUI_CONST_STORAGE GUI_CHARINFO_EXT GUI_Font120_CharInfo[6] = {
+GUI_CONST_STORAGE GUI_CHARINFO_EXT GUI_Font120_CharInfo[7] = {
    {  26,  10,   7,  65,  39, acGUI_Font120_002D } /* code 002D, HYPHEN-MINUS */
   ,{  43,  69,   7,  27,  56, acGUI_Font120_0031 } /* code 0031, DIGIT ONE */
   ,{  45,  69,   5,  27,  56, acGUI_Font120_0032 } /* code 0032, DIGIT TWO */
   ,{  48,  70,   4,  27,  56, acGUI_Font120_0038 } /* code 0038, DIGIT EIGHT */
   ,{  67,  68,   0,  28,  68, acGUI_Font120_0041 } /* code 0041, LATIN CAPITAL LETTER A */
+  ,{  50,  68,   8,  28,  62, acGUI_Font120_0042 } /* code 0042, LATIN CAPITAL LETTER B */
   ,{  78,  68,   8,  28,  93, acGUI_Font120_004D } /* code 004D, LATIN CAPITAL LETTER M */
 };
 
 GUI_CONST_STORAGE GUI_FONT_PROP_EXT GUI_Font120_Prop5 = {
    0x004D /* first character */
   ,0x004D /* last character  */
-  ,&GUI_Font120_CharInfo[  5] /* address of first character */
+  ,&GUI_Font120_CharInfo[  6] /* address of first character */
   ,(GUI_CONST_STORAGE GUI_FONT_PROP_EXT *)0 /* pointer to next GUI_FONT_PROP_EXT */
 };
 
 GUI_CONST_STORAGE GUI_FONT_PROP_EXT GUI_Font120_Prop4 = {
    0x0041 /* first character */
-  ,0x0041 /* last character  */
+  ,0x0042 /* last character  */
   ,&GUI_Font120_CharInfo[  4] /* address of first character */
   ,&GUI_Font120_Prop5 /* pointer to next GUI_FONT_PROP_EXT */
 };

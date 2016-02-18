@@ -14,6 +14,7 @@
 #include "SPI1.h"
 #include "GUI.h"
 #include "dlg.h"
+#include "sound.h"
 
 
 //#ifndef test_test
@@ -22,15 +23,17 @@
 
 /*-------------------- Macro defines ---------------------*/
 /* 定义任务优先级 */
-#define UI_Task_PRIO             11
+#define UI_Task_PRIO             12
 #define Insert_Task_PRIO         8
 #define Refresh_Task_PRIO        9
-#define Task_Stack_Use_PRIO      10  
+#define Play_Task_PRIO           11
+
 /* 定义任务堆栈大小 */
 #define USER_TASK_STACK_SIZE 2048
 #define TOUCH_TASK_STACK_SIZE 256
 #define KEY_TASK_STACK_SIZE 128
-#define Task_Stack_Use_STACK_SIZE 128
+
+#define PLAY_TAST_STACK_SIZE 128
 
 /*------------------- static ----------------------------*/
 /* 定义任务堆栈 */
@@ -40,6 +43,9 @@ static	OS_STK	UI_Task_Stack[USER_TASK_STACK_SIZE];
 static	OS_STK	Insert_Task_Stack[TOUCH_TASK_STACK_SIZE];
 
 static	OS_STK	Refresh_Task_Stack[KEY_TASK_STACK_SIZE];
+
+
+static OS_STK Play_Task_Statck[PLAY_TAST_STACK_SIZE];
 
 //static  OS_STK_DATA UI_Task_Stack_Use;
 //static  OS_STK_DATA Insert_Task_Stack_Use;
@@ -56,6 +62,7 @@ int isKeyTrigged  = 0;
 
 unsigned char isChecked  = 0;
 
+Bool isMute  = FALSE;
 
 int ReleasedDectSwitch  = 0;
 
@@ -139,9 +146,7 @@ void Insert_Task(void *p_arg)  //等待接收采集到的数据
    while(1)
    {	
 
-     s = OSQPend(QSem,0,&err);
-    
-
+      s = OSQPend(QSem,0,&err);    
       tmp  = translate_(s,&text_out,&text_out_24A,&text_out_type_of_ship); 
       OSMutexPend(Refresher, 0, &myErr);        
       switch(tmp)
@@ -175,11 +180,164 @@ void Refresh_Task(void *p_arg)//任务Refresh_Task
 
     check();
     isChecked  = 1;
-         
+       
     OSTimeDlyHMSM(0,0,5,0);
    }
 }
  
+ 
+void Play_Task(void* p_arg) 
+{
+   uint8_t  Nums[3];
+
+   MNT_BERTH* thisMntBerth  = NULL;
+   while(1)
+   {  
+      thisMntBerth  = MNT_fetchNextPlayBerth();
+      if(isMute == FALSE  &&  thisMntBerth)
+      {         
+         switch( (thisMntBerth->trgState&0xf0))
+         {
+            case (0x01<<7):
+                 if(thisMntBerth->nickName[0] >= '0'  &&  thisMntBerth->nickName[0] <= '9' )             
+                 {         
+                    SND_Play(thisMntBerth->nickName[0] - '0');
+                    OSTimeDlyHMSM(0, 0, 0, 600);
+                 }
+                 if(thisMntBerth->nickName[1] >= '0'  &&  thisMntBerth->nickName[1] <= '9')
+                 {
+                    SND_Play(thisMntBerth->nickName[1] - '0');
+                    OSTimeDlyHMSM(0, 0, 0, 600 );
+                    SND_Play(SND_ID_DEV);
+                    OSTimeDlyHMSM(0, 0, 1, 400);
+                 }            
+                 SND_Play(SND_ID_DSP);
+                 OSTimeDlyHMSM(0, 0, 1, 0);
+                 
+                 SND_ParseDist(thisMntBerth->snapDist, Nums);
+                 SND_Play(SND_ID_DST);
+                 OSTimeDlyHMSM(0, 0, 1, 400);
+                 
+                 if(Nums[0])                    
+                 {
+                    SND_Play(Nums[0]);
+                    OSTimeDlyHMSM(0, 0, 0, 800);
+                 }
+                 if(Nums[1])
+                 {
+                    SND_Play(Nums[1]);
+                    OSTimeDlyHMSM(0, 0, 0, 800);                      
+                 }
+                 if(Nums[2])
+                 {
+                    SND_Play(Nums[2]);
+                    OSTimeDlyHMSM(0, 0, 0, 800);                    
+                 }
+                 SND_Play(SND_ID_NM);
+                 
+                 break;
+                 
+            case (0x01<<6):
+                 if(thisMntBerth->mntBoat.mntSetting.DRG_Setting.isSndEnable)
+                 {
+                    if(thisMntBerth->nickName[0] >= '0'  &&  thisMntBerth->nickName[0] <= '9' )             
+                    {         
+                       SND_Play(thisMntBerth->nickName[0] - '0');
+                       OSTimeDlyHMSM(0, 0, 0, 600);
+                    }
+                    if(thisMntBerth->nickName[1] >= '0'  &&  thisMntBerth->nickName[1] <= '9')
+                    {
+                       SND_Play(thisMntBerth->nickName[1] - '0');
+                       OSTimeDlyHMSM(0, 0, 0, 600 );
+                       SND_Play(SND_ID_DEV);
+                       OSTimeDlyHMSM(0, 0, 1, 400);
+                    }                  
+                 
+                    SND_Play(SND_ID_DRG);
+                    OSTimeDlyHMSM(0, 0, 1, 0);
+                    if(thisMntBerth->pBerth->Boat.dist < 99999)
+                    {
+                       SND_ParseDist(thisMntBerth->pBerth->Boat.dist, Nums);                  
+                       SND_Play(SND_ID_DST);
+                       OSTimeDlyHMSM(0, 0, 1, 400);
+                       
+                       if(Nums[0])                    
+                       {
+                          SND_Play(Nums[0]);
+                          OSTimeDlyHMSM(0, 0, 0, 800);
+                       }
+                       if(Nums[1])
+                       {
+                          SND_Play(Nums[1]);
+                          OSTimeDlyHMSM(0, 0, 0, 800);                      
+                       }
+                       if(Nums[2])
+                       {
+                          SND_Play(Nums[2]);
+                          OSTimeDlyHMSM(0, 0, 0, 800);                    
+                       }
+                       SND_Play(SND_ID_NM);
+                    } 
+                 }                 
+                 break;
+                 
+            case (0x01<<5):
+                 if(thisMntBerth->mntBoat.mntSetting.BGL_Setting.isSndEnable)
+                 {
+                 
+                    if(thisMntBerth->nickName[0] >= '0'  &&  thisMntBerth->nickName[0] <= '9' )             
+                    {         
+                       SND_Play(thisMntBerth->nickName[0] - '0');
+                       OSTimeDlyHMSM(0, 0, 0, 600);
+                    }
+                    if(thisMntBerth->nickName[1] >= '0'  &&  thisMntBerth->nickName[1] <= '9')
+                    {
+                       SND_Play(thisMntBerth->nickName[1] - '0');
+                       OSTimeDlyHMSM(0, 0, 0, 600 );
+                       SND_Play(SND_ID_DEV);
+                       OSTimeDlyHMSM(0, 0, 1, 400);
+                    }                  
+                    SND_Play(SND_ID_BGL);
+                    OSTimeDlyHMSM(0, 0, 1, 0);          
+
+                    if(thisMntBerth->pBerth->Boat.dist < 99999)
+                    {
+                       SND_ParseDist(thisMntBerth->pBerth->Boat.dist, Nums);
+                       SND_Play(SND_ID_DST);
+                       OSTimeDlyHMSM(0, 0, 1, 400);
+                       
+                       if(Nums[0])                    
+                       {
+                          SND_Play(Nums[0]);
+                          OSTimeDlyHMSM(0, 0, 0, 800);
+                       }
+                       if(Nums[1])
+                       {
+                          SND_Play(Nums[1]);
+                          OSTimeDlyHMSM(0, 0, 0, 800);                      
+                       }
+                       if(Nums[2])
+                       {
+                          SND_Play(Nums[2]);
+                          OSTimeDlyHMSM(0, 0, 0, 800);                    
+                       }
+                       SND_Play(SND_ID_NM);
+                    } 
+                 }                 
+                 break;
+         }
+         
+      }
+      else
+      {
+          ;    
+      }
+
+      OSTimeDlyHMSM(0, 0,  5,  0);
+   }
+   
+
+}
  
  
 void App_TaskStart(void)//初始化UCOS，初始化SysTick节拍，并创建三个任务
@@ -203,22 +361,44 @@ void App_TaskStart(void)//初始化UCOS，初始化SysTick节拍，并创建三个任务
   QSem = OSQCreate(&MsgQeueTb[0],MSG_QUEUE_TABNUM); //创建消息队列，10条消息
   PartitionPt=OSMemCreate(Partition,MSG_QUEUE_TABNUM,100,&err);
   
-  OSTaskCreateExt(UI_Task, (void *)0,(OS_STK *)&UI_Task_Stack[USER_TASK_STACK_SIZE-1],  UI_Task_PRIO, UI_Task_PRIO, (OS_STK *)&UI_Task_Stack[0], USER_TASK_STACK_SIZE,(void*)0, OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR );/* 创建任务 UI_Task */
-  OSTaskCreateExt(Insert_Task,(void *)0,(OS_STK *)&Insert_Task_Stack[TOUCH_TASK_STACK_SIZE-1],Insert_Task_PRIO,Insert_Task_PRIO,(OS_STK *)&Insert_Task_Stack[0],TOUCH_TASK_STACK_SIZE,(void*)0,OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR );/* 创建任务 Insert_Task */
-  OSTaskCreateExt(Refresh_Task,  (void *)0,(OS_STK *)&Refresh_Task_Stack[KEY_TASK_STACK_SIZE-1],    Refresh_Task_PRIO,  Refresh_Task_PRIO  ,(OS_STK *)&Refresh_Task_Stack[0],  KEY_TASK_STACK_SIZE,(void*)0,  OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR);/* 创建任务 Refresh_Task */
-
-//#if DEBUG_LEVEL >= DEBUG_LEVEL_TAG
-//    INFO("DEBUG_LEVEL: TAG");
-//#elif DEBUG_LEVEL >= DEBUG_LEVEL_WATCH
-//    INFO("DEBUG_LEVEL: WATCH");
-//#elif DEBUG_LEVEL >= DEBUG_LEVEL_WARNING
-//    INFO("DEBUG_LEVEL: WARNKNG");  
-//#elif DEBUG_LEVEL >= DEBUG_LEVEL_ERROR
-//    INFO("DEBUG_LEVEL: ERROR");    
-//#else 
-//    INFO("DEBUG_LEVEL: 0");    
-//#endif
-       
+  OSTaskCreateExt(     UI_Task, 
+                       (void *)0,
+                       (OS_STK *)&UI_Task_Stack[USER_TASK_STACK_SIZE-1],  
+                       UI_Task_PRIO, UI_Task_PRIO, 
+                       (OS_STK *)&UI_Task_Stack[0], 
+                       USER_TASK_STACK_SIZE,
+                       (void*)0, 
+                       OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR );/* 创建任务 UI_Task */
+                       
+  OSTaskCreateExt(     Insert_Task,
+                       (void *)0,
+                       (OS_STK *)&Insert_Task_Stack[TOUCH_TASK_STACK_SIZE-1],
+                       Insert_Task_PRIO,
+                       Insert_Task_PRIO,
+                       (OS_STK *)&Insert_Task_Stack[0],
+                       TOUCH_TASK_STACK_SIZE,
+                       (void*)0,
+                       OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR );/* 创建任务 Insert_Task */
+                       
+  OSTaskCreateExt(     Refresh_Task,   
+                       (void *)0,
+                       ( OS_STK *)&Refresh_Task_Stack[KEY_TASK_STACK_SIZE-1],    
+                       Refresh_Task_PRIO,  
+                       Refresh_Task_PRIO  ,
+                       (OS_STK *)&Refresh_Task_Stack[0],  
+                       KEY_TASK_STACK_SIZE,
+                       (void*)0,  
+                       OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR);/* 创建任务 Refresh_Task */
+                       
+  OSTaskCreateExt(     Play_Task,
+                       (void*)0,
+                       (OS_STK*)&Play_Task_Statck[PLAY_TAST_STACK_SIZE-1],
+                       Play_Task_PRIO,
+                       Play_Task_PRIO,
+                       (OS_STK*)&Play_Task_Statck[0],
+                       PLAY_TAST_STACK_SIZE,
+                       (void*)0,
+                       OS_TASK_OPT_STK_CHK+OS_TASK_OPT_STK_CLR );
 
   OSStart();
 }

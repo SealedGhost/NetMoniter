@@ -7,26 +7,18 @@
 
 #define MNT_BERTH_SIZE  sizeof(MNT_BERTH)
 
+
+extern int getSphereDist(long lg_1,long lt_1, long lg_2, long lt_2);
+extern boat mothership;
+
 MNT_BERTH MNT_Berthes[MNT_NUM_MAX];
 
 
 MNT_BERTH * pMntHeader  = NULL;
 
+static MNT_BERTH* pPlayBerth  = NULL;
+
 //MNT_SETTING mntSetting; 
-
-
-static char  strStates[9][10]  =
-{
-   {"None     "},
-   {"Cancel   "},
-   {"Init     "},
-   {"Pending  "},
-   {"Choosen  "},
-   {"Default  "},
-   {"Monitored"},
-   {"Triggered"},
-   {"Masked   "}
-};
 
 
 /** @brief  MNT_addrCalculate
@@ -44,6 +36,15 @@ int MNT_getAddrOffset(uint8_t * addr)
    return offset;
 }
 
+
+void MNT_storeBoatInfo(MNT_BERTH* pMntBerth)
+{
+    EEPROM_Write(0, MNT_PAGE_ID+(pMntBerth-MNT_Berthes),
+                   &(pMntBerth->mntBoat), MODE_8_BIT, sizeof(MNT_BOAT));
+    
+//             EEPROM_Write( 0, MNT_PAGE_ID+(pIterator-MNT_Berthes),
+//                       &(pIterator->mntBoat),MODE_8_BIT,sizeof(MNT_BOAT));  
+}
 
 
 
@@ -234,9 +235,20 @@ INFO("allco mnt berth failed!");
    buf->mntBoat.lt    = pBerth->Boat.latitude;
    buf->mntBoat.lg    = pBerth->Boat.longitude;
    buf->chsState      = MNTState_Default;
-   buf->cfgState      = MNTState_Init;
+//   buf->cfgState      = MNTState_Init;
    buf->trgState      = MNTState_Monitored;
    buf->mntBoat.mntSetting.DSP_Setting.isEnable  = ENABLE;
+   buf->mntBoat.mntSetting.DRG_Setting.isSndEnable  = ENABLE;
+   buf->mntBoat.mntSetting.BGL_Setting.isSndEnable  = ENABLE;
+   
+   if(pBerth->Boat.dist > 99999)
+   {
+      buf->cfgState  = MNTState_Pending;
+   }
+   else 
+   {
+      buf->cfgState  = MNTState_Monitored;
+   }
    
    if(pMntHeader != NULL)
    {
@@ -301,8 +313,8 @@ void MNT_Enable(void)
       /*********************************************************************************************
       *
       *   Have no boat         ---->Init
-      *   Hvae no lg & lt      ---->Pending
-      *   Hvae lg & lt         ---->Monitored
+      *   Have no lg & lt      ---->Pending
+      *   Have lg & lt         ---->Monitored
       *
       **/
        if(pIterator->pBerth == NULL || pIterator->pBerth->Boat.user_id != pIterator->mntBoat.mmsi)   
@@ -345,8 +357,8 @@ void MNT_Disable(void)
       
       pIterator  = pIterator->pNext;
    }
-INFO("invd print");   
-   INVD_printf();
+//INFO("invd print");   
+//   INVD_printf();
 }
 
 
@@ -431,7 +443,6 @@ void printSetting(MNT_SETTING * p_setting)
 void MNT_printSetting()
 {
    MNT_BERTH * pIterator  = pMntHeader;
-   int cnt  = 0;
    
    while(pIterator)
    {
@@ -442,3 +453,113 @@ void MNT_printSetting()
          pIterator  = pIterator->pNext;
    }
 }
+
+
+MNT_BERTH* MNT_fetchPlayBerth(void)
+{
+   return pPlayBerth;
+}
+
+
+
+MNT_BERTH* MNT_fetchNextPlayBerth(void)
+{ 
+   MNT_BERTH* pIterator ;
+   
+   if(pPlayBerth == NULL)
+   {
+      pIterator  = pMntHeader;
+      while(pIterator)
+      {
+         if( (pIterator->trgState&0x0f) == MNTState_Triggered)
+         {
+             pPlayBerth  = pIterator;
+            return pPlayBerth;
+         }
+         else
+         {
+            pIterator  = pIterator->pNext;
+         }
+      }
+      pPlayBerth  = NULL;
+      return pPlayBerth;
+   }
+   else
+   {
+      pIterator  = pPlayBerth->pNext;
+      
+      while(pIterator)
+      {
+         if( (pIterator->trgState&0x0f) == MNTState_Triggered)
+         {
+            pPlayBerth  = pIterator;
+            return pPlayBerth;
+         }
+         else
+         {
+            pIterator  = pIterator->pNext;
+         }
+      }
+      
+      pIterator  = pMntHeader;
+      while(pIterator)
+      {
+         if( (pIterator->trgState&0x0f) == MNTState_Triggered)
+         {
+            pPlayBerth  = pIterator;
+            return pPlayBerth;
+         }
+         else
+         {
+            pIterator  = pIterator->pNext;
+         }
+      }
+      
+      pPlayBerth  = NULL;
+      return pPlayBerth;
+   }
+}
+
+
+void MNT_snapOnMiss(BERTH* pBerth)
+{
+   MNT_BERTH* pIterator  = pMntHeader;
+   
+   while(pIterator)
+   {
+      if(pIterator->pBerth == pBerth)
+      {
+         pIterator->pBerth  = NULL;
+         
+         if(pIterator->cfgState == MNTState_Monitored)
+         {
+            pIterator->snapLg  = pBerth->Boat.longitude;
+            pIterator->snapLt  = pBerth->Boat.latitude;
+            pIterator->snapDist  = pBerth->Boat.dist;
+            
+            pIterator->trgState  = ((0x01<<7) &0xf0) | MNTState_Triggered;
+   //         pIterator->snapDist  = getSphereDist(pIterator->snapLt, pIterator->snapLg, 
+   //                                              mothership.latitude, mothership.longitude);
+            INVD_clear(pIterator-MNT_Berthes);   
+         }  
+         else
+         {
+            pIterator->cfgState  = MNTState_Init;
+         }         
+         return ;
+      }
+      else
+      {
+         pIterator  = pIterator->pNext;
+      }
+   }
+}
+
+
+
+
+
+
+
+
+

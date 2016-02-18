@@ -25,6 +25,9 @@
 #endif
 
 
+
+#define VERSION  "V1.0.0"
+
 /********************************************************************
  *
  *               UI config
@@ -133,7 +136,7 @@
 #define TIMESTAMP           60
 
 #define MAP_REFRESH_SLOT    500
-#define AUTO_ADAPTER_CNT    20  
+#define CURSOR_HIDE_CNT     200  
 
 
 

@@ -93,7 +93,6 @@ INFO("pass error row:%d",row);
       }
       else
       {
-INFO("alloc invd failed!");
           return FALSE;
       }
    }

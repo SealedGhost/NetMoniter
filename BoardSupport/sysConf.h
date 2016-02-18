@@ -17,6 +17,13 @@
 #define OFFSETOF(x) ((uint8_t*)x-(uint8_t*)MNT_Berthes)
 
 
+#define DEFAULT_SKIN  SKIN_Day
+#define DEFAULT_BRT   4
+#define DEFAULT_VOL   6
+#define DEFAULT_UNIT  UNIT_nm
+#define DEFAULT_SHAPE SHAPE_Fish
+
+
 typedef enum _SKINS SKINS;
 enum _SKINS {SKIN_Day=0, SKIN_Night};
 
@@ -243,6 +250,7 @@ extern unsigned long SYS_Time;
 void sysInit(void);
 Bool sysLoad(void);
 void sysStore(void);
+void sysRevive(void);
 
 #endif
 

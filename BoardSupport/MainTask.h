@@ -24,6 +24,7 @@
 #define REPLY_CANCEL    4
 #define ADD_MONITED     5
 #define SYS_SETTING     6
+#define SYS_REVIVE      7
 
 #define GUI_KEY_RELEASE           4
 #define GUI_KEY_MENU              5

@@ -27,7 +27,7 @@ Bool INVD_isAlone(int row);
 
 void INVD_updataMask(void);
 
-void INVD_printf(void);
+//void INVD_printf(void);
 
 void INVD_deleteByAddr(BERTH * pBerth);
 

@@ -116,7 +116,7 @@ typedef struct mapping mapping;
 typedef struct _cursor _cursor;
 
 
-const static map_scale measuring_scale[8]  =
+static map_scale measuring_scale[8]  =
                                             {
                                              {150, 30000},      //36km   /3  cm
                                              {125, 10000},      //18km   /2.5cm 
